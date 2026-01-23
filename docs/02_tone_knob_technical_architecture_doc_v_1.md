@@ -42,9 +42,9 @@
 
 [Infrastructure]
 
-- DB Server
-- Cache Server
-- Storage Server
+- DB Server (Supabase)
+- Cache Server (Redis)
+- Storage Server (Supabase Storage)
 - AI Processing Queue
 
 ---
@@ -54,9 +54,9 @@
 ## 기술 스택
 
 - Front-end: React Router 7 (React 19.x)
-- Backend: NestJS
+- Back-end: NestJS
 - Audio: Web Audio API + AudioWorklet
-- Realtime: WebRTC + WebSocket
+- Realtime: WebRTC + WebSocket (Node.js)
 - Rendering: SVG / Canvas
 
 ## 구조
