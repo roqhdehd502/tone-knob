@@ -13,8 +13,12 @@ export default [
   // 메인 레이아웃 적용 페이지
   layout("components/common/MainLayout.tsx", [
     index("routes/home.tsx"),
+    route("tabs", "routes/tabs.tsx"),
+    route("tabs/my", "routes/tabs-my.tsx"),
+    route("tabs/:id", "routes/tabs-detail.tsx"),
     route("editor", "routes/editor.tsx"),
     route("editor/new", "routes/editor-new.tsx"),
+    route("editor/:id", "routes/editor-edit.tsx"),
     route("jamroom", "routes/jamroom.tsx"),
     route("community", "routes/community.tsx"),
     route("profile", "routes/profile.tsx"),

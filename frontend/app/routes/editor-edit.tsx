@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { TabCanvas } from "~/components/editor/TabCanvas";
 import { Toolbar } from "~/components/editor/Toolbar";
 import { InspectorPanel } from "~/components/editor/InspectorPanel";
@@ -10,19 +10,41 @@ import type { Duration } from "~/types/tab";
 
 export function meta() {
   return [
-    { title: "새 타브 만들기 - Tone Knob" },
-    { name: "description", content: "새 타브 만들기" },
+    { title: "타브 편집 - Tone Knob" },
+    { name: "description", content: "타브 편집" },
   ];
 }
 
-export default function EditorNew() {
+export default function EditorEdit() {
+  const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
-  const [tabId, setTabId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const editor = useEditorStore();
+
+  // 타브 데이터 로드
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    api.tabs
+      .get(id)
+      .then((tab) => {
+        if (tab.content) {
+          editor.setTab(tab.content);
+        }
+        setIsPublic(tab.isPublic);
+        setLoading(false);
+      })
+      .catch((err: Error) => {
+        setError(err.message);
+        setLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // 키보드 단축키
   useEffect(() => {
@@ -54,35 +76,25 @@ export default function EditorNew() {
   }, [editor]);
 
   const handleSave = useCallback(async () => {
-    if (!user) {
+    if (!user || !id) {
       navigate("/login");
       return;
     }
     setIsSaving(true);
     try {
-      if (tabId) {
-        await api.tabs.update(tabId, {
-          title: editor.tab.title,
-          artist: editor.tab.artist || undefined,
-          content: editor.tab,
-          isPublic,
-        });
-      } else {
-        const result = await api.tabs.create({
-          title: editor.tab.title,
-          artist: editor.tab.artist || undefined,
-          content: editor.tab,
-          isPublic,
-        });
-        setTabId(result.id);
-      }
+      await api.tabs.update(id, {
+        title: editor.tab.title,
+        artist: editor.tab.artist || undefined,
+        content: editor.tab,
+        isPublic,
+      });
       editor.markClean();
     } catch (err) {
       console.error("Save failed:", err);
     } finally {
       setIsSaving(false);
     }
-  }, [user, tabId, editor, isPublic, navigate]);
+  }, [user, id, editor, isPublic, navigate]);
 
   const handleNoteClick = useCallback(
     (noteId: string, _sectionId: string, _measureId: string) => {
@@ -134,6 +146,22 @@ export default function EditorNew() {
   const handleTogglePublish = useCallback(() => {
     setIsPublic((prev) => !prev);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <p className="text-gray-500 dark:text-gray-400">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-4 overflow-hidden">
