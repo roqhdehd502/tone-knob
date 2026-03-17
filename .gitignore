@@ -38,3 +38,14 @@ supabase/.temp/
 
 # Vercel
 .vercel/
+
+# TypeScript incremental build
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Turborepo
+.turbo/
+
+# Package build outputs (monorepo)
+packages/*/dist/
+services/*/dist/

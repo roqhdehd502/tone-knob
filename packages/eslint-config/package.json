@@ -1,0 +1,27 @@
+{
+  "name": "@tone-knob/eslint-config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Tone Knob 공통 ESLint 설정",
+  "type": "module",
+  "exports": {
+    "./base": "./base.mjs",
+    "./nest": "./nest.mjs",
+    "./react": "./react.mjs"
+  },
+  "scripts": {
+    "lint": "echo 'no lint for eslint-config'"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "globals": "^16.0.0",
+    "prettier": "^3.4.2",
+    "typescript-eslint": "^8.20.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

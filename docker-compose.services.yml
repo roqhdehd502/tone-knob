@@ -1,0 +1,196 @@
+version: "3.8"
+
+services:
+  # ── Infrastructure ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: tone-knob-postgres
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: tone-knob-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Microservices ──
+  auth-svc:
+    build:
+      context: .
+      dockerfile: services/auth-svc/Dockerfile
+    container_name: tone-knob-auth-svc
+    ports:
+      - "3001:3001"
+    environment:
+      AUTH_SVC_PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      JWT_SECRET: your-jwt-secret-key
+      JWT_ACCESS_EXPIRATION: 15m
+      JWT_REFRESH_EXPIRATION: 7d
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  tab-svc:
+    build:
+      context: .
+      dockerfile: services/tab-svc/Dockerfile
+    container_name: tone-knob-tab-svc
+    ports:
+      - "3002:3002"
+    environment:
+      TAB_SVC_PORT: 3002
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  jam-svc:
+    build:
+      context: .
+      dockerfile: services/jam-svc/Dockerfile
+    container_name: tone-knob-jam-svc
+    ports:
+      - "3003:3003"
+      - "3004:3004"
+    environment:
+      JAM_SVC_PORT: 3003
+      JAM_SVC_HTTP_PORT: 3004
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      JWT_SECRET: your-jwt-secret-key
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  community-svc:
+    build:
+      context: .
+      dockerfile: services/community-svc/Dockerfile
+    container_name: tone-knob-community-svc
+    ports:
+      - "3005:3005"
+    environment:
+      COMMUNITY_SVC_PORT: 3005
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  marketplace-svc:
+    build:
+      context: .
+      dockerfile: services/marketplace-svc/Dockerfile
+    container_name: tone-knob-marketplace-svc
+    ports:
+      - "3006:3006"
+    environment:
+      MARKETPLACE_SVC_PORT: 3006
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  subscription-svc:
+    build:
+      context: .
+      dockerfile: services/subscription-svc/Dockerfile
+    container_name: tone-knob-subscription-svc
+    ports:
+      - "3007:3007"
+    environment:
+      SUBSCRIPTION_SVC_PORT: 3007
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  media-svc:
+    build:
+      context: .
+      dockerfile: services/media-svc/Dockerfile
+    container_name: tone-knob-media-svc
+    ports:
+      - "3008:3008"
+    environment:
+      MEDIA_SVC_PORT: 3008
+      NODE_ENV: development
+
+  ai-svc:
+    build:
+      context: .
+      dockerfile: services/ai-svc/Dockerfile
+    container_name: tone-knob-ai-svc
+    ports:
+      - "3009:3009"
+    environment:
+      AI_SVC_PORT: 3009
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      ML_SERVER_URL: http://localhost:8001
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    container_name: tone-knob-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      AUTH_SVC_HOST: auth-svc
+      AUTH_SVC_PORT: 3001
+      TAB_SVC_HOST: tab-svc
+      TAB_SVC_PORT: 3002
+      JAM_SVC_HOST: jam-svc
+      JAM_SVC_PORT: 3003
+      COMMUNITY_SVC_HOST: community-svc
+      COMMUNITY_SVC_PORT: 3005
+      MARKETPLACE_SVC_HOST: marketplace-svc
+      MARKETPLACE_SVC_PORT: 3006
+      SUBSCRIPTION_SVC_HOST: subscription-svc
+      SUBSCRIPTION_SVC_PORT: 3007
+      MEDIA_SVC_HOST: media-svc
+      MEDIA_SVC_PORT: 3008
+      AI_SVC_HOST: ai-svc
+      AI_SVC_PORT: 3009
+      JWT_SECRET: your-jwt-secret-key
+      FRONTEND_URL: http://localhost:5173
+      NODE_ENV: development
+    depends_on:
+      - auth-svc
+      - tab-svc
+      - jam-svc
+      - community-svc
+      - marketplace-svc
+      - subscription-svc
+      - media-svc
+      - ai-svc
+
+volumes:
+  pgdata:

@@ -1,0 +1,29 @@
+{
+  "name": "@tone-knob/shared",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Tone Knob 공유 타입, DTO, 인터페이스",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
