@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { Follow } from '../entities/follow.entity';
 import { Tab } from '../entities/tab.entity';
 import { TabVersion } from '../entities/tab-version.entity';
 import { TabController } from './tab.controller';
 import { TabService } from './tab.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Tab, TabVersion])],
+  imports: [TypeOrmModule.forFeature([Tab, TabVersion, Follow])],
   controllers: [TabController],
   providers: [TabService],
   exports: [TabService],

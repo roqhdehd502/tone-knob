@@ -1,10 +1,13 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+
 import { Repository } from 'typeorm';
+
+import { Follow } from '../entities/follow.entity';
 import { Tab } from '../entities/tab.entity';
 import { TabVersion } from '../entities/tab-version.entity';
 import { CreateTabDto } from './dto/create-tab.dto';
@@ -17,6 +20,8 @@ export class TabService {
     private readonly tabRepository: Repository<Tab>,
     @InjectRepository(TabVersion)
     private readonly tabVersionRepository: Repository<TabVersion>,
+    @InjectRepository(Follow)
+    private readonly followRepository: Repository<Follow>,
   ) {}
 
   async create(userId: string, dto: CreateTabDto): Promise<Tab> {
@@ -197,6 +202,53 @@ export class TabService {
       order: { versionNumber: 'DESC' },
       relations: ['creator'],
     });
+  }
+
+  async getFeed(
+    userId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<{ data: Tab[]; total: number; page: number; limit: number }> {
+    const safeLimit = Math.min(limit, 100);
+    const skip = (page - 1) * safeLimit;
+
+    const followingIds = await this.followRepository
+      .createQueryBuilder('follow')
+      .select('follow.followingId')
+      .where('follow.followerId = :userId', { userId })
+      .getRawMany<{ follow_followingId: string }>();
+
+    const ids = followingIds.map((f) => f.follow_followingId);
+
+    if (ids.length === 0) {
+      return { data: [], total: 0, page, limit: safeLimit };
+    }
+
+    const [data, total] = await this.tabRepository
+      .createQueryBuilder('tab')
+      .leftJoinAndSelect('tab.user', 'user')
+      .select([
+        'tab.id',
+        'tab.title',
+        'tab.artist',
+        'tab.isPublic',
+        'tab.viewCount',
+        'tab.likeCount',
+        'tab.createdAt',
+        'tab.updatedAt',
+        'user.id',
+        'user.username',
+        'user.displayName',
+        'user.avatarUrl',
+      ])
+      .where('tab.userId IN (:...ids)', { ids })
+      .andWhere('tab.isPublic = :isPublic', { isPublic: true })
+      .orderBy('tab.updatedAt', 'DESC')
+      .skip(skip)
+      .take(safeLimit)
+      .getManyAndCount();
+
+    return { data, total, page, limit: safeLimit };
   }
 
   async togglePublish(id: string, userId: string): Promise<Tab> {

@@ -1,16 +1,18 @@
 import {
-  Injectable,
   ConflictException,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
+
 import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
+
 import { User } from '../entities/user.entity';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 export interface AuthTokens {
   accessToken: string;

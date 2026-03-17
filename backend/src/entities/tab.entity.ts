@@ -1,13 +1,14 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
+  Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
+
 import { User } from './user.entity';
 
 @Entity('tabs')
@@ -46,6 +47,9 @@ export class Tab {
 
   @Column({ type: 'integer', default: 0 })
   downloadCount: number;
+
+  @Column({ type: 'integer', default: 0 })
+  price: number; // 0 = 무료, 양수 = 유료 (원 단위)
 
   @CreateDateColumn()
   createdAt: Date;

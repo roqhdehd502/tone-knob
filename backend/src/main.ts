@@ -1,13 +1,24 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import { WinstonModule } from 'nest-winston';
+
 import { AppModule } from './app.module';
+import { winstonConfig } from './common/logger/winston.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger(winstonConfig),
+  });
+
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:5173',
+  ].filter(Boolean) as string[];
 
   app.enableCors({
-    origin: ['http://localhost:5173'],
+    origin: allowedOrigins,
     credentials: true,
   });
 

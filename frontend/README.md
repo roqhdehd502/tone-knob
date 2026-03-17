@@ -1,87 +1,74 @@
-# Welcome to React Router!
+# Tone Knob – Frontend
 
-A modern, production-ready template for building full-stack React applications using React Router.
+React Router V7 (SPA 모드) + React 19 + TypeScript + TailwindCSS v4
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## 기술 스택
 
-## Features
+- **React 19** + **React Router V7** (SPA 모드)
+- **TypeScript** + **Vite 7**
+- **TailwindCSS v4** + **Radix UI** (shadcn 스타일 컴포넌트)
+- **Socket.IO Client** (실시간 합주/협업)
+- **Tone.js** (오디오 처리)
+- **dnd-kit** (드래그 앤 드롭 타브 편집)
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+## 로컬 실행
 
 ```bash
 npm install
+cp .env.example .env   # VITE_API_URL 설정
+npm run dev            # http://localhost:5173
 ```
 
-### Development
+## 환경변수
 
-Start the development server with HMR:
+| 변수           | 기본값                  | 설명           |
+| -------------- | ----------------------- | -------------- |
+| `VITE_API_URL` | `http://localhost:3000` | 백엔드 API URL |
 
-```bash
-npm run dev
-```
+## 스크립트
 
-Your application will be available at `http://localhost:5173`.
+| 명령                | 설명                                |
+| ------------------- | ----------------------------------- |
+| `npm run dev`       | 개발 서버 실행 (HMR)                |
+| `npm run build`     | 프로덕션 빌드 → `build/client/`     |
+| `npm run typecheck` | TypeScript 타입 검사                |
+| `npm run lint`      | ESLint 검사                         |
+| `npm run lint:fix`  | ESLint 자동 수정 (import 정렬 포함) |
+| `npm run format`    | Prettier 포맷팅                     |
 
-## Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
+## 라우트 구조
 
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+/                  홈
+/login             로그인
+/register          회원가입
+/tabs              타브 목록
+/tabs/my           내 타브
+/tabs/:id          타브 상세
+/editor/new        새 타브 작성
+/editor/:id        타브 편집
+/jamroom           합주룸 목록
+/jamroom/create    합주룸 생성
+/jamroom/:id       합주룸 입장
+/community         커뮤니티
+/marketplace       마켓플레이스
+/subscription      구독 관리
+/dashboard         대시보드
+/recordings        녹음 목록
+/ai-generate       AI 타브 생성
+/audio-extract     오디오 추출
+/profile           프로필
+/settings          설정
 ```
 
-## Styling
+## Vercel 배포
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+Vercel이 자동으로 `build/client/`를 정적 파일로 서빙합니다.
 
----
+**환경변수 (Vercel 대시보드):**
 
-Built with ❤️ using React Router.
+```
+VITE_API_URL=https://<백엔드-프로젝트>.vercel.app
+```
+
+> Root Directory: `frontend`로 설정 필요

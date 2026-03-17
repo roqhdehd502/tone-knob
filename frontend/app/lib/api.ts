@@ -4,8 +4,15 @@ import type {
   TabDocument,
   TabVersion,
 } from "~/types/tab";
+import type {
+  JamRoom,
+  JamParticipant,
+  CreateJamRoomDto,
+  JoinJamRoomDto,
+} from "~/types/jam-room";
+import type { CommentData, FollowData } from "~/types/community";
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
@@ -83,6 +90,7 @@ export interface User {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  bio: string | null;
   subscriptionTier: string;
   createdAt: string;
   updatedAt: string;
@@ -114,8 +122,10 @@ export const api = {
   },
   users: {
     get: (id: string) => request<User>(`/api/users/${id}`),
-    update: (id: string, data: { displayName?: string; avatarUrl?: string }) =>
-      request<User>(`/api/users/${id}`, { method: "PUT", body: data }),
+    update: (
+      id: string,
+      data: { displayName?: string; avatarUrl?: string; bio?: string },
+    ) => request<User>(`/api/users/${id}`, { method: "PUT", body: data }),
   },
   tabs: {
     list: (params?: {
@@ -165,5 +175,323 @@ export const api = {
     versions: (id: string) => request<TabVersion[]>(`/api/tabs/${id}/versions`),
     togglePublish: (id: string) =>
       request<TabDetail>(`/api/tabs/${id}/publish`, { method: "POST" }),
+    feed: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<TabListResponse>(
+        `/api/tabs/feed${query ? `?${query}` : ""}`,
+      );
+    },
+  },
+  jamRooms: {
+    list: (params?: { page?: number; limit?: number; isActive?: boolean }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      if (params?.isActive !== undefined)
+        qs.set("isActive", String(params.isActive));
+      const query = qs.toString();
+      return request<{
+        data: JamRoom[];
+        total: number;
+        page: number;
+        limit: number;
+      }>(`/api/jam-rooms${query ? `?${query}` : ""}`);
+    },
+    get: (id: string) => request<JamRoom>(`/api/jam-rooms/${id}`),
+    create: (data: CreateJamRoomDto) =>
+      request<JamRoom>("/api/jam-rooms", { method: "POST", body: data }),
+    join: (id: string, data: JoinJamRoomDto) =>
+      request<JamParticipant>(`/api/jam-rooms/${id}/join`, {
+        method: "POST",
+        body: data,
+      }),
+    leave: (id: string) =>
+      request<{ message: string }>(`/api/jam-rooms/${id}/leave`, {
+        method: "POST",
+      }),
+    participants: (id: string) =>
+      request<JamParticipant[]>(`/api/jam-rooms/${id}/participants`),
+    close: (id: string) =>
+      request<{ message: string }>(`/api/jam-rooms/${id}`, {
+        method: "DELETE",
+      }),
+  },
+  community: {
+    // 좋아요
+    toggleLike: (tabId: string) =>
+      request<{ liked: boolean; likeCount: number }>(
+        `/api/community/tabs/${tabId}/like`,
+        { method: "POST" },
+      ),
+    isLiked: (tabId: string) =>
+      request<{ liked: boolean }>(`/api/community/tabs/${tabId}/like`),
+
+    // 댓글
+    getComments: (tabId: string, page = 1, limit = 20) =>
+      request<{ comments: CommentData[]; total: number }>(
+        `/api/community/tabs/${tabId}/comments?page=${page}&limit=${limit}`,
+      ),
+    createComment: (
+      tabId: string,
+      data: { content: string; parentId?: string },
+    ) =>
+      request<CommentData>(`/api/community/tabs/${tabId}/comments`, {
+        method: "POST",
+        body: data,
+      }),
+    getReplies: (commentId: string) =>
+      request<CommentData[]>(`/api/community/comments/${commentId}/replies`),
+    updateComment: (commentId: string, data: { content: string }) =>
+      request<CommentData>(`/api/community/comments/${commentId}`, {
+        method: "PUT",
+        body: data,
+      }),
+    deleteComment: (commentId: string) =>
+      request<{ message: string }>(`/api/community/comments/${commentId}`, {
+        method: "DELETE",
+      }),
+
+    // 팔로우
+    toggleFollow: (userId: string) =>
+      request<{ following: boolean }>(`/api/community/users/${userId}/follow`, {
+        method: "POST",
+      }),
+    isFollowing: (userId: string) =>
+      request<{ following: boolean }>(`/api/community/users/${userId}/follow`),
+    getFollowers: (userId: string, page = 1, limit = 20) =>
+      request<{ followers: FollowData[]; total: number }>(
+        `/api/community/users/${userId}/followers?page=${page}&limit=${limit}`,
+      ),
+    getFollowing: (userId: string, page = 1, limit = 20) =>
+      request<{ following: FollowData[]; total: number }>(
+        `/api/community/users/${userId}/following?page=${page}&limit=${limit}`,
+      ),
+    getUserStats: (userId: string) =>
+      request<{ followerCount: number; followingCount: number }>(
+        `/api/community/users/${userId}/stats`,
+      ),
+  },
+  subscriptions: {
+    getPlans: () =>
+      request<{ plan: string; priceMonthly: number; features: string[] }[]>(
+        "/api/subscriptions/plans",
+      ),
+    getCurrent: () =>
+      request<{
+        id: string;
+        plan: string;
+        status: string;
+        priceMonthly: number;
+        currentPeriodStart: string;
+        currentPeriodEnd: string;
+      } | null>("/api/subscriptions/current"),
+    subscribe: (plan: string, externalPaymentId?: string) =>
+      request<{ id: string; plan: string; status: string }>(
+        "/api/subscriptions/subscribe",
+        { method: "POST", body: { plan, externalPaymentId } },
+      ),
+    cancel: () =>
+      request<{ id: string; plan: string; status: string }>(
+        "/api/subscriptions/cancel",
+        { method: "POST" },
+      ),
+    getHistory: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number }>(
+        `/api/subscriptions/history${query ? `?${query}` : ""}`,
+      );
+    },
+  },
+  marketplace: {
+    listPaidTabs: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<TabListResponse>(
+        `/api/marketplace/tabs${query ? `?${query}` : ""}`,
+      );
+    },
+    setPrice: (tabId: string, price: number) =>
+      request<TabDetail>(`/api/marketplace/tabs/${tabId}/price`, {
+        method: "POST",
+        body: { price },
+      }),
+    purchase: (tabId: string) =>
+      request<{
+        id: string;
+        tabId: string;
+        price: number;
+        status: string;
+        createdAt: string;
+      }>(`/api/marketplace/tabs/${tabId}/purchase`, { method: "POST" }),
+    hasPurchased: (tabId: string) =>
+      request<{ purchased: boolean }>(
+        `/api/marketplace/tabs/${tabId}/purchased`,
+      ),
+    myPurchases: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number }>(
+        `/api/marketplace/my/purchases${query ? `?${query}` : ""}`,
+      );
+    },
+    mySales: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number; totalRevenue: number }>(
+        `/api/marketplace/my/sales${query ? `?${query}` : ""}`,
+      );
+    },
+  },
+  practice: {
+    recordSession: (data: {
+      tabId?: string;
+      durationSeconds: number;
+      bpm?: number;
+      speedMultiplier?: number;
+      loopStartMeasure?: number;
+      loopEndMeasure?: number;
+    }) =>
+      request<{ id: string }>("/api/practice/sessions", {
+        method: "POST",
+        body: data,
+      }),
+    getStats: () =>
+      request<{
+        totalSessions: number;
+        totalMinutes: number;
+        averageSessionMinutes: number;
+        thisWeekMinutes: number;
+        thisMonthMinutes: number;
+        streak: number;
+      }>("/api/practice/stats"),
+    getSessions: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number }>(
+        `/api/practice/sessions${query ? `?${query}` : ""}`,
+      );
+    },
+  },
+  recordings: {
+    create: (data: {
+      title: string;
+      description?: string;
+      audioUrl: string;
+      durationSeconds: number;
+      tabId?: string;
+      visibility?: "public" | "private" | "unlisted";
+    }) =>
+      request<{
+        id: string;
+        title: string;
+        audioUrl: string;
+        durationSeconds: number;
+        visibility: string;
+        createdAt: string;
+      }>("/api/recordings", { method: "POST", body: data }),
+    getPublic: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number }>(
+        `/api/recordings/public${query ? `?${query}` : ""}`,
+      );
+    },
+    getMy: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number }>(
+        `/api/recordings/my${query ? `?${query}` : ""}`,
+      );
+    },
+    getById: (id: string) =>
+      request<{
+        id: string;
+        title: string;
+        description: string;
+        audioUrl: string;
+        durationSeconds: number;
+        visibility: string;
+        playCount: number;
+        user: { id: string; displayName: string };
+        tab: { id: string; title: string } | null;
+        createdAt: string;
+      }>(`/api/recordings/${id}`),
+    update: (
+      id: string,
+      data: {
+        title?: string;
+        description?: string;
+        visibility?: "public" | "private" | "unlisted";
+      },
+    ) =>
+      request<{ id: string }>(`/api/recordings/${id}`, {
+        method: "PUT",
+        body: data,
+      }),
+    delete: (id: string) =>
+      request<void>(`/api/recordings/${id}`, { method: "DELETE" }),
+    play: (id: string) =>
+      request<void>(`/api/recordings/${id}/play`, { method: "POST" }),
+    getShareUrl: (id: string) =>
+      request<{ url: string }>(`/api/recordings/${id}/share`),
+  },
+  aiGen: {
+    createTabJob: (data: {
+      prompt: string;
+      genre?: string;
+      instrument?: string;
+      difficulty?: string;
+      measures?: number;
+    }) =>
+      request<{ id: string; status: string }>("/api/ai-gen/tab", {
+        method: "POST",
+        body: data,
+      }),
+    createAudioExtractionJob: (data: {
+      audioUrl: string;
+      instrument?: string;
+      tuning?: string;
+    }) =>
+      request<{ id: string; status: string }>("/api/ai-gen/audio-extraction", {
+        method: "POST",
+        body: data,
+      }),
+    getMyJobs: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number }>(
+        `/api/ai-gen/jobs${query ? `?${query}` : ""}`,
+      );
+    },
+    getJob: (id: string) =>
+      request<{
+        id: string;
+        status: string;
+        progress: number;
+        inputData: Record<string, unknown>;
+        outputData: Record<string, unknown> | null;
+        errorMessage: string | null;
+        createdAt: string;
+      }>(`/api/ai-gen/jobs/${id}`),
   },
 };

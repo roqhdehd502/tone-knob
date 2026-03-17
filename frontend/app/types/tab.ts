@@ -6,7 +6,8 @@ export interface TabDocument {
   tuning: string[];
   bpm: number;
   timeSignature: [number, number];
-  sections: Section[];
+  sections: Section[]; // 기본 트랙 (하위 호환)
+  tracks?: Track[]; // 멀티트랙 (선택)
 }
 
 export interface Section {
@@ -32,30 +33,52 @@ export interface Note {
 export type Duration = 1 | 0.5 | 0.25 | 0.125 | 0.0625; // 온음표~32분음표
 
 export type Technique =
-  | 'hammer-on'
-  | 'pull-off'
-  | 'bend'
-  | 'slide-up'
-  | 'slide-down'
-  | 'vibrato'
-  | 'mute'
-  | 'harmonic';
+  | "hammer-on"
+  | "pull-off"
+  | "bend"
+  | "slide-up"
+  | "slide-down"
+  | "vibrato"
+  | "mute"
+  | "harmonic";
+
+// 악기 종류
+export type InstrumentType =
+  | "electric-guitar"
+  | "acoustic-guitar"
+  | "bass"
+  | "drums"
+  | "keyboard"
+  | "vocals"
+  | "other";
+
+// 개별 트랙
+export interface Track {
+  id: string;
+  name: string;
+  instrument: InstrumentType;
+  tuning: string[];
+  isMuted: boolean;
+  volume: number; // 0-100
+  pan: number; // -100(L) ~ 100(R)
+  sections: Section[];
+}
 
 // 기본 튜닝
-export const STANDARD_TUNING = ['E', 'B', 'G', 'D', 'A', 'E'];
+export const STANDARD_TUNING = ["E", "B", "G", "D", "A", "E"];
 
 // 새 빈 문서 생성
 export function createEmptyTabDocument(): TabDocument {
   return {
-    title: '새 타브',
-    artist: '',
+    title: "새 타브",
+    artist: "",
     tuning: [...STANDARD_TUNING],
     bpm: 120,
     timeSignature: [4, 4],
     sections: [
       {
         id: crypto.randomUUID(),
-        name: 'Intro',
+        name: "Intro",
         measures: Array.from({ length: 4 }, () => ({
           id: crypto.randomUUID(),
           notes: [],

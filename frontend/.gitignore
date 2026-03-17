@@ -1,7 +1,23 @@
+# OS
 .DS_Store
+Thumbs.db
+
+# Environment (contains secrets)
 .env
+.env.local
+.env.*.local
+
+# Dependencies
 /node_modules/
 
-# React Router
+# Build outputs
 /.react-router/
 /build/
+
+# Test
+/coverage/
+/playwright-report/
+/test-results/
+
+# Vercel
+.vercel/

@@ -6,7 +6,7 @@ dist/
 build/
 .react-router/
 
-# Environment
+# Environment (contains secrets – never commit)
 .env
 .env.local
 .env.*.local
@@ -22,9 +22,19 @@ build/
 Thumbs.db
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 
-# Docker
+# Test coverage
+coverage/
+
+# Docker volumes
 postgres_data/
 redis_data/
+
+# Supabase CLI temp (contains DB URLs and project refs)
+supabase/.temp/
+
+# Vercel
+.vercel/

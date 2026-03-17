@@ -1,8 +1,8 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
@@ -25,6 +25,12 @@ export class User {
 
   @Column({ type: 'text', nullable: true })
   avatarUrl: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  bio: string;
+
+  @Column({ type: 'varchar', length: 20, default: 'user' })
+  role: string;
 
   @Column({ type: 'varchar', length: 20, default: 'free' })
   subscriptionTier: string;

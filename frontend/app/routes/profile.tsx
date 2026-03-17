@@ -9,6 +9,9 @@ import {
   Save,
   X,
   Loader2,
+  Users,
+  Eye,
+  Heart,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -17,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
 import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
+import type { TabListItem } from "~/types/tab";
 
 export function meta() {
   return [
@@ -30,7 +34,11 @@ export default function Profile() {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editData, setEditData] = useState({ displayName: "" });
+  const [editData, setEditData] = useState({ displayName: "", bio: "" });
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [myTabs, setMyTabs] = useState<TabListItem[]>([]);
+  const [tabTotal, setTabTotal] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -40,7 +48,24 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
-      setEditData({ displayName: user.displayName || "" });
+      setEditData({
+        displayName: user.displayName || "",
+        bio: user.bio || "",
+      });
+      api.community
+        .getUserStats(user.id)
+        .then((stats) => {
+          setFollowerCount(stats.followerCount);
+          setFollowingCount(stats.followingCount);
+        })
+        .catch(() => {});
+      api.tabs
+        .my({ limit: 10 })
+        .then((res) => {
+          setMyTabs(res.data);
+          setTabTotal(res.total);
+        })
+        .catch(() => {});
     }
   }, [user]);
 
@@ -48,7 +73,10 @@ export default function Profile() {
     if (!user) return;
     setIsSaving(true);
     try {
-      await api.users.update(user.id, { displayName: editData.displayName });
+      await api.users.update(user.id, {
+        displayName: editData.displayName,
+        bio: editData.bio,
+      });
       await refreshUser();
       setIsEditing(false);
     } catch (err) {
@@ -122,7 +150,7 @@ export default function Profile() {
             )}
           </div>
 
-          <div className="mt-4 flex-1 space-y-5 sm:mt-0">
+          <div className="mt-4 flex-1 space-y-4 sm:mt-0">
             {isEditing ? (
               <>
                 <div className="space-y-2">
@@ -135,6 +163,23 @@ export default function Profile() {
                     }
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bio">소개</Label>
+                  <textarea
+                    id="bio"
+                    value={editData.bio}
+                    onChange={(e) =>
+                      setEditData({ ...editData, bio: e.target.value })
+                    }
+                    maxLength={500}
+                    rows={3}
+                    className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-violet-500 focus:outline-none dark:border-gray-700"
+                    placeholder="자기소개를 입력하세요..."
+                  />
+                  <p className="text-right text-xs text-gray-400">
+                    {editData.bio.length}/500
+                  </p>
+                </div>
               </>
             ) : (
               <>
@@ -146,10 +191,28 @@ export default function Profile() {
                     @{user.username}
                   </p>
                 </div>
+                {user.bio && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {user.bio}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {new Date(user.createdAt).toLocaleDateString("ko-KR")} 가입
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <strong className="text-gray-900 dark:text-white">
+                      {followerCount}
+                    </strong>{" "}
+                    팔로워
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <strong className="text-gray-900 dark:text-white">
+                      {followingCount}
+                    </strong>{" "}
+                    팔로잉
                   </span>
                 </div>
               </>
@@ -162,7 +225,7 @@ export default function Profile() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 text-center dark:border-gray-800 dark:bg-gray-900">
           <FileMusic className="mx-auto h-6 w-6 text-violet-600 dark:text-violet-400" />
           <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-            0
+            {tabTotal}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             제작한 타브
@@ -171,14 +234,14 @@ export default function Profile() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 text-center dark:border-gray-800 dark:bg-gray-900">
           <Radio className="mx-auto h-6 w-6 text-violet-600 dark:text-violet-400" />
           <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-            0
+            {followerCount}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">합주 참여</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">팔로워</p>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-5 text-center dark:border-gray-800 dark:bg-gray-900">
           <Music className="mx-auto h-6 w-6 text-violet-600 dark:text-violet-400" />
           <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-            Free
+            {user.subscriptionTier === "free" ? "Free" : user.subscriptionTier}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">구독 플랜</p>
         </div>
@@ -190,14 +253,61 @@ export default function Profile() {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           내 타브
         </h2>
-        <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          아직 제작한 타브가 없습니다
-        </p>
-        <div className="mt-4 flex justify-center">
-          <Button variant="outline" asChild>
-            <Link to="/editor/new">첫 타브 만들기</Link>
-          </Button>
-        </div>
+        {myTabs.length === 0 ? (
+          <>
+            <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+              아직 제작한 타브가 없습니다
+            </p>
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" asChild>
+                <Link to="/editor/new">첫 타브 만들기</Link>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {myTabs.map((tab) => (
+              <Link
+                key={tab.id}
+                to={`/editor/${tab.id}`}
+                className="flex items-center justify-between rounded-lg border border-gray-100 p-3 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+              >
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {tab.title}
+                  </p>
+                  {tab.artist && (
+                    <p className="text-xs text-gray-500">{tab.artist}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Eye className="h-3 w-3" />
+                    {tab.viewCount}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Heart className="h-3 w-3" />
+                    {tab.likeCount}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      tab.isPublic
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
+                    }`}
+                  >
+                    {tab.isPublic ? "공개" : "비공개"}
+                  </span>
+                </div>
+              </Link>
+            ))}
+            {tabTotal > 10 && (
+              <p className="text-center text-xs text-gray-400">
+                외 {tabTotal - 10}개 더
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

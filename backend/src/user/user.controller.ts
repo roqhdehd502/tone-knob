@@ -1,10 +1,11 @@
-import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { UserService } from './user.service';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../entities/user.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserService } from './user.service';
 
 @ApiTags('Users')
 @Controller('api/users')
