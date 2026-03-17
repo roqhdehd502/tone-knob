@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import { useJamSocket } from "~/lib/jam/use-jam-socket";
@@ -26,15 +27,12 @@ import { ChatMessageItem } from "~/components/jam/ChatMessage";
 import type { JamRoom, JamParticipant } from "~/types/jam-room";
 
 export function meta() {
-  return [
-    { title: "합주방 - Tone Knob" },
-    { name: "description", content: "실시간 온라인 합주" },
-  ];
+  return [{ title: "합주방 - Tone Knob" }, { name: "description", content: "실시간 온라인 합주" }];
 }
 
 export default function JamroomDetail() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [room, setRoom] = useState<JamRoom | null>(null);
   const [participants, setParticipants] = useState<JamParticipant[]>([]);
@@ -43,9 +41,7 @@ export default function JamroomDetail() {
   const [hasJoined, setHasJoined] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [chatInput, setChatInput] = useState("");
-  const [participantVolumes, setParticipantVolumes] = useState<
-    Map<string, number>
-  >(new Map());
+  const [participantVolumes, setParticipantVolumes] = useState<Map<string, number>>(new Map());
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const syncRef = useRef<AudioSynchronizer | null>(null);
   const remoteAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
@@ -78,38 +74,27 @@ export default function JamroomDetail() {
     }, []),
     onUserMuted: useCallback((data: { userId: string; isMuted: boolean }) => {
       setParticipants((prev) =>
-        prev.map((p) =>
-          p.userId === data.userId ? { ...p, isMuted: data.isMuted } : p,
-        ),
+        prev.map((p) => (p.userId === data.userId ? { ...p, isMuted: data.isMuted } : p)),
       );
     }, []),
-    onWebRTCOffer: useCallback(
-      (data: { fromUserId: string; signal: unknown }) => {
-        void webrtcRef.current?.handleOffer(
-          data.fromUserId,
-          data.signal as RTCSessionDescriptionInit,
-        );
-      },
-      [],
-    ),
-    onWebRTCAnswer: useCallback(
-      (data: { fromUserId: string; signal: unknown }) => {
-        void webrtcRef.current?.handleAnswer(
-          data.fromUserId,
-          data.signal as RTCSessionDescriptionInit,
-        );
-      },
-      [],
-    ),
-    onICECandidate: useCallback(
-      (data: { fromUserId: string; signal: unknown }) => {
-        void webrtcRef.current?.handleICECandidate(
-          data.fromUserId,
-          data.signal as RTCIceCandidateInit,
-        );
-      },
-      [],
-    ),
+    onWebRTCOffer: useCallback((data: { fromUserId: string; signal: unknown }) => {
+      void webrtcRef.current?.handleOffer(
+        data.fromUserId,
+        data.signal as RTCSessionDescriptionInit,
+      );
+    }, []),
+    onWebRTCAnswer: useCallback((data: { fromUserId: string; signal: unknown }) => {
+      void webrtcRef.current?.handleAnswer(
+        data.fromUserId,
+        data.signal as RTCSessionDescriptionInit,
+      );
+    }, []),
+    onICECandidate: useCallback((data: { fromUserId: string; signal: unknown }) => {
+      void webrtcRef.current?.handleICECandidate(
+        data.fromUserId,
+        data.signal as RTCIceCandidateInit,
+      );
+    }, []),
     onPlaybackSynced: useCallback(
       (data: { fromUserId: string; position: number; isPlaying: boolean }) => {
         syncRef.current?.applyRemoteSync({
@@ -125,24 +110,15 @@ export default function JamroomDetail() {
   // WebRTC 훅
   const webrtc = useWebRTC({
     localStream,
-    onSendOffer: useCallback(
-      (targetUserId: string, signal: RTCSessionDescriptionInit) => {
-        socketRef.current?.sendOffer(targetUserId, signal);
-      },
-      [],
-    ),
-    onSendAnswer: useCallback(
-      (targetUserId: string, signal: RTCSessionDescriptionInit) => {
-        socketRef.current?.sendAnswer(targetUserId, signal);
-      },
-      [],
-    ),
-    onSendICECandidate: useCallback(
-      (targetUserId: string, signal: RTCIceCandidateInit) => {
-        socketRef.current?.sendICECandidate(targetUserId, signal);
-      },
-      [],
-    ),
+    onSendOffer: useCallback((targetUserId: string, signal: RTCSessionDescriptionInit) => {
+      socketRef.current?.sendOffer(targetUserId, signal);
+    }, []),
+    onSendAnswer: useCallback((targetUserId: string, signal: RTCSessionDescriptionInit) => {
+      socketRef.current?.sendAnswer(targetUserId, signal);
+    }, []),
+    onSendICECandidate: useCallback((targetUserId: string, signal: RTCIceCandidateInit) => {
+      socketRef.current?.sendICECandidate(targetUserId, signal);
+    }, []),
   });
   webrtcRef.current = webrtc;
 
@@ -192,6 +168,7 @@ export default function JamroomDetail() {
   }, [socket.latency]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/login");
       return;
@@ -199,7 +176,7 @@ export default function JamroomDetail() {
     if (!id) return;
 
     loadRoom();
-  }, [id, user, navigate]);
+  }, [id, user, authLoading, navigate]);
 
   const loadRoom = async () => {
     if (!id) return;
@@ -323,189 +300,178 @@ export default function JamroomDetail() {
   if (!room) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-gray-500 dark:text-gray-400">
-          합주방을 찾을 수 없습니다.
-        </p>
+        <p className="text-gray-500 dark:text-gray-400">합주방을 찾을 수 없습니다.</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-6xl space-y-6">
       <button
         type="button"
         onClick={() => navigate("/jamroom")}
-        className="mb-6 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-violet-500 dark:text-gray-500"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3 w-3" />
         합주방 목록으로
       </button>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* 메인 영역 */}
         <div className="lg:col-span-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {room.name}
-              </h1>
-              {room.description && (
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  {room.description}
-                </p>
-              )}
-            </div>
+          <Card>
+            <CardContent className="p-5">
+              <div className="mb-5">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{room.name}</h1>
+                {room.description && (
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {room.description}
+                  </p>
+                )}
+              </div>
 
-            <div className="mb-6 flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>
-                  {room.currentParticipants}/{room.maxParticipants}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Music className="h-4 w-4" />
-                <span>{room.bpm} BPM</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`h-2 w-2 rounded-full ${socket.connected ? "bg-green-500" : "bg-gray-400"}`}
-                />
-                <span>{socket.connected ? "연결됨" : "연결 중..."}</span>
-              </div>
-              {socket.latency !== null && (
-                <div className="flex items-center gap-1">
-                  <Wifi
-                    className={`h-4 w-4 ${getLatencyColor(socket.latency)}`}
-                  />
-                  <span className={getLatencyColor(socket.latency)}>
-                    {socket.latency}ms
+              <div className="mb-5 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>
+                    {room.currentParticipants}/{room.maxParticipants}
                   </span>
                 </div>
-              )}
-            </div>
-
-            {!hasJoined ? (
-              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-12 dark:border-gray-700">
-                <Music className="h-12 w-12 text-gray-400" />
-                <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                  합주방에 참가하여 함께 연주하세요
-                </p>
-                <Button className="mt-4" onClick={handleJoinRoom}>
-                  합주방 참가
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Music className="h-4 w-4" />
+                  <span>{room.bpm} BPM</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className={`h-1.5 w-1.5 rounded-full ${socket.connected ? "bg-green-500" : "bg-gray-400"}`}
+                  />
+                  <span>{socket.connected ? "연결됨" : "연결 중..."}</span>
+                </div>
+                {socket.latency !== null && (
+                  <div className="flex items-center gap-1">
+                    <Wifi className={`h-3.5 w-3.5 ${getLatencyColor(socket.latency)}`} />
+                    <span className={getLatencyColor(socket.latency)}>{socket.latency}ms</span>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="space-y-4">
-                {/* 오디오 컨트롤 */}
-                <div className="flex items-center justify-center gap-4 rounded-lg bg-gray-50 p-8 dark:bg-gray-800">
-                  <Button
-                    variant={isMuted ? "outline" : "default"}
-                    size="lg"
-                    onClick={handleToggleMute}
-                  >
-                    {isMuted ? (
-                      <>
-                        <MicOff className="mr-2 h-5 w-5" />
-                        음소거됨
-                      </>
-                    ) : (
-                      <>
-                        <Mic className="mr-2 h-5 w-5" />
-                        마이크 켜짐
-                      </>
-                    )}
-                  </Button>
 
-                  <Button variant="outline" size="lg">
-                    <Volume2 className="mr-2 h-5 w-5" />
-                    볼륨
+              {!hasJoined ? (
+                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-12 dark:border-gray-700">
+                  <Music className="h-12 w-12 text-gray-400" />
+                  <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    합주방에 참가하여 함께 연주하세요
+                  </p>
+                  <Button className="mt-4" onClick={handleJoinRoom}>
+                    합주방 참가
                   </Button>
                 </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* 오디오 컨트롤 */}
+                  <div className="flex items-center justify-center gap-4 rounded-lg bg-gray-50 p-8 dark:bg-gray-800">
+                    <Button
+                      variant={isMuted ? "outline" : "default"}
+                      size="lg"
+                      onClick={handleToggleMute}
+                    >
+                      {isMuted ? (
+                        <>
+                          <MicOff className="mr-2 h-5 w-5" />
+                          음소거됨
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="mr-2 h-5 w-5" />
+                          마이크 켜짐
+                        </>
+                      )}
+                    </Button>
 
-                {/* WebRTC 연결 상태 */}
-                <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Radio className="h-4 w-4 text-violet-500" />
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      오디오 연결 ({webrtc.remoteStreams.size}명과 연결됨)
-                    </span>
+                    <Button variant="outline" size="lg">
+                      <Volume2 className="mr-2 h-5 w-5" />
+                      볼륨
+                    </Button>
                   </div>
-                  {webrtc.remoteStreams.size === 0 &&
-                    participants.length > 1 && (
+
+                  {/* WebRTC 연결 상태 */}
+                  <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Radio className="h-4 w-4 text-violet-500" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        오디오 연결 ({webrtc.remoteStreams.size}명과 연결됨)
+                      </span>
+                    </div>
+                    {webrtc.remoteStreams.size === 0 && participants.length > 1 && (
                       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                         다른 참가자와 피어 연결을 설정하는 중...
                       </p>
                     )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* 사이드바 */}
         <div className="space-y-4 lg:col-span-1">
           {/* 참가자 목록 */}
-          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="mb-3 font-semibold text-gray-900 dark:text-white">
-              참가자 ({participants.length})
-            </h2>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">참가자 ({participants.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {participants.map((participant) => (
+                  <ParticipantItem
+                    key={participant.id}
+                    participant={participant}
+                    isHost={participant.userId === room.hostId}
+                    isSelf={participant.userId === user?.id}
+                    hasJoined={hasJoined}
+                    volume={participantVolumes.get(participant.userId) ?? 100}
+                    onVolumeChange={handleVolumeChange}
+                  />
+                ))}
+              </div>
 
-            <div className="space-y-2">
-              {participants.map((participant) => (
-                <ParticipantItem
-                  key={participant.id}
-                  participant={participant}
-                  isHost={participant.userId === room.hostId}
-                  isSelf={participant.userId === user?.id}
-                  hasJoined={hasJoined}
-                  volume={participantVolumes.get(participant.userId) ?? 100}
-                  onVolumeChange={handleVolumeChange}
-                />
-              ))}
-            </div>
-
-            {hasJoined && (
-              <Button
-                variant="outline"
-                className="mt-4 w-full"
-                onClick={handleLeaveRoom}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                합주방 나가기
-              </Button>
-            )}
-          </div>
+              {hasJoined && (
+                <Button
+                  variant="outline"
+                  className="mt-4 w-full"
+                  size="sm"
+                  onClick={handleLeaveRoom}
+                >
+                  <LogOut className="mr-1.5 h-4 w-4" />
+                  합주방 나가기
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
           {/* 채팅 */}
           {hasJoined && (
-            <div className="flex h-80 flex-col rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-              <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-                <MessageSquare className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+            <Card className="flex h-80 flex-col overflow-hidden">
+              <CardHeader className="flex-none border-b border-gray-200 pb-2 dark:border-gray-800">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <MessageSquare className="h-3.5 w-3.5 text-gray-500" />
                   채팅
-                </span>
-              </div>
+                </CardTitle>
+              </CardHeader>
 
               <div className="flex-1 overflow-y-auto px-4 py-2">
                 {socket.chatMessages.length === 0 ? (
-                  <p className="py-8 text-center text-xs text-gray-400">
-                    메시지가 없습니다
-                  </p>
+                  <p className="py-8 text-center text-xs text-gray-400">메시지가 없습니다</p>
                 ) : (
                   socket.chatMessages.map((msg) => {
-                    const sender = participants.find(
-                      (p) => p.userId === msg.userId,
-                    );
+                    const sender = participants.find((p) => p.userId === msg.userId);
                     return (
                       <ChatMessageItem
                         key={msg.id}
                         msg={msg}
                         isMe={msg.userId === user?.id}
                         senderName={
-                          sender?.user?.displayName ||
-                          sender?.user?.username ||
-                          "알 수 없음"
+                          sender?.user?.displayName || sender?.user?.username || "알 수 없음"
                         }
                       />
                     );
@@ -516,7 +482,7 @@ export default function JamroomDetail() {
 
               <form
                 onSubmit={handleSendChat}
-                className="flex gap-2 border-t border-gray-200 px-3 py-2 dark:border-gray-800"
+                className="flex flex-none gap-2 border-t border-gray-200 px-3 py-2 dark:border-gray-800"
               >
                 <Input
                   value={chatInput}
@@ -529,7 +495,7 @@ export default function JamroomDetail() {
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
-            </div>
+            </Card>
           )}
         </div>
       </div>

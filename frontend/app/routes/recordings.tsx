@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { cn } from "~/lib/utils";
 import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
 
@@ -69,9 +71,7 @@ export default function RecordingsPage() {
 
   // 업로드 상태
   const [title, setTitle] = useState("");
-  const [visibility, setVisibility] = useState<
-    "public" | "private" | "unlisted"
-  >("public");
+  const [visibility, setVisibility] = useState<"public" | "private" | "unlisted">("public");
   const [uploading, setUploading] = useState(false);
 
   // 목록
@@ -130,10 +130,7 @@ export default function RecordingsPage() {
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
-      timerRef.current = setInterval(
-        () => setRecordingTime((prev) => prev + 1),
-        1000,
-      );
+      timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
     } catch {
       alert("마이크 접근 권한이 필요합니다");
     }
@@ -228,102 +225,100 @@ export default function RecordingsPage() {
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
-        녹음 및 공유
-      </h1>
-
-      {/* 녹음 섹션 */}
-      <div className="mb-8 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-          <Mic className="h-5 w-5 text-red-500" />
-          녹음
-        </h2>
-
-        {!recordedBlob ? (
-          <div className="flex flex-col items-center gap-4">
-            <div className="text-3xl font-mono font-bold text-gray-700 dark:text-gray-300">
-              {formatDuration(recordingTime)}
-            </div>
-            {isRecording ? (
-              <Button
-                onClick={stopRecording}
-                className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700"
-              >
-                <Square className="h-6 w-6" />
-              </Button>
-            ) : (
-              <Button
-                onClick={startRecording}
-                className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700"
-              >
-                <Mic className="h-6 w-6" />
-              </Button>
-            )}
-            <p className="text-xs text-gray-400">
-              {isRecording
-                ? "녹음 중... 중지하려면 버튼을 누르세요"
-                : "버튼을 눌러 녹음을 시작하세요"}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {/* 미리듣기 */}
-            {recordedUrl && (
-              <audio controls src={recordedUrl} className="w-full" />
-            )}
-
-            <Input
-              placeholder="녹음 제목"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-
-            <div className="flex gap-2">
-              {(["public", "private", "unlisted"] as const).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setVisibility(v)}
-                  className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                    visibility === v
-                      ? "bg-violet-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                  }`}
-                >
-                  {VISIBILITY_ICONS[v]}
-                  {v === "public"
-                    ? "공개"
-                    : v === "private"
-                      ? "비공개"
-                      : "링크 공유"}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleUpload}
-                disabled={uploading || !title.trim()}
-                className="flex-1 bg-violet-600 hover:bg-violet-700"
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Upload className="mr-1 h-4 w-4" /> 저장
-                  </>
-                )}
-              </Button>
-              <Button variant="outline" onClick={discardRecording}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">녹음 및 공유</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">연주를 녹음하고 공유하세요</p>
       </div>
 
+      {/* 녹음 섹션 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Mic className="h-4 w-4 text-red-500" />
+            녹음
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!recordedBlob ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="text-3xl font-mono font-bold text-gray-700 dark:text-gray-300">
+                {formatDuration(recordingTime)}
+              </div>
+              {isRecording ? (
+                <Button
+                  onClick={stopRecording}
+                  className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700"
+                >
+                  <Square className="h-6 w-6" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={startRecording}
+                  className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700"
+                >
+                  <Mic className="h-6 w-6" />
+                </Button>
+              )}
+              <p className="text-xs text-gray-400">
+                {isRecording
+                  ? "녹음 중... 중지하려면 버튼을 누르세요"
+                  : "버튼을 눌러 녹음을 시작하세요"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* 미리듣기 */}
+              {recordedUrl && <audio controls src={recordedUrl} className="w-full" />}
+
+              <Input
+                placeholder="녹음 제목"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+
+              <div className="flex gap-2">
+                {(["public", "private", "unlisted"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setVisibility(v)}
+                    className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      visibility === v
+                        ? "bg-violet-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                    }`}
+                  >
+                    {VISIBILITY_ICONS[v]}
+                    {v === "public" ? "공개" : v === "private" ? "비공개" : "링크 공유"}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUpload}
+                  disabled={uploading || !title.trim()}
+                  className="flex-1 bg-violet-600 hover:bg-violet-700"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="mr-1 h-4 w-4" /> 저장
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" onClick={discardRecording}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* 녹음 목록 */}
-      <div className="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800/50">
         {(["my", "public"] as const).map((t) => (
           <button
             key={t}
@@ -331,11 +326,12 @@ export default function RecordingsPage() {
               setTab(t);
               setPage(1);
             }}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={cn(
+              "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
               tab === t
-                ? "border-b-2 border-violet-600 text-violet-600"
-                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            }`}
+                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
+                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
+            )}
           >
             {t === "my" ? "내 녹음" : "공개 녹음"}
           </button>
@@ -343,20 +339,24 @@ export default function RecordingsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
-        </div>
+        <Card>
+          <CardContent className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
+          </CardContent>
+        </Card>
       ) : recordings.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <Headphones className="h-10 w-10 text-gray-300 dark:text-gray-700" />
-          <p className="mt-2 text-sm text-gray-400">녹음이 없습니다</p>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center py-16 text-center">
+            <Headphones className="h-10 w-10 text-gray-300 dark:text-gray-700" />
+            <p className="mt-2 text-sm text-gray-400">녹음이 없습니다</p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {recordings.map((rec) => (
             <div
               key={rec.id}
-              className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900"
+              className="flex items-center gap-3 rounded-xl border border-gray-200/80 bg-white p-3 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
             >
               <button
                 onClick={() => togglePlay(rec.id, rec.audioUrl)}
@@ -383,26 +383,16 @@ export default function RecordingsPage() {
                     {rec.playCount}
                   </span>
                   {VISIBILITY_ICONS[rec.visibility]}
-                  {rec.user && tab === "public" && (
-                    <span>{rec.user.displayName}</span>
-                  )}
+                  {rec.user && tab === "public" && <span>{rec.user.displayName}</span>}
                 </div>
               </div>
 
               <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleShare(rec.id)}
-                >
+                <Button size="sm" variant="ghost" onClick={() => handleShare(rec.id)}>
                   <Share2 className="h-4 w-4" />
                 </Button>
                 {tab === "my" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDelete(rec.id)}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(rec.id)}>
                     <Trash2 className="h-4 w-4 text-red-400" />
                   </Button>
                 )}
@@ -411,7 +401,7 @@ export default function RecordingsPage() {
           ))}
 
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 pt-4">
+            <div className="flex justify-center gap-2 pt-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -420,7 +410,7 @@ export default function RecordingsPage() {
               >
                 이전
               </Button>
-              <span className="flex items-center text-sm text-gray-500">
+              <span className="flex items-center text-xs text-gray-500">
                 {page} / {totalPages}
               </span>
               <Button

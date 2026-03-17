@@ -1,24 +1,72 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import {
-  Eye,
-  Heart,
-  Clock,
-  GitFork,
-  Globe,
-  GlobeLock,
-  ArrowLeft,
-  Pencil,
-} from "lucide-react";
+import { Eye, Heart, Clock, GitFork, Globe, GlobeLock, ArrowLeft, Pencil } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { TabCanvas } from "~/components/editor/TabCanvas";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
-import type { TabDetail, TabVersion } from "~/types/tab";
+import type { TabDetail, TabDocument, TabVersion } from "~/types/tab";
+import { STANDARD_TUNING } from "~/types/tab";
 
 export function meta() {
   return [{ title: "타브 상세 - Tone Knob" }];
+}
+
+const TUNING_PRESETS: Record<string, string[]> = {
+  standard: ["E", "B", "G", "D", "A", "E"],
+  "drop-d": ["E", "B", "G", "D", "A", "D"],
+  "open-g": ["D", "B", "G", "D", "G", "D"],
+  dadgad: ["D", "A", "G", "D", "A", "D"],
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeContent(raw: any): TabDocument {
+  // bpm: legacy uses "tempo"
+  const bpm = (raw.bpm ?? raw.tempo ?? 120) as number;
+
+  // timeSignature: legacy uses "4/4" string
+  let timeSignature: [number, number] = [4, 4];
+  const ts = raw.timeSignature;
+  if (Array.isArray(ts) && ts.length >= 2) {
+    timeSignature = [Number(ts[0]), Number(ts[1])];
+  } else if (typeof ts === "string") {
+    const parts = ts.split("/").map(Number);
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      timeSignature = [parts[0], parts[1]];
+    }
+  }
+
+  // tuning: legacy uses preset string like "standard"
+  let tuning: string[] = [...STANDARD_TUNING];
+  if (Array.isArray(raw.tuning)) {
+    tuning = raw.tuning as string[];
+  } else if (typeof raw.tuning === "string") {
+    tuning = TUNING_PRESETS[raw.tuning.toLowerCase()] ?? [...STANDARD_TUNING];
+  }
+
+  // sections: legacy uses "tracks" array
+  let sections = raw.sections as TabDocument["sections"] | undefined;
+  if (!sections && Array.isArray(raw.tracks)) {
+    sections = raw.tracks.map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (track: any, i: number) => ({
+        id: (track.id as string) ?? `track-${i}`,
+        name: (track.name as string) ?? (track.instrument as string) ?? `Track ${i + 1}`,
+        measures: (track.measures as TabDocument["sections"][0]["measures"]) ?? [],
+      }),
+    );
+  }
+
+  return {
+    title: (raw.title as string) ?? "",
+    artist: (raw.artist as string) ?? "",
+    bpm,
+    timeSignature,
+    tuning,
+    sections: sections ?? [],
+  };
 }
 
 function timeAgo(dateStr: string) {
@@ -88,9 +136,7 @@ export default function TabsDetail() {
   if (error || !tab) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-gray-500 dark:text-gray-400">
-          {error || "타브를 찾을 수 없습니다."}
-        </p>
+        <p className="text-gray-500 dark:text-gray-400">{error || "타브를 찾을 수 없습니다."}</p>
         <Button variant="outline" className="mt-4" asChild>
           <Link to="/tabs">타브 목록으로</Link>
         </Button>
@@ -99,6 +145,7 @@ export default function TabsDetail() {
   }
 
   const isOwner = user?.id === tab.user?.id;
+  const content = tab.content ? normalizeContent(tab.content) : null;
 
   return (
     <div className="space-y-6">
@@ -112,13 +159,9 @@ export default function TabsDetail() {
             <ArrowLeft className="h-3 w-3" />
             타브 목록
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {tab.title}
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{tab.title}</h1>
           {tab.artist && (
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {tab.artist}
-            </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{tab.artist}</p>
           )}
           <div className="mt-2 flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1">
@@ -169,24 +212,24 @@ export default function TabsDetail() {
       <Separator />
 
       {/* 타브 정보 */}
-      {tab.content && (
+      {content && (
         <div className="space-y-2">
           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-            <span>BPM: {tab.content.bpm}</span>
+            <span>BPM: {content.bpm}</span>
             <span>
-              박자: {tab.content.timeSignature?.[0]}/{tab.content.timeSignature?.[1]}
+              박자: {content.timeSignature[0]}/{content.timeSignature[1]}
             </span>
-            <span>튜닝: {tab.content.tuning?.join(" ")}</span>
+            <span>튜닝: {content.tuning.join(" ")}</span>
           </div>
         </div>
       )}
 
       {/* 타브 캔버스 (읽기 전용) */}
-      {tab.content?.sections && (
-        <div className="overflow-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      {content && content.sections.length > 0 && (
+        <Card className="overflow-auto p-4">
           <TabCanvas
-            sections={tab.content.sections}
-            tuning={tab.content.tuning || ["E", "B", "G", "D", "A", "E"]}
+            sections={content.sections}
+            tuning={content.tuning}
             selectedNoteIds={new Set()}
             selectedMeasureId={null}
             currentTool="select"
@@ -196,7 +239,16 @@ export default function TabsDetail() {
             onCellClick={() => {}}
             onMeasureClick={() => {}}
           />
-        </div>
+        </Card>
+      )}
+
+      {/* sections가 없을 때 안내 */}
+      {content && content.sections.length === 0 && (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-sm text-gray-400 dark:text-gray-500">아직 악보 데이터가 없습니다.</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* 버전 히스토리 */}
@@ -206,37 +258,37 @@ export default function TabsDetail() {
             버전 히스토리 보기
           </Button>
         ) : (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              버전 히스토리
-            </h3>
-            {versions.length === 0 ? (
-              <p className="text-xs text-gray-400">버전 정보가 없습니다.</p>
-            ) : (
-              <div className="space-y-2">
-                {versions.map((v) => (
-                  <div
-                    key={v.id}
-                    className="rounded-lg border border-gray-100 p-3 text-xs dark:border-gray-800"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        v{v.versionNumber}
-                      </span>
-                      <span className="text-gray-400">
-                        {timeAgo(v.createdAt)}
-                      </span>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">버전 히스토리</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {versions.length === 0 ? (
+                <p className="text-xs text-gray-400">버전 정보가 없습니다.</p>
+              ) : (
+                <div className="space-y-2">
+                  {versions.map((v) => (
+                    <div
+                      key={v.id}
+                      className="rounded-lg border border-gray-100 p-3 text-xs dark:border-gray-800"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          v{v.versionNumber}
+                        </span>
+                        <span className="text-gray-400">{timeAgo(v.createdAt)}</span>
+                      </div>
+                      {v.changeDescription && (
+                        <p className="mt-1 text-gray-500 dark:text-gray-400">
+                          {v.changeDescription}
+                        </p>
+                      )}
                     </div>
-                    {v.changeDescription && (
-                      <p className="mt-1 text-gray-500 dark:text-gray-400">
-                        {v.changeDescription}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

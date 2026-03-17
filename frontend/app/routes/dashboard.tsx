@@ -1,14 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import {
-  BarChart3,
-  Clock,
-  Flame,
-  Music,
-  TrendingUp,
-  Calendar,
-  Loader2,
-} from "lucide-react";
+import { BarChart3, Clock, Flame, Music, TrendingUp, Calendar, Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
 
@@ -65,83 +58,83 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
-      <div className="mb-6 flex items-center gap-3">
-        <BarChart3 className="h-7 w-7 text-violet-600" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          통계 대시보드
-        </h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">통계 대시보드</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          연습 기록과 통계를 확인하세요
+        </p>
       </div>
 
       {!stats || stats.totalSessions === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-20 text-center dark:border-gray-800 dark:bg-gray-900">
-          <Music className="h-12 w-12 text-gray-300 dark:text-gray-700" />
-          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            아직 연습 기록이 없습니다. 타브를 열고 연습을 시작해보세요!
-          </p>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Music className="h-10 w-10 text-gray-300 dark:text-gray-700" />
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              아직 연습 기록이 없습니다. 타브를 열고 연습을 시작해보세요!
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <>
-          {/* 요약 카드 */}
-          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard
-              icon={<Clock className="h-5 w-5 text-blue-500" />}
+              icon={<Clock className="h-4 w-4 text-blue-500" />}
               label="총 연습 시간"
               value={formatMinutes(stats.totalMinutes)}
             />
             <StatCard
-              icon={<Music className="h-5 w-5 text-emerald-500" />}
+              icon={<Music className="h-4 w-4 text-emerald-500" />}
               label="총 세션"
               value={`${stats.totalSessions}회`}
             />
             <StatCard
-              icon={<TrendingUp className="h-5 w-5 text-amber-500" />}
+              icon={<TrendingUp className="h-4 w-4 text-amber-500" />}
               label="평균 세션 시간"
               value={formatMinutes(stats.averageSessionMinutes)}
             />
             <StatCard
-              icon={<Calendar className="h-5 w-5 text-violet-500" />}
+              icon={<Calendar className="h-4 w-4 text-violet-500" />}
               label="이번 주"
               value={formatMinutes(stats.thisWeekMinutes)}
             />
             <StatCard
-              icon={<Calendar className="h-5 w-5 text-pink-500" />}
+              icon={<Calendar className="h-4 w-4 text-pink-500" />}
               label="이번 달"
               value={formatMinutes(stats.thisMonthMinutes)}
             />
             <StatCard
-              icon={<Flame className="h-5 w-5 text-orange-500" />}
+              icon={<Flame className="h-4 w-4 text-orange-500" />}
               label="연속 연습"
               value={`${stats.streak}일`}
               highlight={stats.streak >= 7}
             />
           </div>
 
-          {/* 주간 목표 프로그레스 */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-              주간 연습 목표
-            </h2>
-            <div className="mb-2 flex items-end justify-between">
-              <span className="text-2xl font-bold text-violet-600">
-                {formatMinutes(stats.thisWeekMinutes)}
-              </span>
-              <span className="text-sm text-gray-400">/ 목표 5시간</span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-violet-600 transition-all"
-                style={{
-                  width: `${Math.min(100, (stats.thisWeekMinutes / 300) * 100)}%`,
-                }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-gray-400">
-              {stats.thisWeekMinutes >= 300
-                ? "이번 주 목표를 달성했습니다!"
-                : `${formatMinutes(300 - stats.thisWeekMinutes)} 더 연습하면 목표 달성!`}
-            </p>
-          </div>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">주간 연습 목표</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-2 flex items-end justify-between">
+                <span className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                  {formatMinutes(stats.thisWeekMinutes)}
+                </span>
+                <span className="text-sm text-gray-400">/ 목표 5시간</span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-violet-500 to-indigo-500 transition-all"
+                  style={{ width: `${Math.min(100, (stats.thisWeekMinutes / 300) * 100)}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-gray-400">
+                {stats.thisWeekMinutes >= 300
+                  ? "이번 주 목표를 달성했습니다! 🎉"
+                  : `${formatMinutes(300 - stats.thisWeekMinutes)} 더 연습하면 목표 달성!`}
+              </p>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
@@ -160,22 +153,20 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-xl border p-4 ${
+    <Card
+      className={
         highlight
-          ? "border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-900/20"
-          : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-      }`}
+          ? "border-orange-200 bg-orange-50/50 dark:border-orange-900/50 dark:bg-orange-950/20"
+          : ""
+      }
     >
-      <div className="mb-2 flex items-center gap-2">
-        {icon}
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-          {label}
-        </span>
+      <div className="p-4">
+        <div className="mb-1.5 flex items-center gap-2">
+          {icon}
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+        </div>
+        <p className="text-xl font-bold text-gray-900 dark:text-white">{value}</p>
       </div>
-      <p className="text-xl font-bold text-gray-900 dark:text-white">
-        {value}
-      </p>
-    </div>
+    </Card>
   );
 }

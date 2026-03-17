@@ -1,15 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router";
-import {
-  Home,
-  FileMusic,
-  Radio,
-  Users,
-  Settings,
-  Plus,
-  Search,
-  FolderOpen,
-} from "lucide-react";
+import { Home, FileMusic, Radio, Users, Settings, Plus, Search, FolderOpen } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { cn } from "~/lib/utils";
@@ -50,16 +41,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />}
 
       <aside
         className={cn(
-          "fixed left-0 top-16 z-40 flex h-[calc(100vh-4rem)] w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-200 dark:border-gray-800 dark:bg-gray-950",
+          "fixed left-0 top-14 z-40 flex h-[calc(100vh-3.5rem)] w-60 flex-col border-r border-gray-200/60 bg-white/95 backdrop-blur-sm transition-transform duration-200 dark:border-gray-800/60 dark:bg-gray-950/95",
           "lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
@@ -119,7 +105,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
 
-        <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+        <div className="border-t border-gray-200/60 p-3 dark:border-gray-800/60">
           {bottomNavItems.map((item) => (
             <NavLink
               key={item.to}

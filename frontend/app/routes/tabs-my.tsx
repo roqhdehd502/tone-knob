@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import {
-  Eye,
-  Heart,
-  Clock,
-  Plus,
-  FileMusic,
-  Globe,
-  GlobeLock,
-  Trash2,
-} from "lucide-react";
+import { Eye, Heart, Clock, Plus, FileMusic, Globe, GlobeLock, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabListItem } from "~/types/tab";
@@ -35,7 +27,7 @@ function timeAgo(dateStr: string) {
 }
 
 export default function TabsMy() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [tabs, setTabs] = useState<TabListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -44,6 +36,7 @@ export default function TabsMy() {
   const limit = 12;
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/login");
       return;
@@ -57,7 +50,7 @@ export default function TabsMy() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [user, page, navigate]);
+  }, [user, authLoading, page, navigate]);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -87,46 +80,43 @@ export default function TabsMy() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            내 타브
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {total}개의 타브
-          </p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">내 타브</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{total}개의 타브</p>
         </div>
-        <Button asChild>
-          <Link to="/editor/new" className="gap-2">
+        <Button asChild size="sm">
+          <Link to="/editor/new" className="gap-1.5">
             <Plus className="h-4 w-4" />새 타브
           </Link>
         </Button>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-        </div>
+        <Card>
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="h-7 w-7 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+          </CardContent>
+        </Card>
       ) : tabs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <FileMusic className="h-16 w-16 text-gray-300 dark:text-gray-700" />
-          <p className="mt-4 text-gray-500 dark:text-gray-400">
-            아직 제작한 타브가 없습니다.
-          </p>
-          <Button className="mt-4" asChild>
-            <Link to="/editor/new">첫 타브 만들기</Link>
-          </Button>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <FileMusic className="h-10 w-10 text-gray-300 dark:text-gray-700" />
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              아직 제작한 타브가 없습니다.
+            </p>
+            <Button className="mt-4" size="sm" asChild>
+              <Link to="/editor/new">첨 타브 만들기</Link>
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {tabs.map((tab) => (
               <div
                 key={tab.id}
-                className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                className="flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-3.5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
               >
-                <Link
-                  to={`/tabs/${tab.id}`}
-                  className="min-w-0 flex-1 group"
-                >
+                <Link to={`/tabs/${tab.id}`} className="min-w-0 flex-1 group">
                   <h3 className="truncate text-sm font-semibold text-gray-900 group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
                     {tab.title}
                   </h3>
@@ -187,7 +177,7 @@ export default function TabsMy() {
               >
                 이전
               </Button>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {page} / {totalPages}
               </span>
               <Button

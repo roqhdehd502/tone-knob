@@ -1,22 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import {
-  Crown,
-  Zap,
-  Check,
-  Loader2,
-  AlertCircle,
-  Calendar,
-} from "lucide-react";
+import { Crown, Zap, Check, Loader2, AlertCircle, Calendar } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
 
 export function meta() {
-  return [
-    { title: "구독 관리 - Tone Knob" },
-    { name: "description", content: "구독 플랜 관리" },
-  ];
+  return [{ title: "구독 관리 - Tone Knob" }, { name: "description", content: "구독 플랜 관리" }];
 }
 
 interface PlanInfo {
@@ -69,10 +60,7 @@ export default function SubscriptionPage() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([
-      api.subscriptions.getPlans(),
-      api.subscriptions.getCurrent().catch(() => null),
-    ])
+    Promise.all([api.subscriptions.getPlans(), api.subscriptions.getCurrent().catch(() => null)])
       .then(([planData, subData]) => {
         setPlans(planData);
         setCurrentSub(subData);
@@ -89,8 +77,7 @@ export default function SubscriptionPage() {
       const sub = await api.subscriptions.getCurrent().catch(() => null);
       setCurrentSub(sub);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "구독 처리 중 오류가 발생했습니다";
+      const msg = err instanceof Error ? err.message : "구독 처리 중 오류가 발생했습니다";
       setError(msg);
     } finally {
       setSubscribing(null);
@@ -104,8 +91,7 @@ export default function SubscriptionPage() {
       await api.subscriptions.cancel();
       setCurrentSub(null);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "취소 처리 중 오류가 발생했습니다";
+      const msg = err instanceof Error ? err.message : "취소 처리 중 오류가 발생했습니다";
       setError(msg);
     } finally {
       setCancelling(false);
@@ -123,25 +109,23 @@ export default function SubscriptionPage() {
   const activePlan = currentSub?.plan || "free";
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          구독 관리
-        </h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">구독 관리</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           플랜을 선택하여 더 많은 기능을 이용하세요
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-900/20 dark:text-red-400">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-900/20 dark:text-red-400">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           {error}
         </div>
       )}
 
       {currentSub && (
-        <div className="mb-8 rounded-xl border border-violet-200 bg-violet-50 p-5 dark:border-violet-800 dark:bg-violet-900/20">
+        <Card className="border-violet-200 bg-violet-50/50 p-5 dark:border-violet-800 dark:bg-violet-900/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {PLAN_ICONS[currentSub.plan]}
@@ -151,41 +135,29 @@ export default function SubscriptionPage() {
                 </p>
                 <p className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                   <Calendar className="h-3 w-3" />
-                  {new Date(currentSub.currentPeriodEnd).toLocaleDateString(
-                    "ko-KR",
-                  )}{" "}
-                  까지
+                  {new Date(currentSub.currentPeriodEnd).toLocaleDateString("ko-KR")} 까지
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              disabled={cancelling}
-            >
-              {cancelling ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "구독 취소"
-              )}
+            <Button variant="outline" size="sm" onClick={handleCancel} disabled={cancelling}>
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : "구독 취소"}
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         {plans.map((plan) => {
           const isCurrent = activePlan === plan.plan;
           const isHighlighted = plan.plan === "premium";
 
           return (
-            <div
+            <Card
               key={plan.plan}
-              className={`relative rounded-xl border p-6 ${
+              className={`relative p-6 ${
                 isHighlighted
-                  ? "border-violet-400 bg-white shadow-lg dark:border-violet-600 dark:bg-gray-900"
-                  : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                  ? "border-violet-400 shadow-lg shadow-violet-500/10 dark:border-violet-600"
+                  : ""
               }`}
             >
               {isHighlighted && (
@@ -218,20 +190,12 @@ export default function SubscriptionPage() {
               </ul>
 
               {plan.plan === "free" ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  disabled={isCurrent}
-                >
+                <Button variant="outline" className="w-full" disabled={isCurrent}>
                   {isCurrent ? "현재 플랜" : "무료"}
                 </Button>
               ) : (
                 <Button
-                  className={`w-full ${
-                    isHighlighted
-                      ? "bg-violet-600 hover:bg-violet-700"
-                      : ""
-                  }`}
+                  className={`w-full ${isHighlighted ? "bg-violet-600 hover:bg-violet-700" : ""}`}
                   disabled={isCurrent || subscribing !== null}
                   onClick={() => handleSubscribe(plan.plan)}
                 >
@@ -244,7 +208,7 @@ export default function SubscriptionPage() {
                   )}
                 </Button>
               )}
-            </div>
+            </Card>
           );
         })}
       </div>

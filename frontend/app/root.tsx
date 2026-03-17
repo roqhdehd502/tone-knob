@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { AuthProvider } from "~/lib/auth";
+import { ThemeProvider } from "~/lib/theme";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -24,12 +25,16 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+// Inline script to apply theme before first paint to prevent flash
+const themeScript = `(function(){try{var t=localStorage.getItem("tone-knob-theme")||"system";var d=t==="system"?window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light":t;document.documentElement.classList.toggle("dark",d==="dark");document.documentElement.style.colorScheme=d}catch(e){}})()`;
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <Meta />
         <Links />
       </head>
@@ -44,9 +49,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
@@ -58,9 +65,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? "404" : "Error";
     details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
+      error.status === 404 ? "The requested page could not be found." : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
