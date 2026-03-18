@@ -91,7 +91,7 @@ export function TutorialOverlay() {
           <button
             type="button"
             onClick={skipTutorial}
-            className="absolute right-3 top-3 rounded-full p-1.5 text-white/60 transition-colors hover:bg-white/20 hover:text-white"
+            className="absolute right-3 top-3 cursor-pointer rounded-full p-1.5 text-white/60 transition-colors hover:bg-white/20 hover:text-white"
             aria-label="튜토리얼 닫기"
           >
             <X className="h-4 w-4" />
@@ -134,7 +134,7 @@ export function TutorialOverlay() {
             <button
               type="button"
               onClick={handleGoTo}
-              className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-miami-600 hover:underline dark:text-miami-400"
+              className="mt-3 inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-miami-600 hover:underline dark:text-miami-400"
             >
               바로 가기 →
             </button>
@@ -175,7 +175,7 @@ export function TutorialOverlay() {
             <button
               type="button"
               onClick={skipTutorial}
-              className="mt-3 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="mt-3 cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               건너뛰기
             </button>

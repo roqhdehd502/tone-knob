@@ -1,8 +1,10 @@
 import { Link } from "react-router";
-import { Bell, Search, Menu, LogOut } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+
+import { Bell, LogOut, Menu, Search } from "lucide-react";
+
 import { ThemeToggle } from "~/components/common/ThemeToggle";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth";
 
 interface HeaderProps {

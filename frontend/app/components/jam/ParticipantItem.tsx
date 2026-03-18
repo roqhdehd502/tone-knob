@@ -1,7 +1,8 @@
 import { memo } from "react";
-import { MicOff, Volume2, Guitar } from "lucide-react";
+
+import { Guitar, MicOff, Volume2 } from "lucide-react";
+
 import type { JamParticipant } from "~/types/jam-room";
-import type { InstrumentType } from "~/types/tab";
 
 const INSTRUMENT_LABELS: Record<string, string> = {
   "electric-guitar": "일렉 기타",

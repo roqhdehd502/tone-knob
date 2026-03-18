@@ -115,7 +115,7 @@ const MixerChannel = memo(function MixerChannel({
         <button
           type="button"
           onClick={onMonitoringToggle}
-          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
+          className={`mt-2 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
             monitoring
               ? "bg-miami-100 text-miami-700 dark:bg-miami-900/30 dark:text-miami-300"
               : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"

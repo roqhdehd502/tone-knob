@@ -1,6 +1,6 @@
 import { memo } from "react";
+
 import type { ChatMessage as ChatMessageType } from "~/lib/jam/use-jam-socket";
-import type { JamParticipant } from "~/types/jam-room";
 
 interface ChatMessageProps {
   msg: ChatMessageType;

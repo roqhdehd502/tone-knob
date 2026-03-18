@@ -1,11 +1,27 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
-import { Home, FileMusic, Radio, Users, Settings, Plus, Search, FolderOpen } from "lucide-react";
+
+import {
+  AudioLines,
+  FileMusic,
+  FolderOpen,
+  Home,
+  Mic,
+  Plus,
+  Radio,
+  Search,
+  Settings,
+  ShoppingBag,
+  Sparkles,
+  Users,
+  Wand2,
+} from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { cn } from "~/lib/utils";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
+import { cn } from "~/lib/utils";
 import type { TabListItem } from "~/types/tab";
 
 interface SidebarProps {
@@ -20,6 +36,17 @@ const mainNavItems = [
   { to: "/editor", icon: FileMusic, label: "타브 에디터" },
   { to: "/jamroom", icon: Radio, label: "합주방" },
   { to: "/community", icon: Users, label: "커뮤니티" },
+];
+
+const toolNavItems = [
+  { to: "/ai-generate", icon: Wand2, label: "AI 타브 생성" },
+  { to: "/audio-extract", icon: AudioLines, label: "오디오 추출" },
+  { to: "/recordings", icon: Mic, label: "녹음" },
+];
+
+const moreNavItems = [
+  { to: "/marketplace", icon: ShoppingBag, label: "마켓플레이스" },
+  { to: "/subscription", icon: Sparkles, label: "구독" },
 ];
 
 const bottomNavItems = [{ to: "/settings", icon: Settings, label: "설정" }];
@@ -78,6 +105,58 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </NavLink>
             ))}
           </nav>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-1">
+            <p className="px-3 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
+              도구
+            </p>
+            {toolNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-miami-50 text-miami-700 dark:bg-miami-950 dark:text-miami-300"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+                  )
+                }
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-1">
+            <p className="px-3 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
+              더 보기
+            </p>
+            {moreNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-miami-50 text-miami-700 dark:bg-miami-950 dark:text-miami-300"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+                  )
+                }
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
 
           <Separator className="my-4" />
 

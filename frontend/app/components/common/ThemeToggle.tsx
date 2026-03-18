@@ -1,5 +1,6 @@
-import { Sun, Moon, Monitor } from "lucide-react";
-import { useTheme, type Theme } from "~/lib/theme";
+import { Monitor, Moon, Sun } from "lucide-react";
+
+import { type Theme, useTheme } from "~/lib/theme";
 import { cn } from "~/lib/utils";
 
 const options: { value: Theme; icon: typeof Sun; label: string }[] = [

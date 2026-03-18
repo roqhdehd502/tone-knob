@@ -140,7 +140,7 @@ export function SoundCheckPanel({
               key={opt.value}
               type="button"
               onClick={() => onInstrumentChange(opt.value)}
-              className={`flex items-center gap-2 rounded-lg border p-2.5 text-left text-sm transition-colors ${
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2.5 text-left text-sm transition-colors ${
                 selectedInstrument === opt.value
                   ? "border-miami-400 bg-miami-50 text-miami-700 dark:border-miami-600 dark:bg-miami-950/40 dark:text-miami-300"
                   : "border-gray-200 text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600"
@@ -232,14 +232,13 @@ export function SoundCheckPanel({
               <button
                 type="button"
                 onClick={() => monitor.setMonitoring(!monitor.monitoring)}
-                className={`relative h-5 w-9 rounded-full transition-colors ${
+                className={`relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors ${
                   monitor.monitoring ? "bg-miami-500" : "bg-gray-300 dark:bg-gray-600"
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                    monitor.monitoring ? "translate-x-4" : "translate-x-0.5"
-                  }`}
+                  className="absolute h-4 w-4 rounded-full bg-white shadow transition-all duration-200"
+                  style={{ left: monitor.monitoring ? "18px" : "2px", top: "2px" }}
                 />
               </button>
             </div>
@@ -281,7 +280,7 @@ export function SoundCheckPanel({
         <button
           type="button"
           onClick={onCancel}
-          className="w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          className="w-full cursor-pointer text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           사운드 체크 없이 참가
         </button>

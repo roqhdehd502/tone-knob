@@ -47,14 +47,13 @@ function Toggle({
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
           checked ? "bg-miami-500" : "bg-gray-300 dark:bg-gray-600"
         }`}
       >
         <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-            checked ? "translate-x-4" : "translate-x-0.5"
-          }`}
+          className="absolute h-4 w-4 rounded-full bg-white shadow transition-all duration-200"
+          style={{ left: checked ? "18px" : "2px", top: "2px" }}
         />
       </button>
     </div>
@@ -102,7 +101,7 @@ export function AudioSettingsPanel({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="flex w-full items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+        className="flex w-full cursor-pointer items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
       >
         <Settings2 className="h-3.5 w-3.5" />
         오디오 설정
@@ -122,7 +121,7 @@ export function AudioSettingsPanel({
             type="button"
             onClick={refreshDevices}
             disabled={loading}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             title="장치 목록 새로고침"
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
@@ -130,7 +129,7 @@ export function AudioSettingsPanel({
           <button
             type="button"
             onClick={() => onChange(getDefaultSettings())}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             기본값
           </button>
@@ -138,7 +137,7 @@ export function AudioSettingsPanel({
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               접기
             </button>
@@ -154,7 +153,7 @@ export function AudioSettingsPanel({
         <select
           value={settings.inputDeviceId}
           onChange={(e) => update({ inputDeviceId: e.target.value })}
-          className="h-8 w-full rounded border border-gray-200 bg-white px-2 text-sm text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          className="h-8 w-full cursor-pointer rounded border border-gray-200 bg-white px-2 text-sm text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
         >
           <option value="default">시스템 기본값</option>
           {inputDevices.map((d) => (
@@ -173,7 +172,7 @@ export function AudioSettingsPanel({
         <select
           value={settings.outputDeviceId}
           onChange={(e) => update({ outputDeviceId: e.target.value })}
-          className="h-8 w-full rounded border border-gray-200 bg-white px-2 text-sm text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          className="h-8 w-full cursor-pointer rounded border border-gray-200 bg-white px-2 text-sm text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
         >
           <option value="default">시스템 기본값</option>
           {outputDevices.map((d) => (
@@ -200,7 +199,7 @@ export function AudioSettingsPanel({
               key={opt.value}
               type="button"
               onClick={() => update({ sampleRate: opt.value })}
-              className={`rounded border px-2 py-1.5 text-[11px] transition-colors ${
+              className={`cursor-pointer rounded border px-2 py-1.5 text-[11px] transition-colors ${
                 settings.sampleRate === opt.value
                   ? "border-miami-400 bg-miami-50 text-miami-700 dark:border-miami-600 dark:bg-miami-950/40 dark:text-miami-300"
                   : "border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400"
@@ -223,7 +222,7 @@ export function AudioSettingsPanel({
               key={opt.value}
               type="button"
               onClick={() => update({ bufferSize: opt.value })}
-              className={`flex w-full items-start gap-2 rounded border px-2.5 py-2 text-left transition-colors ${
+              className={`flex w-full cursor-pointer items-start gap-2 rounded border px-2.5 py-2 text-left transition-colors ${
                 settings.bufferSize === opt.value
                   ? "border-miami-400 bg-miami-50 dark:border-miami-600 dark:bg-miami-950/40"
                   : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
@@ -262,7 +261,7 @@ export function AudioSettingsPanel({
           <button
             type="button"
             onClick={() => update({ channelCount: 1 })}
-            className={`rounded border px-2 py-1.5 text-xs transition-colors ${
+            className={`cursor-pointer rounded border px-2 py-1.5 text-xs transition-colors ${
               settings.channelCount === 1
                 ? "border-miami-400 bg-miami-50 text-miami-700 dark:border-miami-600 dark:bg-miami-950/40 dark:text-miami-300"
                 : "border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400"
@@ -273,7 +272,7 @@ export function AudioSettingsPanel({
           <button
             type="button"
             onClick={() => update({ channelCount: 2 })}
-            className={`rounded border px-2 py-1.5 text-xs transition-colors ${
+            className={`cursor-pointer rounded border px-2 py-1.5 text-xs transition-colors ${
               settings.channelCount === 2
                 ? "border-miami-400 bg-miami-50 text-miami-700 dark:border-miami-600 dark:bg-miami-950/40 dark:text-miami-300"
                 : "border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400"

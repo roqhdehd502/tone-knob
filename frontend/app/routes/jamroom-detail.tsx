@@ -15,6 +15,7 @@ import {
   Wifi,
 } from "lucide-react";
 
+import { AmpSimulatorPanel } from "~/components/jam/AmpSimulatorPanel";
 import { AudioLevelMeter } from "~/components/jam/AudioLevelMeter";
 import { AudioMixer } from "~/components/jam/AudioMixer";
 import { ChatMessageItem } from "~/components/jam/ChatMessage";
@@ -25,6 +26,8 @@ import { Input } from "~/components/ui/input";
 import { api } from "~/lib/api";
 import { getAudioEngine } from "~/lib/audio/audio-engine";
 import { useAuth } from "~/lib/auth";
+import type { AmpSettings } from "~/lib/jam/amp-simulator";
+import { DEFAULT_AMP_SETTINGS } from "~/lib/jam/amp-simulator";
 import type { AudioSettings } from "~/lib/jam/audio-settings";
 import {
   buildAudioContextOptions,
@@ -69,6 +72,7 @@ export default function JamroomDetail() {
   const [selfVolume, setSelfVolume] = useState(80);
   const [showSoundCheck, setShowSoundCheck] = useState(true);
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(loadAudioSettings);
+  const [ampSettings, setAmpSettings] = useState<AmpSettings>({ ...DEFAULT_AMP_SETTINGS });
   const syncRef = useRef<AudioSynchronizer | null>(null);
   const remoteAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -690,6 +694,27 @@ export default function JamroomDetail() {
               )}
             </CardContent>
           </Card>
+
+          {/* 가상 앰프 */}
+          {hasJoined && (
+            <Card>
+              <CardContent className="pt-4">
+                <AmpSimulatorPanel
+                  settings={ampSettings}
+                  onChange={(newSettings) => {
+                    setAmpSettings(newSettings);
+                    if (newSettings.enabled && !localMonitor.ampEnabled) {
+                      localMonitor.connectAmp(newSettings);
+                    } else if (!newSettings.enabled && localMonitor.ampEnabled) {
+                      localMonitor.disconnectAmp();
+                    } else if (newSettings.enabled && localMonitor.ampEnabled) {
+                      localMonitor.updateAmpSettings(newSettings);
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* 채팅 */}
           {hasJoined && (
