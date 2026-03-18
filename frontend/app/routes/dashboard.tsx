@@ -52,7 +52,7 @@ export default function Dashboard() {
   if (authLoading || !user || loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function Dashboard() {
               value={formatMinutes(stats.averageSessionMinutes)}
             />
             <StatCard
-              icon={<Calendar className="h-4 w-4 text-violet-500" />}
+              icon={<Calendar className="h-4 w-4 text-miami-500" />}
               label="이번 주"
               value={formatMinutes(stats.thisWeekMinutes)}
             />
@@ -117,14 +117,14 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="mb-2 flex items-end justify-between">
-                <span className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                <span className="text-2xl font-bold text-miami-600 dark:text-miami-400">
                   {formatMinutes(stats.thisWeekMinutes)}
                 </span>
                 <span className="text-sm text-gray-400">/ 목표 5시간</span>
               </div>
               <div className="h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                 <div
-                  className="h-full rounded-full bg-linear-to-r from-violet-500 to-indigo-500 transition-all"
+                  className="h-full rounded-full bg-linear-to-r from-miami-500 to-miami-500 transition-all"
                   style={{ width: `${Math.min(100, (stats.thisWeekMinutes / 300) * 100)}%` }}
                 />
               </div>

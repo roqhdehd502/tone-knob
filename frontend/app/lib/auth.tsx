@@ -1,12 +1,17 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router';
-import { api, type User } from './api';
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router";
+import { api, type User } from "./api";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; username: string; password: string; displayName?: string }) => Promise<void>;
+  register: (data: {
+    email: string;
+    username: string;
+    password: string;
+    displayName?: string;
+  }) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -18,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       setUser(null);
       setIsLoading(false);
@@ -29,8 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
     } catch {
       setUser(null);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
     } finally {
       setIsLoading(false);
     }
@@ -42,21 +47,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const res = await api.auth.login({ email, password });
-    localStorage.setItem('accessToken', res.tokens.accessToken);
-    localStorage.setItem('refreshToken', res.tokens.refreshToken);
+    localStorage.setItem("accessToken", res.tokens.accessToken);
+    localStorage.setItem("refreshToken", res.tokens.refreshToken);
     setUser(res.user);
   };
 
-  const register = async (data: { email: string; username: string; password: string; displayName?: string }) => {
+  const register = async (data: {
+    email: string;
+    username: string;
+    password: string;
+    displayName?: string;
+  }) => {
     const res = await api.auth.register(data);
-    localStorage.setItem('accessToken', res.tokens.accessToken);
-    localStorage.setItem('refreshToken', res.tokens.refreshToken);
+    localStorage.setItem("accessToken", res.tokens.accessToken);
+    localStorage.setItem("refreshToken", res.tokens.refreshToken);
     setUser(res.user);
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setUser(null);
   };
 
@@ -70,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

@@ -11,17 +11,10 @@ interface VersionHistoryProps {
   onRestore: (content: TabDocument) => void;
 }
 
-export function VersionHistory({
-  tabId,
-  currentContent,
-  isOwner,
-  onRestore,
-}: VersionHistoryProps) {
+export function VersionHistory({ tabId, currentContent, isOwner, onRestore }: VersionHistoryProps) {
   const [versions, setVersions] = useState<TabVersion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVersion, setSelectedVersion] = useState<TabVersion | null>(
-    null,
-  );
+  const [selectedVersion, setSelectedVersion] = useState<TabVersion | null>(null);
   const [compareMode, setCompareMode] = useState(false);
 
   useEffect(() => {
@@ -67,14 +60,8 @@ export function VersionHistory({
     oldDoc.sections.forEach((oldSection) => {
       const newSection = newDoc.sections.find((s) => s.id === oldSection.id);
       if (newSection) {
-        const oldNotes = oldSection.measures.reduce(
-          (sum, m) => sum + m.notes.length,
-          0,
-        );
-        const newNotes = newSection.measures.reduce(
-          (sum, m) => sum + m.notes.length,
-          0,
-        );
+        const oldNotes = oldSection.measures.reduce((sum, m) => sum + m.notes.length, 0);
+        const newNotes = newSection.measures.reduce((sum, m) => sum + m.notes.length, 0);
         if (oldNotes !== newNotes) modified++;
       }
     });
@@ -115,9 +102,7 @@ export function VersionHistory({
       </div>
 
       {versions.length === 0 ? (
-        <p className="py-4 text-center text-sm text-gray-400">
-          버전 기록이 없습니다
-        </p>
+        <p className="py-4 text-center text-sm text-gray-400">버전 기록이 없습니다</p>
       ) : (
         <div className="space-y-2">
           {versions.map((version, index) => {
@@ -132,13 +117,13 @@ export function VersionHistory({
                 key={version.id}
                 className={`rounded-lg border p-3 transition-colors ${
                   selectedVersion?.id === version.id
-                    ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-900/20"
+                    ? "border-miami-500 bg-miami-50 dark:border-miami-400 dark:bg-miami-900/20"
                     : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-miami-100 text-xs font-bold text-miami-700 dark:bg-miami-900/40 dark:text-miami-300">
                       {version.versionNumber}
                     </span>
                     <div>
@@ -169,9 +154,7 @@ export function VersionHistory({
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          setSelectedVersion(
-                            selectedVersion?.id === version.id ? null : version,
-                          )
+                          setSelectedVersion(selectedVersion?.id === version.id ? null : version)
                         }
                       >
                         선택
@@ -192,12 +175,8 @@ export function VersionHistory({
 
                 {compareMode && diff && (
                   <div className="mt-2 flex gap-3 text-xs">
-                    {diff.added > 0 && (
-                      <span className="text-green-600">+{diff.added} 섹션</span>
-                    )}
-                    {diff.removed > 0 && (
-                      <span className="text-red-500">-{diff.removed} 섹션</span>
-                    )}
+                    {diff.added > 0 && <span className="text-green-600">+{diff.added} 섹션</span>}
+                    {diff.removed > 0 && <span className="text-red-500">-{diff.removed} 섹션</span>}
                     {diff.modified > 0 && (
                       <span className="text-amber-500">~{diff.modified} 수정</span>
                     )}
@@ -209,28 +188,21 @@ export function VersionHistory({
 
                 {compareMode && selectedVersion?.id === version.id && (
                   <div className="mt-3 rounded border border-gray-200 bg-gray-50 p-2 dark:border-gray-600 dark:bg-gray-700">
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                      요약
-                    </p>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300">요약</p>
                     <div className="mt-1 grid grid-cols-2 gap-2 text-xs text-gray-500">
                       <div>섹션: {version.content.sections.length}개</div>
                       <div>BPM: {version.content.bpm}</div>
                       <div>
                         노트:{" "}
                         {version.content.sections.reduce(
-                          (sum, s) =>
-                            sum + s.measures.reduce((ms, m) => ms + m.notes.length, 0),
+                          (sum, s) => sum + s.measures.reduce((ms, m) => ms + m.notes.length, 0),
                           0,
                         )}
                         개
                       </div>
                       <div>
                         마디:{" "}
-                        {version.content.sections.reduce(
-                          (sum, s) => sum + s.measures.length,
-                          0,
-                        )}
-                        개
+                        {version.content.sections.reduce((sum, s) => sum + s.measures.length, 0)}개
                       </div>
                     </div>
                   </div>

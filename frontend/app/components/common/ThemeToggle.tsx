@@ -21,7 +21,7 @@ export function ThemeToggle() {
           className={cn(
             "rounded-md p-1.5 transition-colors",
             theme === opt.value
-              ? "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300"
+              ? "bg-miami-100 text-miami-700 dark:bg-miami-900 dark:text-miami-300"
               : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300",
           )}
         >

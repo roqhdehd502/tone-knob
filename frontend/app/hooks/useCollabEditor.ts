@@ -21,11 +21,7 @@ export interface SessionState {
   activeUserIds: string[];
 }
 
-export type CollabStatus =
-  | "disconnected"
-  | "connecting"
-  | "connected"
-  | "error";
+export type CollabStatus = "disconnected" | "connecting" | "connected" | "error";
 
 interface UseCollabEditorOptions {
   tabId: string;
@@ -41,10 +37,7 @@ interface UseCollabEditorReturn {
   status: CollabStatus;
   revision: number;
   activeUserIds: string[];
-  sendOperation: (
-    type: OperationType,
-    payload: Record<string, unknown>,
-  ) => void;
+  sendOperation: (type: OperationType, payload: Record<string, unknown>) => void;
   sendCursor: (position: unknown) => void;
   saveSnapshot: (snapshot: Record<string, unknown>) => void;
   sync: (sinceRevision: number) => void;
@@ -107,9 +100,7 @@ export function useCollabEditor({
     });
 
     socket.on("user:joined", ({ userId }: { userId: string }) => {
-      setActiveUserIds((prev) =>
-        prev.includes(userId) ? prev : [...prev, userId],
-      );
+      setActiveUserIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
       onUserJoined?.(userId);
     });
 

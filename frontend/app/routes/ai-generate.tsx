@@ -132,7 +132,7 @@ export default function AiGeneratePage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
       </div>
     );
   }
@@ -148,7 +148,7 @@ export default function AiGeneratePage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="h-4 w-4 text-violet-500" />
+            <Sparkles className="h-4 w-4 text-miami-500" />
             생성 요청
           </CardTitle>
         </CardHeader>
@@ -241,7 +241,7 @@ export default function AiGeneratePage() {
             <Button
               type="submit"
               disabled={submitting || !prompt.trim()}
-              className="w-full bg-violet-600 hover:bg-violet-700"
+              className="w-full bg-miami-600 hover:bg-miami-700"
             >
               {submitting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -265,7 +265,7 @@ export default function AiGeneratePage() {
       {loadingJobs ? (
         <Card>
           <CardContent className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-miami-600" />
           </CardContent>
         </Card>
       ) : jobs.length === 0 ? (
@@ -307,7 +307,7 @@ export default function AiGeneratePage() {
                   <div className="mt-3">
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                       <div
-                        className="h-full bg-violet-500 transition-all duration-300"
+                        className="h-full bg-miami-500 transition-all duration-300"
                         style={{ width: `${job.progress}%` }}
                       />
                     </div>

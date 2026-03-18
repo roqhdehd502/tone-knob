@@ -217,7 +217,7 @@ export default function RecordingsPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
       </div>
     );
   }
@@ -284,7 +284,7 @@ export default function RecordingsPage() {
                     onClick={() => setVisibility(v)}
                     className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                       visibility === v
-                        ? "bg-violet-600 text-white"
+                        ? "bg-miami-600 text-white"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
                     }`}
                   >
@@ -298,7 +298,7 @@ export default function RecordingsPage() {
                 <Button
                   onClick={handleUpload}
                   disabled={uploading || !title.trim()}
-                  className="flex-1 bg-violet-600 hover:bg-violet-700"
+                  className="flex-1 bg-miami-600 hover:bg-miami-700"
                 >
                   {uploading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -341,7 +341,7 @@ export default function RecordingsPage() {
       {loading ? (
         <Card>
           <CardContent className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-miami-600" />
           </CardContent>
         </Card>
       ) : recordings.length === 0 ? (
@@ -360,7 +360,7 @@ export default function RecordingsPage() {
             >
               <button
                 onClick={() => togglePlay(rec.id, rec.audioUrl)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-colors hover:bg-violet-200 dark:bg-violet-900/30"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-miami-100 text-miami-600 transition-colors hover:bg-miami-200 dark:bg-miami-900/30"
               >
                 {playingId === rec.id ? (
                   <Pause className="h-4 w-4" />

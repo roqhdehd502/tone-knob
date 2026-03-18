@@ -1,15 +1,5 @@
-import type {
-  TabDetail,
-  TabListResponse,
-  TabDocument,
-  TabVersion,
-} from "~/types/tab";
-import type {
-  JamRoom,
-  JamParticipant,
-  CreateJamRoomDto,
-  JoinJamRoomDto,
-} from "~/types/jam-room";
+import type { TabDetail, TabListResponse, TabDocument, TabVersion } from "~/types/tab";
+import type { JamRoom, JamParticipant, CreateJamRoomDto, JoinJamRoomDto } from "~/types/jam-room";
 import type { CommentData, FollowData } from "~/types/community";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -18,14 +8,10 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestOptions = {},
-): Promise<T> {
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options;
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
   const res = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
@@ -58,8 +44,7 @@ async function request<T>(
 }
 
 async function tryRefresh(): Promise<boolean> {
-  const refreshToken =
-    typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+  const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
 
   if (!refreshToken) return false;
 
@@ -106,12 +91,7 @@ interface AuthResponse {
 
 export const api = {
   auth: {
-    register: (data: {
-      email: string;
-      username: string;
-      password: string;
-      displayName?: string;
-    }) =>
+    register: (data: { email: string; username: string; password: string; displayName?: string }) =>
       request<AuthResponse>("/api/auth/register", {
         method: "POST",
         body: data,
@@ -122,18 +102,11 @@ export const api = {
   },
   users: {
     get: (id: string) => request<User>(`/api/users/${id}`),
-    update: (
-      id: string,
-      data: { displayName?: string; avatarUrl?: string; bio?: string },
-    ) => request<User>(`/api/users/${id}`, { method: "PUT", body: data }),
+    update: (id: string, data: { displayName?: string; avatarUrl?: string; bio?: string }) =>
+      request<User>(`/api/users/${id}`, { method: "PUT", body: data }),
   },
   tabs: {
-    list: (params?: {
-      page?: number;
-      limit?: number;
-      search?: string;
-      userId?: string;
-    }) => {
+    list: (params?: { page?: number; limit?: number; search?: string; userId?: string }) => {
       const qs = new URLSearchParams();
       if (params?.page) qs.set("page", String(params.page));
       if (params?.limit) qs.set("limit", String(params.limit));
@@ -147,17 +120,11 @@ export const api = {
       if (params?.page) qs.set("page", String(params.page));
       if (params?.limit) qs.set("limit", String(params.limit));
       const query = qs.toString();
-      return request<TabListResponse>(
-        `/api/tabs/my${query ? `?${query}` : ""}`,
-      );
+      return request<TabListResponse>(`/api/tabs/my${query ? `?${query}` : ""}`);
     },
     get: (id: string) => request<TabDetail>(`/api/tabs/${id}`),
-    create: (data: {
-      title: string;
-      artist?: string;
-      content: TabDocument;
-      isPublic?: boolean;
-    }) => request<TabDetail>("/api/tabs", { method: "POST", body: data }),
+    create: (data: { title: string; artist?: string; content: TabDocument; isPublic?: boolean }) =>
+      request<TabDetail>("/api/tabs", { method: "POST", body: data }),
     update: (
       id: string,
       data: {
@@ -168,10 +135,8 @@ export const api = {
         changeDescription?: string;
       },
     ) => request<TabDetail>(`/api/tabs/${id}`, { method: "PUT", body: data }),
-    delete: (id: string) =>
-      request<void>(`/api/tabs/${id}`, { method: "DELETE" }),
-    fork: (id: string) =>
-      request<TabDetail>(`/api/tabs/${id}/fork`, { method: "POST" }),
+    delete: (id: string) => request<void>(`/api/tabs/${id}`, { method: "DELETE" }),
+    fork: (id: string) => request<TabDetail>(`/api/tabs/${id}/fork`, { method: "POST" }),
     versions: (id: string) => request<TabVersion[]>(`/api/tabs/${id}/versions`),
     togglePublish: (id: string) =>
       request<TabDetail>(`/api/tabs/${id}/publish`, { method: "POST" }),
@@ -180,9 +145,7 @@ export const api = {
       if (params?.page) qs.set("page", String(params.page));
       if (params?.limit) qs.set("limit", String(params.limit));
       const query = qs.toString();
-      return request<TabListResponse>(
-        `/api/tabs/feed${query ? `?${query}` : ""}`,
-      );
+      return request<TabListResponse>(`/api/tabs/feed${query ? `?${query}` : ""}`);
     },
   },
   jamRooms: {
@@ -190,8 +153,7 @@ export const api = {
       const qs = new URLSearchParams();
       if (params?.page) qs.set("page", String(params.page));
       if (params?.limit) qs.set("limit", String(params.limit));
-      if (params?.isActive !== undefined)
-        qs.set("isActive", String(params.isActive));
+      if (params?.isActive !== undefined) qs.set("isActive", String(params.isActive));
       const query = qs.toString();
       return request<{
         data: JamRoom[];
@@ -212,8 +174,7 @@ export const api = {
       request<{ message: string }>(`/api/jam-rooms/${id}/leave`, {
         method: "POST",
       }),
-    participants: (id: string) =>
-      request<JamParticipant[]>(`/api/jam-rooms/${id}/participants`),
+    participants: (id: string) => request<JamParticipant[]>(`/api/jam-rooms/${id}/participants`),
     close: (id: string) =>
       request<{ message: string }>(`/api/jam-rooms/${id}`, {
         method: "DELETE",
@@ -222,22 +183,17 @@ export const api = {
   community: {
     // 좋아요
     toggleLike: (tabId: string) =>
-      request<{ liked: boolean; likeCount: number }>(
-        `/api/community/tabs/${tabId}/like`,
-        { method: "POST" },
-      ),
-    isLiked: (tabId: string) =>
-      request<{ liked: boolean }>(`/api/community/tabs/${tabId}/like`),
+      request<{ liked: boolean; likeCount: number }>(`/api/community/tabs/${tabId}/like`, {
+        method: "POST",
+      }),
+    isLiked: (tabId: string) => request<{ liked: boolean }>(`/api/community/tabs/${tabId}/like`),
 
     // 댓글
     getComments: (tabId: string, page = 1, limit = 20) =>
       request<{ comments: CommentData[]; total: number }>(
         `/api/community/tabs/${tabId}/comments?page=${page}&limit=${limit}`,
       ),
-    createComment: (
-      tabId: string,
-      data: { content: string; parentId?: string },
-    ) =>
+    createComment: (tabId: string, data: { content: string; parentId?: string }) =>
       request<CommentData>(`/api/community/tabs/${tabId}/comments`, {
         method: "POST",
         body: data,
@@ -289,15 +245,14 @@ export const api = {
         currentPeriodEnd: string;
       } | null>("/api/subscriptions/current"),
     subscribe: (plan: string, externalPaymentId?: string) =>
-      request<{ id: string; plan: string; status: string }>(
-        "/api/subscriptions/subscribe",
-        { method: "POST", body: { plan, externalPaymentId } },
-      ),
+      request<{ id: string; plan: string; status: string }>("/api/subscriptions/subscribe", {
+        method: "POST",
+        body: { plan, externalPaymentId },
+      }),
     cancel: () =>
-      request<{ id: string; plan: string; status: string }>(
-        "/api/subscriptions/cancel",
-        { method: "POST" },
-      ),
+      request<{ id: string; plan: string; status: string }>("/api/subscriptions/cancel", {
+        method: "POST",
+      }),
     getHistory: (params?: { page?: number; limit?: number }) => {
       const qs = new URLSearchParams();
       if (params?.page) qs.set("page", String(params.page));
@@ -314,9 +269,7 @@ export const api = {
       if (params?.page) qs.set("page", String(params.page));
       if (params?.limit) qs.set("limit", String(params.limit));
       const query = qs.toString();
-      return request<TabListResponse>(
-        `/api/marketplace/tabs${query ? `?${query}` : ""}`,
-      );
+      return request<TabListResponse>(`/api/marketplace/tabs${query ? `?${query}` : ""}`);
     },
     setPrice: (tabId: string, price: number) =>
       request<TabDetail>(`/api/marketplace/tabs/${tabId}/price`, {
@@ -332,9 +285,7 @@ export const api = {
         createdAt: string;
       }>(`/api/marketplace/tabs/${tabId}/purchase`, { method: "POST" }),
     hasPurchased: (tabId: string) =>
-      request<{ purchased: boolean }>(
-        `/api/marketplace/tabs/${tabId}/purchased`,
-      ),
+      request<{ purchased: boolean }>(`/api/marketplace/tabs/${tabId}/purchased`),
     myPurchases: (params?: { page?: number; limit?: number }) => {
       const qs = new URLSearchParams();
       if (params?.page) qs.set("page", String(params.page));
@@ -446,12 +397,9 @@ export const api = {
         method: "PUT",
         body: data,
       }),
-    delete: (id: string) =>
-      request<void>(`/api/recordings/${id}`, { method: "DELETE" }),
-    play: (id: string) =>
-      request<void>(`/api/recordings/${id}/play`, { method: "POST" }),
-    getShareUrl: (id: string) =>
-      request<{ url: string }>(`/api/recordings/${id}/share`),
+    delete: (id: string) => request<void>(`/api/recordings/${id}`, { method: "DELETE" }),
+    play: (id: string) => request<void>(`/api/recordings/${id}/play`, { method: "POST" }),
+    getShareUrl: (id: string) => request<{ url: string }>(`/api/recordings/${id}/share`),
   },
   aiGen: {
     createTabJob: (data: {
@@ -465,11 +413,7 @@ export const api = {
         method: "POST",
         body: data,
       }),
-    createAudioExtractionJob: (data: {
-      audioUrl: string;
-      instrument?: string;
-      tuning?: string;
-    }) =>
+    createAudioExtractionJob: (data: { audioUrl: string; instrument?: string; tuning?: string }) =>
       request<{ id: string; status: string }>("/api/ai-gen/audio-extraction", {
         method: "POST",
         body: data,

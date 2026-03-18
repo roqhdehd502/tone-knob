@@ -16,6 +16,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 
+import { BpmDial } from "~/components/editor/BpmDial";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
@@ -78,22 +79,8 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="tab-bpm" className="text-xs">
-            BPM
-          </Label>
-          <Input
-            id="tab-bpm"
-            type="number"
-            min={20}
-            max={300}
-            value={tab.bpm}
-            onChange={(e) =>
-              onUpdateMeta({
-                bpm: Math.max(20, Math.min(300, parseInt(e.target.value) || 120)),
-              })
-            }
-            className="h-8 text-sm"
-          />
+          <Label className="text-xs">BPM</Label>
+          <BpmDial value={tab.bpm} min={20} max={300} onChange={(bpm) => onUpdateMeta({ bpm })} />
         </div>
 
         <div className="space-y-1">

@@ -3,10 +3,7 @@ import { STANDARD_TUNING } from "~/types/tab";
 
 const BASS_TUNING = ["G", "D", "A", "E"];
 
-const INSTRUMENT_DEFAULTS: Record<
-  InstrumentType,
-  { tuning: string[]; name: string }
-> = {
+const INSTRUMENT_DEFAULTS: Record<InstrumentType, { tuning: string[]; name: string }> = {
   "electric-guitar": { tuning: [...STANDARD_TUNING], name: "일렉기타" },
   "acoustic-guitar": { tuning: [...STANDARD_TUNING], name: "어쿠스틱기타" },
   bass: { tuning: [...BASS_TUNING], name: "베이스" },
@@ -53,10 +50,7 @@ export function addTrackToDocument(
   };
 }
 
-export function removeTrackFromDocument(
-  doc: TabDocument,
-  trackId: string,
-): TabDocument {
+export function removeTrackFromDocument(doc: TabDocument, trackId: string): TabDocument {
   return {
     ...doc,
     tracks: (doc.tracks || []).filter((t) => t.id !== trackId),
@@ -70,9 +64,7 @@ export function updateTrack(
 ): TabDocument {
   return {
     ...doc,
-    tracks: (doc.tracks || []).map((t) =>
-      t.id === trackId ? { ...t, ...updates } : t,
-    ),
+    tracks: (doc.tracks || []).map((t) => (t.id === trackId ? { ...t, ...updates } : t)),
   };
 }
 

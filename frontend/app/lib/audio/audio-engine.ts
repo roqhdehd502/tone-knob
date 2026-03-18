@@ -1,5 +1,6 @@
 import * as Tone from "tone";
-import type { TabDocument, Note, Duration } from "~/types/tab";
+
+import type { Duration, InstrumentType, TabDocument } from "~/types/tab";
 
 // 표준 튜닝의 MIDI 노트 번호 (1번줄 high E → 6번줄 low E)
 const STANDARD_TUNING_MIDI = [64, 59, 55, 50, 45, 40]; // E4, B3, G3, D3, A2, E2
@@ -25,17 +26,26 @@ function midiToNoteName(midi: number): string {
 
 // Duration 값을 Tone.js notation으로 변환
 function durationToNotation(duration: Duration): string {
-  switch (duration) {
+  const abs = Math.abs(duration);
+  switch (abs) {
     case 1:
       return "1n";
+    case 0.75:
+      return "2n.";
     case 0.5:
       return "2n";
+    case 0.375:
+      return "4n.";
     case 0.25:
       return "4n";
+    case 0.1875:
+      return "8n.";
     case 0.125:
       return "8n";
     case 0.0625:
       return "16n";
+    case 0.03125:
+      return "32n";
     default:
       return "4n";
   }
@@ -55,9 +65,73 @@ export interface AudioEngineCallbacks {
   onComplete?: () => void;
 }
 
+// Instrument-specific synth configurations
+function createInstrumentSynth(instrument: InstrumentType): Tone.PolySynth {
+  switch (instrument) {
+    case "electric-guitar":
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "fatsawtooth", spread: 12, count: 3 },
+        envelope: {
+          attack: 0.003,
+          decay: 0.4,
+          sustain: 0.15,
+          release: 1.2,
+        },
+        volume: -8,
+      });
+    case "acoustic-guitar":
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle8" },
+        envelope: {
+          attack: 0.002,
+          decay: 0.6,
+          sustain: 0.08,
+          release: 1.5,
+        },
+        volume: -6,
+      });
+    case "bass":
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "fmsine", modulationIndex: 1.5 },
+        envelope: {
+          attack: 0.01,
+          decay: 0.5,
+          sustain: 0.3,
+          release: 0.8,
+        },
+        volume: -4,
+      });
+    case "keyboard":
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "sine" },
+        envelope: {
+          attack: 0.01,
+          decay: 0.3,
+          sustain: 0.6,
+          release: 0.6,
+        },
+        volume: -6,
+      });
+    default:
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle" },
+        envelope: {
+          attack: 0.005,
+          decay: 0.3,
+          sustain: 0.2,
+          release: 0.8,
+        },
+        volume: -6,
+      });
+  }
+}
+
 export class AudioEngine {
   private synth: Tone.PolySynth | null = null;
   private metronomeSynth: Tone.MembraneSynth | null = null;
+  private reverbNode: Tone.Reverb | null = null;
+  private eqNode: Tone.EQ3 | null = null;
+  private volumeNode: Tone.Volume | null = null;
   private scheduledEvents: number[] = [];
   private state: PlaybackState = "stopped";
   private callbacks: AudioEngineCallbacks = {};
@@ -65,20 +139,34 @@ export class AudioEngine {
   private animationFrameId: number | null = null;
   private startTime = 0;
   private pauseOffset = 0;
+  private currentInstrument: InstrumentType = "electric-guitar";
 
-  async init(): Promise<void> {
+  async init(instrument?: InstrumentType): Promise<void> {
     await Tone.start();
 
-    this.synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: "triangle" },
-      envelope: {
-        attack: 0.005,
-        decay: 0.3,
-        sustain: 0.2,
-        release: 0.8,
-      },
-      volume: -6,
-    }).toDestination();
+    if (instrument) {
+      this.currentInstrument = instrument;
+    }
+
+    // Dispose old chain
+    this.synth?.dispose();
+    this.reverbNode?.dispose();
+    this.eqNode?.dispose();
+    this.volumeNode?.dispose();
+
+    // Create instrument-specific synth
+    this.synth = createInstrumentSynth(this.currentInstrument);
+
+    // FX chain: synth → EQ → reverb → volume → destination
+    this.volumeNode = new Tone.Volume(0).toDestination();
+    this.reverbNode = new Tone.Reverb({ decay: 1.5, wet: 0.15 }).connect(this.volumeNode);
+    this.eqNode = new Tone.EQ3({
+      low: this.currentInstrument === "bass" ? 3 : 0,
+      mid: 0,
+      high: this.currentInstrument === "acoustic-guitar" ? 2 : 0,
+    }).connect(this.reverbNode);
+
+    this.synth.connect(this.eqNode);
 
     this.metronomeSynth = new Tone.MembraneSynth({
       pitchDecay: 0.01,
@@ -93,6 +181,22 @@ export class AudioEngine {
     }).toDestination();
   }
 
+  async setInstrument(instrument: InstrumentType): Promise<void> {
+    if (this.currentInstrument === instrument && this.synth) return;
+    this.currentInstrument = instrument;
+    await this.init(instrument);
+  }
+
+  getInstrument(): InstrumentType {
+    return this.currentInstrument;
+  }
+
+  setVolume(db: number): void {
+    if (this.volumeNode) {
+      this.volumeNode.volume.value = db;
+    }
+  }
+
   setCallbacks(callbacks: AudioEngineCallbacks): void {
     this.callbacks = callbacks;
   }
@@ -102,11 +206,7 @@ export class AudioEngine {
   }
 
   // 기타 줄과 프렛으로부터 실제 음 높이 계산
-  getNoteFrequency(
-    stringIndex: number,
-    fret: number,
-    tuning: string[],
-  ): string {
+  getNoteFrequency(stringIndex: number, fret: number, tuning: string[]): string {
     let baseMidi: number;
     if (tuning.length > stringIndex) {
       // 튜닝 문자열에 옥타브 번호가 없으면 표준 옥타브 사용
@@ -171,8 +271,8 @@ export class AudioEngine {
     let globalTime = 0;
 
     // Starting position offset
-    let startSectionIdx = startPosition?.sectionIndex ?? 0;
-    let startMeasureIdx = startPosition?.measureIndex ?? 0;
+    const startSectionIdx = startPosition?.sectionIndex ?? 0;
+    const startMeasureIdx = startPosition?.measureIndex ?? 0;
 
     for (let si = startSectionIdx; si < tab.sections.length; si++) {
       const section = tab.sections[si];
@@ -187,11 +287,7 @@ export class AudioEngine {
           for (let beat = 0; beat < beatsPerMeasure; beat++) {
             const clickTime = globalTime + beat * secondsPerBeat;
             const eventId = Tone.getTransport().schedule((time) => {
-              this.metronomeSynth?.triggerAttackRelease(
-                beat === 0 ? "C3" : "C2",
-                "32n",
-                time,
-              );
+              this.metronomeSynth?.triggerAttackRelease(beat === 0 ? "C3" : "C2", "32n", time);
             }, clickTime);
             this.scheduledEvents.push(eventId);
           }
@@ -200,11 +296,7 @@ export class AudioEngine {
         // Schedule notes
         for (const note of measure.notes) {
           const noteTime = globalTime + note.position * measureDuration;
-          const noteName = this.getNoteFrequency(
-            note.string,
-            note.fret,
-            tab.tuning,
-          );
+          const noteName = this.getNoteFrequency(note.string, note.fret, tab.tuning);
           const notation = durationToNotation(note.duration);
 
           const eventId = Tone.getTransport().schedule((time) => {
@@ -269,8 +361,14 @@ export class AudioEngine {
     this.stop();
     this.synth?.dispose();
     this.metronomeSynth?.dispose();
+    this.reverbNode?.dispose();
+    this.eqNode?.dispose();
+    this.volumeNode?.dispose();
     this.synth = null;
     this.metronomeSynth = null;
+    this.reverbNode = null;
+    this.eqNode = null;
+    this.volumeNode = null;
   }
 
   private setState(state: PlaybackState): void {

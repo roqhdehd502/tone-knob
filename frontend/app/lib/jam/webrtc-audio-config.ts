@@ -8,14 +8,12 @@
 
 /** Opus 코덱을 SDP에서 최우선으로 설정 */
 export function preferOpusCodec(sdp: string): string {
-  const lines = sdp.split('\r\n');
-  const mLineIndex = lines.findIndex((l) => l.startsWith('m=audio'));
+  const lines = sdp.split("\r\n");
+  const mLineIndex = lines.findIndex((l) => l.startsWith("m=audio"));
   if (mLineIndex === -1) return sdp;
 
   // Opus payload type 찾기
-  const opusLine = lines.find(
-    (l) => l.toLowerCase().includes('opus/48000'),
-  );
+  const opusLine = lines.find((l) => l.toLowerCase().includes("opus/48000"));
   if (!opusLine) return sdp;
 
   const match = opusLine.match(/^a=rtpmap:(\d+)\s+opus/i);
@@ -24,24 +22,22 @@ export function preferOpusCodec(sdp: string): string {
 
   // m= 라인에서 Opus를 첫 번째로 이동
   const mLine = lines[mLineIndex];
-  const parts = mLine.split(' ');
+  const parts = mLine.split(" ");
   // m=audio 9 UDP/TLS/RTP/SAVPF 111 103 104 ...
   const header = parts.slice(0, 3);
   const payloads = parts.slice(3);
   const reordered = [opusPT, ...payloads.filter((p) => p !== opusPT)];
-  lines[mLineIndex] = [...header, ...reordered].join(' ');
+  lines[mLineIndex] = [...header, ...reordered].join(" ");
 
-  return lines.join('\r\n');
+  return lines.join("\r\n");
 }
 
 /** Opus fmtp 파라미터 설정 (음악 모드 최적화) */
 export function setOpusMusicMode(sdp: string): string {
-  const lines = sdp.split('\r\n');
+  const lines = sdp.split("\r\n");
 
   // Opus payload type 찾기
-  const rtpmapLine = lines.find(
-    (l) => l.toLowerCase().includes('opus/48000'),
-  );
+  const rtpmapLine = lines.find((l) => l.toLowerCase().includes("opus/48000"));
   if (!rtpmapLine) return sdp;
 
   const match = rtpmapLine.match(/^a=rtpmap:(\d+)\s+opus/i);
@@ -49,9 +45,7 @@ export function setOpusMusicMode(sdp: string): string {
   const opusPT = match[1];
 
   // 기존 fmtp 라인 찾기 또는 새로 생성
-  const fmtpIndex = lines.findIndex(
-    (l) => l.startsWith(`a=fmtp:${opusPT}`),
-  );
+  const fmtpIndex = lines.findIndex((l) => l.startsWith(`a=fmtp:${opusPT}`));
 
   // 음악 모드 파라미터:
   // stereo=1: 스테레오 수신 허용
@@ -60,17 +54,17 @@ export function setOpusMusicMode(sdp: string): string {
   // useinbandfec=1: 패킷 손실 복구 (FEC)
   // usedtx=0: DTX 비활성화 (음악에서는 무음 구간도 전송)
   const musicParams = [
-    'stereo=1',
-    'sprop-stereo=1',
-    'maxaveragebitrate=128000',
-    'useinbandfec=1',
-    'usedtx=0',
-  ].join(';');
+    "stereo=1",
+    "sprop-stereo=1",
+    "maxaveragebitrate=128000",
+    "useinbandfec=1",
+    "usedtx=0",
+  ].join(";");
 
   if (fmtpIndex !== -1) {
     // 기존 파라미터에 음악 모드 추가
     const existing = lines[fmtpIndex];
-    const existingParams = existing.split(' ').slice(1).join(' ');
+    const existingParams = existing.split(" ").slice(1).join(" ");
     const merged = mergeParams(existingParams, musicParams);
     lines[fmtpIndex] = `a=fmtp:${opusPT} ${merged}`;
   } else {
@@ -79,22 +73,22 @@ export function setOpusMusicMode(sdp: string): string {
     lines.splice(rtpmapIndex + 1, 0, `a=fmtp:${opusPT} ${musicParams}`);
   }
 
-  return lines.join('\r\n');
+  return lines.join("\r\n");
 }
 
 function mergeParams(existing: string, additions: string): string {
   const params = new Map<string, string>();
-  for (const param of existing.split(';')) {
-    const [key, value] = param.split('=');
-    if (key) params.set(key.trim(), value?.trim() ?? '');
+  for (const param of existing.split(";")) {
+    const [key, value] = param.split("=");
+    if (key) params.set(key.trim(), value?.trim() ?? "");
   }
-  for (const param of additions.split(';')) {
-    const [key, value] = param.split('=');
-    if (key) params.set(key.trim(), value?.trim() ?? '');
+  for (const param of additions.split(";")) {
+    const [key, value] = param.split("=");
+    if (key) params.set(key.trim(), value?.trim() ?? "");
   }
   return Array.from(params.entries())
     .map(([k, v]) => (v ? `${k}=${v}` : k))
-    .join(';');
+    .join(";");
 }
 
 /**
@@ -148,7 +142,7 @@ export class AdaptiveBitrateController {
       let roundTripTime = 0;
 
       stats.forEach((report) => {
-        if (report.type === 'outbound-rtp' && report.kind === 'audio') {
+        if (report.type === "outbound-rtp" && report.kind === "audio") {
           const bytesSent = report.bytesSent as number;
           const ts = report.timestamp as number;
 
@@ -162,7 +156,7 @@ export class AdaptiveBitrateController {
           this.prevTimestamp = ts;
         }
 
-        if (report.type === 'remote-inbound-rtp' && report.kind === 'audio') {
+        if (report.type === "remote-inbound-rtp" && report.kind === "audio") {
           packetLoss = (report.fractionLost as number) ?? 0;
           roundTripTime = (report.roundTripTime as number) ?? 0;
         }
@@ -171,19 +165,13 @@ export class AdaptiveBitrateController {
       // 비트레이트 조절 로직
       if (packetLoss > 0.1 || roundTripTime > 0.3) {
         // 패킷 손실 > 10% 또는 RTT > 300ms → 비트레이트 감소
-        this.currentBitrate = Math.max(
-          this.minBitrate,
-          this.currentBitrate - this.stepDown,
-        );
+        this.currentBitrate = Math.max(this.minBitrate, this.currentBitrate - this.stepDown);
         this.consecutiveGood = 0;
       } else if (packetLoss < 0.02 && roundTripTime < 0.1) {
         // 패킷 손실 < 2% 및 RTT < 100ms → 점진적 증가
         this.consecutiveGood++;
         if (this.consecutiveGood >= 3) {
-          this.currentBitrate = Math.min(
-            this.maxBitrate,
-            this.currentBitrate + this.stepUp,
-          );
+          this.currentBitrate = Math.min(this.maxBitrate, this.currentBitrate + this.stepUp);
           this.consecutiveGood = 0;
         }
       }
@@ -198,7 +186,7 @@ export class AdaptiveBitrateController {
   private async applyBitrate() {
     const senders = this.pc.getSenders();
     for (const sender of senders) {
-      if (sender.track?.kind === 'audio') {
+      if (sender.track?.kind === "audio") {
         const params = sender.getParameters();
         if (!params.encodings || params.encodings.length === 0) {
           params.encodings = [{}];
@@ -226,12 +214,12 @@ export function applyJitterBufferConfig(
 ) {
   const receivers = pc.getReceivers();
   for (const receiver of receivers) {
-    if (receiver.track?.kind === 'audio') {
+    if (receiver.track?.kind === "audio") {
       // playoutDelayHint는 아직 표준화 중이지만 Chrome에서 지원
       const jitterBufferTarget = receiver as RTCRtpReceiver & {
         playoutDelayHint?: number;
       };
-      if ('playoutDelayHint' in jitterBufferTarget) {
+      if ("playoutDelayHint" in jitterBufferTarget) {
         jitterBufferTarget.playoutDelayHint = targetDelaySeconds;
       }
     }

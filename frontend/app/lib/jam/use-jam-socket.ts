@@ -18,11 +18,7 @@ interface JamSocketOptions {
   onWebRTCAnswer?: (data: { fromUserId: string; signal: unknown }) => void;
   onICECandidate?: (data: { fromUserId: string; signal: unknown }) => void;
   onUserMuted?: (data: { userId: string; isMuted: boolean }) => void;
-  onPlaybackSynced?: (data: {
-    fromUserId: string;
-    position: number;
-    isPlaying: boolean;
-  }) => void;
+  onPlaybackSynced?: (data: { fromUserId: string; position: number; isPlaying: boolean }) => void;
 }
 
 export function useJamSocket(options: JamSocketOptions) {
@@ -51,9 +47,7 @@ export function useJamSocket(options: JamSocketOptions) {
   >([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [latency, setLatency] = useState<number | null>(null);
-  const latencyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null,
-  );
+  const latencyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -73,12 +67,9 @@ export function useJamSocket(options: JamSocketOptions) {
       setConnected(false);
     });
 
-    socket.on(
-      "room-joined",
-      (data: { roomId: string; participants: unknown[] }) => {
-        setParticipants(data.participants as typeof participants);
-      },
-    );
+    socket.on("room-joined", (data: { roomId: string; participants: unknown[] }) => {
+      setParticipants(data.participants as typeof participants);
+    });
 
     socket.on("user-joined", (data: { userId: string; socketId: string }) => {
       onUserJoined?.(data);
@@ -92,26 +83,17 @@ export function useJamSocket(options: JamSocketOptions) {
       onUserDisconnected?.(data);
     });
 
-    socket.on(
-      "webrtc-offer",
-      (data: { fromUserId: string; signal: unknown }) => {
-        onWebRTCOffer?.(data);
-      },
-    );
+    socket.on("webrtc-offer", (data: { fromUserId: string; signal: unknown }) => {
+      onWebRTCOffer?.(data);
+    });
 
-    socket.on(
-      "webrtc-answer",
-      (data: { fromUserId: string; signal: unknown }) => {
-        onWebRTCAnswer?.(data);
-      },
-    );
+    socket.on("webrtc-answer", (data: { fromUserId: string; signal: unknown }) => {
+      onWebRTCAnswer?.(data);
+    });
 
-    socket.on(
-      "webrtc-ice-candidate",
-      (data: { fromUserId: string; signal: unknown }) => {
-        onICECandidate?.(data);
-      },
-    );
+    socket.on("webrtc-ice-candidate", (data: { fromUserId: string; signal: unknown }) => {
+      onICECandidate?.(data);
+    });
 
     socket.on("user-muted", (data: { userId: string; isMuted: boolean }) => {
       onUserMuted?.(data);

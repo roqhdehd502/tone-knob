@@ -73,11 +73,11 @@ export default function Home() {
   return (
     <div className="space-y-6">
       {/* Welcome banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-violet-600 via-indigo-600 to-purple-700 p-6 text-white shadow-lg shadow-violet-500/10 sm:p-8">
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-miami-600 via-miami-600 to-rosewood-700 p-6 text-white shadow-lg shadow-miami-500/10 sm:p-8">
         <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-white/5 blur-3xl" />
         <div className="relative z-10">
-          <div className="flex items-center gap-2 text-violet-200">
+          <div className="flex items-center gap-2 text-miami-200">
             <Sparkles className="h-4 w-4" />
             <span className="text-xs font-medium uppercase tracking-wider">
               {user ? `${user.displayName || user.username}님, 환영합니다` : "Tone Knob"}
@@ -88,7 +88,7 @@ export default function Home() {
             타브 제작부터 실시간 합주까지 — 당신의 음악 여정이 여기서 시작됩니다.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button asChild className="bg-white text-violet-700 hover:bg-white/90">
+            <Button asChild className="bg-white text-miami-700 hover:bg-white/90">
               <Link to="/editor/new" className="gap-2">
                 <Plus className="h-4 w-4" />새 타브 만들기
               </Link>
@@ -112,8 +112,8 @@ export default function Home() {
         {stats.map((stat) => (
           <Card key={stat.label} className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/50">
-                <stat.icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-miami-50 dark:bg-miami-950/50">
+                <stat.icon className="h-4 w-4 text-miami-600 dark:text-miami-400" />
               </div>
               <div className="min-w-0">
                 <p className="text-xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
@@ -134,7 +134,7 @@ export default function Home() {
             {user && myTabs.length > 0 && (
               <Link
                 to="/tabs/my"
-                className="flex items-center gap-1 text-xs text-violet-600 hover:underline dark:text-violet-400"
+                className="flex items-center gap-1 text-xs text-miami-600 hover:underline dark:text-miami-400"
               >
                 전체 보기 <ArrowRight className="h-3 w-3" />
               </Link>
@@ -195,7 +195,7 @@ export default function Home() {
           {publicTabs.length > 0 && (
             <Link
               to="/tabs"
-              className="flex items-center gap-1 text-xs text-violet-600 hover:underline dark:text-violet-400"
+              className="flex items-center gap-1 text-xs text-miami-600 hover:underline dark:text-miami-400"
             >
               전체 보기 <ArrowRight className="h-3 w-3" />
             </Link>
@@ -244,10 +244,10 @@ export default function Home() {
           <Link
             key={item.to}
             to={item.to}
-            className="group flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-violet-700"
+            className="group flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-miami-300 hover:shadow-md dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-miami-700"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 transition-colors group-hover:bg-violet-100 dark:bg-violet-950/50 dark:group-hover:bg-violet-950">
-              <item.icon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-miami-50 transition-colors group-hover:bg-miami-100 dark:bg-miami-950/50 dark:group-hover:bg-miami-950">
+              <item.icon className="h-5 w-5 text-miami-600 dark:text-miami-400" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{item.title}</h3>
@@ -264,11 +264,11 @@ function TabListCard({ tab, showAuthor = false }: { tab: TabListItem; showAuthor
   return (
     <Link
       to={`/tabs/${tab.id}`}
-      className="group block rounded-lg border border-gray-100 p-3 transition-colors hover:border-violet-200 hover:bg-violet-50/50 dark:border-gray-800 dark:hover:border-violet-800 dark:hover:bg-violet-950/30"
+      className="group block rounded-lg border border-gray-100 p-3 transition-colors hover:border-miami-200 hover:bg-miami-50/50 dark:border-gray-800 dark:hover:border-miami-800 dark:hover:bg-miami-950/30"
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-medium text-gray-900 group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
+          <h3 className="truncate text-sm font-medium text-gray-900 group-hover:text-miami-700 dark:text-white dark:group-hover:text-miami-300">
             {tab.title}
           </h3>
           {tab.artist && (

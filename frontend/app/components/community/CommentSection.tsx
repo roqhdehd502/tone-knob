@@ -105,9 +105,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <MessageCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="font-semibold text-gray-900 dark:text-white">
-          댓글 ({total})
-        </h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white">댓글 ({total})</h3>
       </div>
 
       {currentUserId && (
@@ -129,9 +127,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
       {loading && comments.length === 0 ? (
         <p className="py-4 text-center text-sm text-gray-400">로딩 중...</p>
       ) : comments.length === 0 ? (
-        <p className="py-4 text-center text-sm text-gray-400">
-          아직 댓글이 없습니다
-        </p>
+        <p className="py-4 text-center text-sm text-gray-400">아직 댓글이 없습니다</p>
       ) : (
         <div className="space-y-3">
           {comments.map((comment) => (
@@ -153,24 +149,15 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                       onChange={(e) => setEditContent(e.target.value)}
                       className="flex-1 text-sm"
                     />
-                    <Button
-                      size="sm"
-                      onClick={() => handleEdit(comment.id)}
-                    >
+                    <Button size="sm" onClick={() => handleEdit(comment.id)}>
                       저장
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setEditingId(null)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
                       취소
                     </Button>
                   </div>
                 ) : (
-                  <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                    {comment.content}
-                  </p>
+                  <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{comment.content}</p>
                 )}
 
                 <div className="mt-2 flex gap-2">
@@ -180,14 +167,14 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                         setReplyTo(replyTo === comment.id ? null : comment.id);
                         setReplyContent("");
                       }}
-                      className="text-xs text-gray-500 hover:text-violet-500"
+                      className="text-xs text-gray-500 hover:text-miami-500"
                     >
                       답글
                     </button>
                   )}
                   <button
                     onClick={() => loadReplies(comment.id)}
-                    className="text-xs text-gray-500 hover:text-violet-500"
+                    className="text-xs text-gray-500 hover:text-miami-500"
                   >
                     답글 보기
                   </button>
@@ -233,10 +220,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
               )}
 
               {replies.get(comment.id)?.map((reply) => (
-                <div
-                  key={reply.id}
-                  className="ml-6 rounded-lg bg-gray-100 p-2.5 dark:bg-gray-700"
-                >
+                <div key={reply.id} className="ml-6 rounded-lg bg-gray-100 p-2.5 dark:bg-gray-700">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-800 dark:text-gray-200">
                       {reply.user?.displayName || reply.user?.username || "알 수 없음"}
@@ -245,9 +229,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                       {new Date(reply.createdAt).toLocaleDateString("ko-KR")}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
-                    {reply.content}
-                  </p>
+                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">{reply.content}</p>
                   {currentUserId === reply.userId && (
                     <button
                       onClick={() => handleDelete(reply.id)}

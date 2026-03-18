@@ -28,7 +28,7 @@ interface CurrentSub {
 const PLAN_ICONS: Record<string, React.ReactNode> = {
   free: <Zap className="h-6 w-6 text-gray-400" />,
   premium: <Crown className="h-6 w-6 text-amber-500" />,
-  pro: <Crown className="h-6 w-6 text-violet-500" />,
+  pro: <Crown className="h-6 w-6 text-miami-500" />,
 };
 
 const PLAN_LABELS: Record<string, string> = {
@@ -101,7 +101,7 @@ export default function SubscriptionPage() {
   if (authLoading || !user || loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function SubscriptionPage() {
       )}
 
       {currentSub && (
-        <Card className="border-violet-200 bg-violet-50/50 p-5 dark:border-violet-800 dark:bg-violet-900/20">
+        <Card className="border-miami-200 bg-miami-50/50 p-5 dark:border-miami-800 dark:bg-miami-900/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {PLAN_ICONS[currentSub.plan]}
@@ -156,12 +156,12 @@ export default function SubscriptionPage() {
               key={plan.plan}
               className={`relative p-6 ${
                 isHighlighted
-                  ? "border-violet-400 shadow-lg shadow-violet-500/10 dark:border-violet-600"
+                  ? "border-miami-400 shadow-lg shadow-miami-500/10 dark:border-miami-600"
                   : ""
               }`}
             >
               {isHighlighted && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-600 px-3 py-0.5 text-xs font-medium text-white">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-miami-600 px-3 py-0.5 text-xs font-medium text-white">
                   인기
                 </span>
               )}
@@ -195,7 +195,7 @@ export default function SubscriptionPage() {
                 </Button>
               ) : (
                 <Button
-                  className={`w-full ${isHighlighted ? "bg-violet-600 hover:bg-violet-700" : ""}`}
+                  className={`w-full ${isHighlighted ? "bg-miami-600 hover:bg-miami-700" : ""}`}
                   disabled={isCurrent || subscribing !== null}
                   onClick={() => handleSubscribe(plan.plan)}
                 >

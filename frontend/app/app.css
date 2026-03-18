@@ -4,20 +4,47 @@
 
 @theme {
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
+    "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  --color-brand-50: oklch(0.97 0.02 285);
-  --color-brand-100: oklch(0.94 0.04 285);
-  --color-brand-200: oklch(0.88 0.08 285);
-  --color-brand-300: oklch(0.78 0.12 285);
-  --color-brand-400: oklch(0.68 0.17 285);
-  --color-brand-500: oklch(0.58 0.22 285);
-  --color-brand-600: oklch(0.52 0.24 285);
-  --color-brand-700: oklch(0.45 0.22 285);
-  --color-brand-800: oklch(0.38 0.18 285);
-  --color-brand-900: oklch(0.32 0.14 285);
-  --color-brand-950: oklch(0.24 0.1 285);
+  /* Miami Blue (Primary) */
+  --color-miami-50: oklch(0.97 0.02 192);
+  --color-miami-100: oklch(0.93 0.04 192);
+  --color-miami-200: oklch(0.86 0.08 192);
+  --color-miami-300: oklch(0.77 0.11 192);
+  --color-miami-400: oklch(0.73 0.12 192);
+  --color-miami-500: oklch(0.65 0.13 192);
+  --color-miami-600: oklch(0.58 0.12 192);
+  --color-miami-700: oklch(0.5 0.1 192);
+  --color-miami-800: oklch(0.42 0.08 192);
+  --color-miami-900: oklch(0.35 0.06 192);
+  --color-miami-950: oklch(0.25 0.04 192);
+
+  /* Rosewood (Secondary) */
+  --color-rosewood-50: oklch(0.97 0.01 22);
+  --color-rosewood-100: oklch(0.92 0.03 22);
+  --color-rosewood-200: oklch(0.83 0.06 22);
+  --color-rosewood-300: oklch(0.72 0.1 22);
+  --color-rosewood-400: oklch(0.58 0.13 22);
+  --color-rosewood-500: oklch(0.48 0.14 22);
+  --color-rosewood-600: oklch(0.4 0.13 22);
+  --color-rosewood-700: oklch(0.33 0.11 22);
+  --color-rosewood-800: oklch(0.28 0.09 22);
+  --color-rosewood-900: oklch(0.24 0.07 22);
+  --color-rosewood-950: oklch(0.18 0.05 22);
+
+  /* Amber (Tertiary) */
+  --color-amber-50: oklch(0.98 0.02 85);
+  --color-amber-100: oklch(0.95 0.05 85);
+  --color-amber-200: oklch(0.9 0.1 85);
+  --color-amber-300: oklch(0.87 0.14 85);
+  --color-amber-400: oklch(0.84 0.17 85);
+  --color-amber-500: oklch(0.8 0.16 85);
+  --color-amber-600: oklch(0.72 0.14 85);
+  --color-amber-700: oklch(0.62 0.12 85);
+  --color-amber-800: oklch(0.52 0.1 85);
+  --color-amber-900: oklch(0.42 0.08 85);
+  --color-amber-950: oklch(0.3 0.05 85);
 }
 
 html,
@@ -45,7 +72,7 @@ body {
 
 /* Focus ring */
 *:focus-visible {
-  @apply outline-none ring-2 ring-violet-500/40 ring-offset-2 ring-offset-white dark:ring-offset-gray-950;
+  @apply outline-none ring-2 ring-miami-400/40 ring-offset-2 ring-offset-white dark:ring-offset-gray-950;
 }
 
 /* Glass card utility */
@@ -55,7 +82,7 @@ body {
 
 /* Gradient text utility */
 .text-gradient {
-  @apply bg-linear-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent dark:from-violet-400 dark:to-indigo-400;
+  @apply bg-linear-to-r from-miami-500 to-miami-700 bg-clip-text text-transparent dark:from-miami-300 dark:to-miami-500;
 }
 
 /* Smooth page transitions */

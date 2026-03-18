@@ -1,6 +1,15 @@
 import { useCallback, useState } from "react";
 
-import type { Duration, Measure, Note, Section, TabDocument, Technique } from "~/types/tab";
+import type {
+  Duration,
+  Measure,
+  MeasureDirective,
+  MusicDirective,
+  Note,
+  Section,
+  TabDocument,
+  Technique,
+} from "~/types/tab";
 import { createEmptyTabDocument } from "~/types/tab";
 
 interface EditorState {
@@ -106,6 +115,41 @@ export function useEditorStore(initialTab?: TabDocument) {
       };
     });
   }, []);
+
+  const updateNote = useCallback(
+    (noteId: string, updates: Partial<Pick<Note, "fret" | "string" | "position" | "duration">>) => {
+      setState((prev) => {
+        const newTab = structuredClone(prev.tab);
+        let found = false;
+        for (const section of newTab.sections) {
+          for (const measure of section.measures) {
+            const note = measure.notes.find((n: Note) => n.id === noteId);
+            if (note) {
+              if (updates.fret !== undefined) note.fret = updates.fret;
+              if (updates.string !== undefined) note.string = updates.string;
+              if (updates.position !== undefined) note.position = updates.position;
+              if (updates.duration !== undefined) note.duration = updates.duration;
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+        if (!found) return prev;
+        const newHistory = prev.history.slice(0, prev.historyIndex + 1);
+        newHistory.push(structuredClone(newTab));
+        if (newHistory.length > 50) newHistory.shift();
+        return {
+          ...prev,
+          tab: newTab,
+          history: newHistory,
+          historyIndex: newHistory.length - 1,
+          isDirty: true,
+        };
+      });
+    },
+    [],
+  );
 
   const deleteNotes = useCallback((noteIds: string[]) => {
     const idSet = new Set(noteIds);
@@ -302,6 +346,69 @@ export function useEditorStore(initialTab?: TabDocument) {
     return [...techs];
   }, [state.selectedNoteIds, state.tab]);
 
+  const clearTechniques = useCallback(() => {
+    setState((prev) => {
+      if (prev.selectedNoteIds.size === 0) return prev;
+      const newTab = structuredClone(prev.tab);
+      for (const section of newTab.sections) {
+        for (const measure of section.measures) {
+          for (const note of measure.notes) {
+            if (prev.selectedNoteIds.has(note.id)) {
+              note.techniques = undefined;
+            }
+          }
+        }
+      }
+      const newHistory = prev.history.slice(0, prev.historyIndex + 1);
+      newHistory.push(structuredClone(newTab));
+      if (newHistory.length > 50) newHistory.shift();
+      return {
+        ...prev,
+        tab: newTab,
+        history: newHistory,
+        historyIndex: newHistory.length - 1,
+        isDirty: true,
+      };
+    });
+  }, []);
+
+  const addDirective = useCallback((directive: MusicDirective) => {
+    setState((prev) => {
+      if (!prev.selectedMeasureId) return prev;
+      const newTab = structuredClone(prev.tab);
+      for (const section of newTab.sections) {
+        const measure = section.measures.find((m: Measure) => m.id === prev.selectedMeasureId);
+        if (measure) {
+          const directives: MeasureDirective[] = measure.directives ?? [];
+          const existingIdx = directives.findIndex((d) => d.type === directive);
+          if (existingIdx >= 0) {
+            directives.splice(existingIdx, 1);
+          } else {
+            const position =
+              directive === "repeat-start" || directive === "segno"
+                ? "start"
+                : directive === "repeat-end" || directive === "fine" || directive === "coda"
+                  ? "end"
+                  : undefined;
+            directives.push({ type: directive, position });
+          }
+          measure.directives = directives.length > 0 ? directives : undefined;
+          break;
+        }
+      }
+      const newHistory = prev.history.slice(0, prev.historyIndex + 1);
+      newHistory.push(structuredClone(newTab));
+      if (newHistory.length > 50) newHistory.shift();
+      return {
+        ...prev,
+        tab: newTab,
+        history: newHistory,
+        historyIndex: newHistory.length - 1,
+        isDirty: true,
+      };
+    });
+  }, []);
+
   const markClean = useCallback(() => {
     setState((prev) => ({ ...prev, isDirty: false }));
   }, []);
@@ -311,6 +418,7 @@ export function useEditorStore(initialTab?: TabDocument) {
     undo,
     redo,
     addNote,
+    updateNote,
     deleteNotes,
     addMeasure,
     addSection,
@@ -325,6 +433,8 @@ export function useEditorStore(initialTab?: TabDocument) {
     setTab,
     markClean,
     toggleTechnique,
+    clearTechniques,
+    addDirective,
     selectedNoteTechniques: getSelectedNoteTechniques(),
     canUndo: state.historyIndex > 0,
     canRedo: state.historyIndex < state.history.length - 1,

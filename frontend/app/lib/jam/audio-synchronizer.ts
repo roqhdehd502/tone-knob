@@ -61,9 +61,7 @@ export class AudioSynchronizer {
     // 중앙값 사용 (이상치 제거)
     const sorted = [...this.latencySamples].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 !== 0
-      ? sorted[mid]
-      : (sorted[mid - 1] + sorted[mid]) / 2;
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   }
 
   /**
@@ -101,19 +99,14 @@ export class AudioSynchronizer {
   /**
    * 원격 동기화 수신 (다른 참가자의 재생 상태를 적용)
    */
-  applyRemoteSync(data: {
-    position: number;
-    isPlaying: boolean;
-    timestamp?: number;
-  }) {
+  applyRemoteSync(data: { position: number; isPlaying: boolean; timestamp?: number }) {
     const latency = this.getEstimatedLatency();
 
     if (data.isPlaying) {
       // 지연시간을 보정하여 재생 위치 조정
       const elapsedSinceEmit = latency; // ms
       const beatsPerMs = this.state.bpm / 60 / 1000;
-      const correctedPosition =
-        data.position + elapsedSinceEmit * beatsPerMs;
+      const correctedPosition = data.position + elapsedSinceEmit * beatsPerMs;
 
       this.state.isPlaying = true;
       this.state.position = correctedPosition;

@@ -19,7 +19,50 @@ export interface Section {
 export interface Measure {
   id: string;
   notes: Note[];
+  directives?: MeasureDirective[];
 }
+
+// 오선보 지시사항
+export type MusicDirective =
+  | "repeat-start"
+  | "repeat-end"
+  | "dc-al-fine"
+  | "dc-al-coda"
+  | "ds-al-fine"
+  | "ds-al-coda"
+  | "fine"
+  | "coda"
+  | "segno"
+  | "fermata"
+  | "crescendo"
+  | "decrescendo";
+
+export interface MeasureDirective {
+  type: MusicDirective;
+  position?: "start" | "end"; // 마디 시작/끝 (도돌이표 등)
+}
+
+export interface DirectiveMeta {
+  id: MusicDirective;
+  label: string;
+  symbol: string;
+  category: "repeat" | "navigation" | "dynamics";
+}
+
+export const DIRECTIVE_META: DirectiveMeta[] = [
+  { id: "repeat-start", label: "도돌이표 시작", symbol: "𝄆", category: "repeat" },
+  { id: "repeat-end", label: "도돌이표 끝", symbol: "𝄇", category: "repeat" },
+  { id: "dc-al-fine", label: "D.C. al Fine", symbol: "D.C.", category: "navigation" },
+  { id: "dc-al-coda", label: "D.C. al Coda", symbol: "D.C.🎵", category: "navigation" },
+  { id: "ds-al-fine", label: "D.S. al Fine", symbol: "D.S.", category: "navigation" },
+  { id: "ds-al-coda", label: "D.S. al Coda", symbol: "D.S.🎵", category: "navigation" },
+  { id: "fine", label: "Fine", symbol: "Fine", category: "navigation" },
+  { id: "coda", label: "Coda", symbol: "𝄌", category: "navigation" },
+  { id: "segno", label: "Segno", symbol: "𝄋", category: "navigation" },
+  { id: "fermata", label: "페르마타", symbol: "𝄐", category: "dynamics" },
+  { id: "crescendo", label: "크레센도", symbol: "<", category: "dynamics" },
+  { id: "decrescendo", label: "데크레센도", symbol: ">", category: "dynamics" },
+];
 
 export interface Note {
   id: string;
@@ -30,7 +73,25 @@ export interface Note {
   techniques?: Technique[];
 }
 
-export type Duration = 1 | 0.5 | 0.25 | 0.125 | 0.0625; // 온음표~32분음표
+// 온음표(1), 점2분(0.75), 2분(0.5), 점4분(0.375), 4분(0.25),
+// 점8분(0.1875), 8분(0.125), 16분(0.0625), 32분(0.03125)
+// 쉼표는 음수 값: -1(온쉼표), -0.5(2분쉼표), -0.25(4분쉼표), -0.125(8분쉼표), -0.0625(16분쉼표), -0.03125(32분쉼표)
+export type Duration =
+  | 1
+  | 0.75
+  | 0.5
+  | 0.375
+  | 0.25
+  | 0.1875
+  | 0.125
+  | 0.0625
+  | 0.03125
+  | -1
+  | -0.5
+  | -0.25
+  | -0.125
+  | -0.0625
+  | -0.03125;
 
 export type Technique =
   | "hammer-on"

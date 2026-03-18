@@ -30,6 +30,7 @@ export interface JamParticipant {
     avatarUrl?: string;
   };
   socketId?: string;
+  instrument?: import("~/types/tab").InstrumentType;
   isMuted: boolean;
   volume: number;
   isConnected: boolean;

@@ -86,7 +86,7 @@ export default function Profile() {
   if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
       </div>
     );
   }
@@ -95,12 +95,12 @@ export default function Profile() {
     <div className="mx-auto max-w-3xl space-y-6">
       {/* Profile header card */}
       <Card className="overflow-hidden">
-        <div className="h-24 bg-linear-to-r from-violet-600 via-indigo-600 to-purple-600" />
+        <div className="h-24 bg-linear-to-r from-miami-600 via-miami-600 to-rosewood-600" />
         <div className="px-6 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-end sm:gap-5">
             <Avatar className="-mt-12 h-20 w-20 ring-4 ring-white dark:ring-gray-900">
               <AvatarImage src={user.avatarUrl || ""} alt={user.displayName || ""} />
-              <AvatarFallback className="bg-violet-100 text-xl font-bold text-violet-700 dark:bg-violet-900 dark:text-violet-300">
+              <AvatarFallback className="bg-miami-100 text-xl font-bold text-miami-700 dark:bg-miami-900 dark:text-miami-300">
                 {(user.displayName || user.username).charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -161,7 +161,7 @@ export default function Profile() {
                   onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
                   maxLength={500}
                   rows={3}
-                  className="w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm transition-colors focus:border-violet-500 focus:outline-none dark:border-gray-700"
+                  className="w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm transition-colors focus:border-miami-500 focus:outline-none dark:border-gray-700"
                   placeholder="자기소개를 입력하세요..."
                 />
                 <p className="text-right text-xs text-gray-400">{editData.bio.length}/500</p>
@@ -202,7 +202,7 @@ export default function Profile() {
           },
         ].map((stat) => (
           <Card key={stat.label} className="p-4 text-center">
-            <stat.icon className="mx-auto h-5 w-5 text-violet-600 dark:text-violet-400" />
+            <stat.icon className="mx-auto h-5 w-5 text-miami-600 dark:text-miami-400" />
             <p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
             <p className="text-[11px] text-gray-500 dark:text-gray-400">{stat.label}</p>
           </Card>
@@ -231,7 +231,7 @@ export default function Profile() {
                 <Link
                   key={tab.id}
                   to={`/editor/${tab.id}`}
-                  className="flex items-center justify-between rounded-lg border border-gray-100 p-3 transition-colors hover:border-violet-200 hover:bg-violet-50/50 dark:border-gray-800 dark:hover:border-violet-800 dark:hover:bg-violet-950/30"
+                  className="flex items-center justify-between rounded-lg border border-gray-100 p-3 transition-colors hover:border-miami-200 hover:bg-miami-50/50 dark:border-gray-800 dark:hover:border-miami-800 dark:hover:bg-miami-950/30"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-gray-900 dark:text-white">

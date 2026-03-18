@@ -1,14 +1,5 @@
 import { useState, useCallback, useRef, useEffect, memo } from "react";
-import {
-  Play,
-  Pause,
-  RotateCcw,
-  Repeat,
-  Minus,
-  Plus,
-  Timer,
-  Gauge,
-} from "lucide-react";
+import { Play, Pause, RotateCcw, Repeat, Minus, Plus, Timer, Gauge } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
 interface PracticeModeProps {
@@ -112,12 +103,9 @@ const PracticeMode = memo(function PracticeMode({
     onPlayStateChange?.(false);
   }, [loopEnabled, loopStart, onPlayStateChange]);
 
-  const adjustBpm = useCallback(
-    (delta: number) => {
-      setBpm((prev) => Math.max(20, Math.min(300, prev + delta)));
-    },
-    [],
-  );
+  const adjustBpm = useCallback((delta: number) => {
+    setBpm((prev) => Math.max(20, Math.min(300, prev + delta)));
+  }, []);
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);
@@ -129,7 +117,7 @@ const PracticeMode = memo(function PracticeMode({
     <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-          <Gauge className="h-5 w-5 text-violet-500" />
+          <Gauge className="h-5 w-5 text-miami-500" />
           연습 모드
         </h3>
         <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -146,7 +134,7 @@ const PracticeMode = memo(function PracticeMode({
         {isPlaying ? (
           <Button
             size="sm"
-            className="h-10 w-10 rounded-full bg-violet-600 hover:bg-violet-700"
+            className="h-10 w-10 rounded-full bg-miami-600 hover:bg-miami-700"
             onClick={handlePause}
           >
             <Pause className="h-5 w-5" />
@@ -154,7 +142,7 @@ const PracticeMode = memo(function PracticeMode({
         ) : (
           <Button
             size="sm"
-            className="h-10 w-10 rounded-full bg-violet-600 hover:bg-violet-700"
+            className="h-10 w-10 rounded-full bg-miami-600 hover:bg-miami-700"
             onClick={handlePlay}
           >
             <Play className="ml-0.5 h-5 w-5" />
@@ -171,12 +159,7 @@ const PracticeMode = memo(function PracticeMode({
           템포 (BPM)
         </label>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => adjustBpm(-5)}
-          >
+          <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => adjustBpm(-5)}>
             <Minus className="h-3 w-3" />
           </Button>
           <div className="flex-1">
@@ -186,15 +169,10 @@ const PracticeMode = memo(function PracticeMode({
               max={300}
               value={bpm}
               onChange={(e) => setBpm(Number(e.target.value))}
-              className="w-full accent-violet-600"
+              className="w-full accent-miami-600"
             />
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => adjustBpm(5)}
-          >
+          <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => adjustBpm(5)}>
             <Plus className="h-3 w-3" />
           </Button>
           <span className="w-16 text-center text-sm font-bold text-gray-900 dark:text-white">
@@ -215,7 +193,7 @@ const PracticeMode = memo(function PracticeMode({
               onClick={() => setSpeedMultiplier(preset.value)}
               className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
                 speedMultiplier === preset.value
-                  ? "bg-violet-600 text-white"
+                  ? "bg-miami-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
               }`}
             >
@@ -228,14 +206,12 @@ const PracticeMode = memo(function PracticeMode({
       {/* 루프 설정 */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-            루프 구간
-          </label>
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">루프 구간</label>
           <button
             onClick={() => setLoopEnabled(!loopEnabled)}
             className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
               loopEnabled
-                ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+                ? "bg-miami-100 text-miami-700 dark:bg-miami-900/30 dark:text-miami-400"
                 : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
             }`}
           >
@@ -246,39 +222,28 @@ const PracticeMode = memo(function PracticeMode({
         {loopEnabled && (
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <label className="mb-1 block text-[10px] text-gray-400">
-                시작 마디
-              </label>
+              <label className="mb-1 block text-[10px] text-gray-400">시작 마디</label>
               <input
                 type="number"
                 min={1}
                 max={loopEnd}
                 value={loopStart}
                 onChange={(e) =>
-                  setLoopStart(
-                    Math.max(1, Math.min(Number(e.target.value), loopEnd)),
-                  )
+                  setLoopStart(Math.max(1, Math.min(Number(e.target.value), loopEnd)))
                 }
                 className="w-full rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm dark:border-gray-700"
               />
             </div>
             <span className="mt-4 text-gray-400">~</span>
             <div className="flex-1">
-              <label className="mb-1 block text-[10px] text-gray-400">
-                끝 마디
-              </label>
+              <label className="mb-1 block text-[10px] text-gray-400">끝 마디</label>
               <input
                 type="number"
                 min={loopStart}
                 max={totalMeasures}
                 value={loopEnd}
                 onChange={(e) =>
-                  setLoopEnd(
-                    Math.max(
-                      loopStart,
-                      Math.min(Number(e.target.value), totalMeasures),
-                    ),
-                  )
+                  setLoopEnd(Math.max(loopStart, Math.min(Number(e.target.value), totalMeasures)))
                 }
                 className="w-full rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm dark:border-gray-700"
               />

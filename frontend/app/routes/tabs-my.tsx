@@ -93,7 +93,7 @@ export default function TabsMy() {
       {loading ? (
         <Card>
           <CardContent className="flex items-center justify-center py-16">
-            <div className="h-7 w-7 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+            <div className="h-7 w-7 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
           </CardContent>
         </Card>
       ) : tabs.length === 0 ? (
@@ -117,7 +117,7 @@ export default function TabsMy() {
                 className="flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-3.5 shadow-sm dark:border-gray-800/80 dark:bg-gray-900"
               >
                 <Link to={`/tabs/${tab.id}`} className="min-w-0 flex-1 group">
-                  <h3 className="truncate text-sm font-semibold text-gray-900 group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
+                  <h3 className="truncate text-sm font-semibold text-gray-900 group-hover:text-miami-700 dark:text-white dark:group-hover:text-miami-300">
                     {tab.title}
                   </h3>
                   {tab.artist && (

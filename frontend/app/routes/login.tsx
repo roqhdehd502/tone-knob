@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Music, Eye, EyeOff, Loader2, Guitar, Headphones, Mic2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Guitar, Headphones, Mic2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -37,13 +37,11 @@ export default function Login() {
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-violet-600 via-indigo-600 to-purple-700">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-miami-600 via-miami-600 to-rosewood-700">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-60" />
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <Music className="h-5 w-5" />
-            </div>
+            <img src="/images/logo-48.png" alt="Tone Knob" className="h-10 w-10 rounded-xl" />
             <span className="text-xl font-bold">Tone Knob</span>
           </Link>
 
@@ -62,15 +60,15 @@ export default function Login() {
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
-                <Guitar className="h-5 w-5 text-violet-200" />
+                <Guitar className="h-5 w-5 text-miami-200" />
                 <span className="text-sm text-white/90">직관적인 타브 에디터로 쉽게 악보 제작</span>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
-                <Headphones className="h-5 w-5 text-violet-200" />
+                <Headphones className="h-5 w-5 text-miami-200" />
                 <span className="text-sm text-white/90">실시간 온라인 합주로 어디서든 함께</span>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
-                <Mic2 className="h-5 w-5 text-violet-200" />
+                <Mic2 className="h-5 w-5 text-miami-200" />
                 <span className="text-sm text-white/90">AI 기반 타브 자동 생성 및 분석</span>
               </div>
             </div>
@@ -90,9 +88,11 @@ export default function Login() {
           <div className="w-full max-w-sm animate-fade-in space-y-8">
             <div className="flex flex-col items-center lg:items-start">
               <Link to="/" className="flex items-center gap-2 lg:hidden">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/25">
-                  <Music className="h-6 w-6 text-white" />
-                </div>
+                <img
+                  src="/images/logo-48.png"
+                  alt="Tone Knob"
+                  className="h-11 w-11 rounded-xl shadow-lg shadow-miami-500/25"
+                />
               </Link>
               <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white lg:mt-0">
                 로그인
@@ -125,7 +125,7 @@ export default function Login() {
                   <Label htmlFor="password">비밀번호</Label>
                   <Link
                     to="/forgot-password"
-                    className="text-xs text-violet-600 hover:underline dark:text-violet-400"
+                    className="text-xs text-miami-600 hover:underline dark:text-miami-400"
                   >
                     비밀번호를 잊으셨나요?
                   </Link>
@@ -158,7 +158,7 @@ export default function Login() {
               아직 계정이 없으신가요?{" "}
               <Link
                 to="/register"
-                className="font-medium text-violet-600 hover:underline dark:text-violet-400"
+                className="font-medium text-miami-600 hover:underline dark:text-miami-400"
               >
                 회원가입
               </Link>

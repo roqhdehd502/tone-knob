@@ -8,10 +8,7 @@ interface CollabStatusProps {
   className?: string;
 }
 
-const STATUS_CONFIG: Record<
-  Status,
-  { icon: React.ReactNode; label: string; color: string }
-> = {
+const STATUS_CONFIG: Record<Status, { icon: React.ReactNode; label: string; color: string }> = {
   connected: {
     icon: <Wifi className="h-3.5 w-3.5" />,
     label: "연결됨",
@@ -59,7 +56,7 @@ export function CollabStatus({
 
           {/* 협업 참가자 수 */}
           {activeUserIds.length > 0 && (
-            <span className="flex items-center gap-1 text-violet-600 dark:text-violet-400">
+            <span className="flex items-center gap-1 text-miami-600 dark:text-miami-400">
               <Users className="h-3.5 w-3.5" />
               {activeUserIds.length}명 편집 중
             </span>
@@ -91,11 +88,4 @@ export function CollabStatus({
   );
 }
 
-export const USER_COLORS = [
-  "#7c3aed",
-  "#db2777",
-  "#0891b2",
-  "#16a34a",
-  "#ea580c",
-  "#4f46e5",
-];
+export const USER_COLORS = ["#7c3aed", "#db2777", "#0891b2", "#16a34a", "#ea580c", "#4f46e5"];

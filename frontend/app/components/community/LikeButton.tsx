@@ -20,7 +20,10 @@ export const LikeButton = memo(function LikeButton({
 
   useEffect(() => {
     if (!isLoggedIn) return;
-    api.community.isLiked(tabId).then((res) => setLiked(res.liked)).catch(() => {});
+    api.community
+      .isLiked(tabId)
+      .then((res) => setLiked(res.liked))
+      .catch(() => {});
   }, [tabId, isLoggedIn]);
 
   const handleToggle = async () => {
@@ -45,9 +48,7 @@ export const LikeButton = memo(function LikeButton({
       disabled={!isLoggedIn || loading}
       className="gap-1.5"
     >
-      <Heart
-        className={`h-4 w-4 ${liked ? "fill-red-500 text-red-500" : "text-gray-500"}`}
-      />
+      <Heart className={`h-4 w-4 ${liked ? "fill-red-500 text-red-500" : "text-gray-500"}`} />
       <span className="text-sm">{likeCount}</span>
     </Button>
   );

@@ -6,6 +6,7 @@ import { PlaybackBar } from "~/components/editor/PlaybackBar";
 import { TabCanvas } from "~/components/editor/TabCanvas";
 import { Toolbar } from "~/components/editor/Toolbar";
 import { api } from "~/lib/api";
+import { getAudioEngine } from "~/lib/audio/audio-engine";
 import { useAudioPlayer } from "~/lib/audio/use-audio-player";
 import { useAuth } from "~/lib/auth";
 import { useEditorStore } from "~/lib/editor-store";
@@ -155,6 +156,26 @@ export default function EditorNew() {
     setIsPublic((prev) => !prev);
   }, []);
 
+  const handleNotePreview = useCallback(
+    (stringIndex: number, fret: number) => {
+      const engine = getAudioEngine();
+      engine.playNotePreview(stringIndex, fret, editor.tab.tuning, editor.currentDuration);
+    },
+    [editor.tab.tuning, editor.currentDuration],
+  );
+
+  const handleNoteUpdate = useCallback(
+    (
+      noteId: string,
+      updates: Partial<
+        Pick<import("~/types/tab").Note, "fret" | "string" | "position" | "duration">
+      >,
+    ) => {
+      editor.updateNote(noteId, updates);
+    },
+    [editor],
+  );
+
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-2 overflow-hidden lg:gap-4">
       <div className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden lg:gap-3">
@@ -179,6 +200,8 @@ export default function EditorNew() {
           selectedNoteTechniques={editor.selectedNoteTechniques}
           hasSelection={editor.selectedNoteIds.size > 0}
           onToggleTechnique={editor.toggleTechnique}
+          onClearTechniques={editor.clearTechniques}
+          onAddDirective={editor.addDirective}
         />
 
         <div className="flex-1 overflow-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -193,6 +216,8 @@ export default function EditorNew() {
             onNoteClick={handleNoteClick}
             onCellClick={handleCellClick}
             onMeasureClick={handleMeasureClick}
+            onNotePreview={handleNotePreview}
+            onNoteUpdate={handleNoteUpdate}
           />
         </div>
 
@@ -211,7 +236,7 @@ export default function EditorNew() {
       {/* 모바일 인스펙터 토글 */}
       <button
         type="button"
-        className="fixed bottom-4 right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg lg:hidden"
+        className="fixed bottom-4 right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-miami-600 text-white shadow-lg lg:hidden"
         onClick={() => setShowInspector((v) => !v)}
         title="타브 정보"
       >

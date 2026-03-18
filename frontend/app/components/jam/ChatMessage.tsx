@@ -17,7 +17,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
     <div className="mb-2">
       <div className="flex items-baseline gap-1.5">
         <span
-          className={`text-xs font-semibold ${isMe ? "text-violet-600 dark:text-violet-400" : "text-gray-700 dark:text-gray-300"}`}
+          className={`text-xs font-semibold ${isMe ? "text-miami-600 dark:text-miami-400" : "text-gray-700 dark:text-gray-300"}`}
         >
           {isMe ? "나" : senderName}
         </span>

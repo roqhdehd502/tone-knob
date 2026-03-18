@@ -1,30 +1,51 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+
 import {
   ArrowLeft,
-  Users,
-  Music,
+  LogOut,
+  MessageSquare,
   Mic,
   MicOff,
-  Volume2,
-  LogOut,
+  Music,
   Radio,
   Send,
-  MessageSquare,
+  Users,
+  Volume2,
   Wifi,
 } from "lucide-react";
+
+import { AudioLevelMeter } from "~/components/jam/AudioLevelMeter";
+import { AudioMixer } from "~/components/jam/AudioMixer";
+import { ChatMessageItem } from "~/components/jam/ChatMessage";
+import { SoundCheckPanel } from "~/components/jam/SoundCheckPanel";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
 import { api } from "~/lib/api";
+import { getAudioEngine } from "~/lib/audio/audio-engine";
 import { useAuth } from "~/lib/auth";
+import type { AudioSettings } from "~/lib/jam/audio-settings";
+import {
+  buildAudioContextOptions,
+  buildMediaConstraints,
+  loadAudioSettings,
+  setOutputDevice,
+} from "~/lib/jam/audio-settings";
+import type { SyncState } from "~/lib/jam/audio-synchronizer";
+import { AudioSynchronizer } from "~/lib/jam/audio-synchronizer";
+import { useAudioMonitor } from "~/lib/jam/use-audio-monitor";
 import { useJamSocket } from "~/lib/jam/use-jam-socket";
 import { useWebRTC } from "~/lib/jam/use-webrtc";
-import { AudioSynchronizer } from "~/lib/jam/audio-synchronizer";
-import type { SyncState } from "~/lib/jam/audio-synchronizer";
-import { ParticipantItem } from "~/components/jam/ParticipantItem";
-import { ChatMessageItem } from "~/components/jam/ChatMessage";
-import type { JamRoom, JamParticipant } from "~/types/jam-room";
+import type { JamParticipant, JamRoom } from "~/types/jam-room";
+import type { InstrumentType } from "~/types/tab";
+
+const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string; emoji: string }[] = [
+  { value: "electric-guitar", label: "일렉 기타", emoji: "🎸" },
+  { value: "acoustic-guitar", label: "어쿠스틱 기타", emoji: "🎶" },
+  { value: "bass", label: "베이스", emoji: "🎵" },
+  { value: "keyboard", label: "키보드", emoji: "🎹" },
+];
 
 export function meta() {
   return [{ title: "합주방 - Tone Knob" }, { name: "description", content: "실시간 온라인 합주" }];
@@ -42,10 +63,22 @@ export default function JamroomDetail() {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [participantVolumes, setParticipantVolumes] = useState<Map<string, number>>(new Map());
-  const [syncState, setSyncState] = useState<SyncState | null>(null);
+  const [participantLevels, setParticipantLevels] = useState<Map<string, number>>(new Map());
+  const [, setSyncState] = useState<SyncState | null>(null);
+  const [selectedInstrument, setSelectedInstrument] = useState<InstrumentType>("electric-guitar");
+  const [selfVolume, setSelfVolume] = useState(80);
+  const [showSoundCheck, setShowSoundCheck] = useState(true);
+  const [audioSettings, setAudioSettings] = useState<AudioSettings>(loadAudioSettings);
   const syncRef = useRef<AudioSynchronizer | null>(null);
   const remoteAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // 로컬 오디오 모니터 (내 마이크 → 레벨 측정 + 로컬 모니터링)
+  const localMonitor = useAudioMonitor();
+  // 리모트 오디오 모니터 맵 (레벨 측정용 AnalyserNode)
+  const remoteMonitorsRef = useRef<
+    Map<string, { ctx: AudioContext; analyser: AnalyserNode; source: MediaStreamAudioSourceNode }>
+  >(new Map());
 
   // ref로 순환 참조 해결
   const socketRef = useRef<ReturnType<typeof useJamSocket>>(null!);
@@ -122,28 +155,98 @@ export default function JamroomDetail() {
   });
   webrtcRef.current = webrtc;
 
-  // 리모트 스트림을 audio 엘리먼트에 연결
+  // 리모트 스트림을 audio 엘리먼트 + 레벨 미터에 연결
   useEffect(() => {
     webrtc.remoteStreams.forEach((stream, userId) => {
+      // Audio 엘리먼트 (소리 출력)
       let audio = remoteAudioRefs.current.get(userId);
       if (!audio) {
         audio = new Audio();
         audio.autoplay = true;
         remoteAudioRefs.current.set(userId, audio);
+        // 선택된 출력 장치 적용
+        void setOutputDevice(audio, audioSettings.outputDeviceId);
       }
       if (audio.srcObject !== stream) {
         audio.srcObject = stream;
       }
+
+      // 리모트 레벨 미터용 AnalyserNode
+      if (!remoteMonitorsRef.current.has(userId)) {
+        try {
+          const ctx = new AudioContext();
+          const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.5;
+          source.connect(analyser);
+          remoteMonitorsRef.current.set(userId, { ctx, analyser, source });
+        } catch (e) {
+          console.warn("[AudioMixer] Failed to create remote analyser for", userId, e);
+        }
+      }
     });
 
-    // 제거된 피어의 audio 엘리먼트 정리
+    // 제거된 피어 정리
     remoteAudioRefs.current.forEach((audio, userId) => {
       if (!webrtc.remoteStreams.has(userId)) {
         audio.srcObject = null;
         remoteAudioRefs.current.delete(userId);
       }
     });
-  }, [webrtc.remoteStreams]);
+    remoteMonitorsRef.current.forEach((nodes, userId) => {
+      if (!webrtc.remoteStreams.has(userId)) {
+        nodes.source.disconnect();
+        nodes.analyser.disconnect();
+        void nodes.ctx.close();
+        remoteMonitorsRef.current.delete(userId);
+      }
+    });
+  }, [webrtc.remoteStreams, audioSettings.outputDeviceId]);
+
+  // 모든 참가자(본인+리모트) 레벨 측정 루프
+  useEffect(() => {
+    if (!hasJoined) return;
+
+    let raf: number;
+    const data = new Uint8Array(128);
+
+    const tick = () => {
+      const levels = new Map<string, number>();
+
+      // 본인 레벨
+      if (user?.id) {
+        levels.set(user.id, localMonitor.level);
+      }
+
+      // 리모트 레벨
+      remoteMonitorsRef.current.forEach((nodes, userId) => {
+        nodes.analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = (data[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / data.length);
+        levels.set(userId, Math.min(1, rms * 2.5));
+      });
+
+      setParticipantLevels((prev) => {
+        // 최적화: 변화가 없으면 리렌더 방지
+        let changed = false;
+        levels.forEach((v, k) => {
+          if (Math.abs((prev.get(k) ?? 0) - v) > 0.01) changed = true;
+        });
+        if (!changed && prev.size === levels.size) return prev;
+        return levels;
+      });
+
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(raf);
+  }, [hasJoined, user?.id, localMonitor.level]);
 
   // AudioSynchronizer 초기화 및 latency 피딩
   useEffect(() => {
@@ -203,21 +306,74 @@ export default function JamroomDetail() {
     }
   };
 
-  const handleJoinRoom = async () => {
+  // 사운드 체크 완료 후 참가 (스트림을 받아서 진행)
+  const joinWithStream = async (stream: MediaStream, settings: AudioSettings) => {
     if (!id || !user) return;
 
     try {
-      // 마이크 권한 요청
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setLocalStream(stream);
+      setAudioSettings(settings);
+
+      // localMonitor가 아직 연결 안 된 경우에만 attach (사운드체크에서 이미 연결한 경우 스킵)
+      if (!localMonitor.monitoring) {
+        const ctxOpts = buildAudioContextOptions(settings);
+        localMonitor.attach(stream, true, selfVolume / 100, ctxOpts);
+      }
+
+      // 악기별 오디오 엔진 초기화
+      const engine = getAudioEngine();
+      await engine.setInstrument(selectedInstrument);
+      const db = selfVolume <= 0 ? -Infinity : (selfVolume / 100) * 40 - 40;
+      engine.setVolume(db);
 
       // API를 통해 합주방 참가
       await api.jamRooms.join(id, {});
       setHasJoined(true);
+      setShowSoundCheck(false);
       await loadParticipants();
     } catch (error) {
       console.error("Failed to join room:", error);
       alert("합주방 참가에 실패했습니다. 마이크 권한을 확인해주세요.");
+    }
+  };
+
+  // SoundCheckPanel에서 "확인 후 참가" 클릭 시
+  const handleSoundCheckReady = (stream: MediaStream, settings: AudioSettings) => {
+    void joinWithStream(stream, settings);
+  };
+
+  // 사운드 체크 없이 바로 참가
+  const handleSkipSoundCheck = async () => {
+    if (!id || !user) return;
+    try {
+      const settings = loadAudioSettings();
+      const constraints = buildMediaConstraints(settings);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const ctxOpts = buildAudioContextOptions(settings);
+      localMonitor.attach(stream, true, selfVolume / 100, ctxOpts);
+      await joinWithStream(stream, settings);
+    } catch (error) {
+      console.error("Failed to get microphone:", error);
+      alert("마이크 권한이 필요합니다. 브라우저 설정을 확인해주세요.");
+    }
+  };
+
+  const handleInstrumentChange = async (inst: InstrumentType) => {
+    setSelectedInstrument(inst);
+    if (hasJoined) {
+      const engine = getAudioEngine();
+      await engine.setInstrument(inst);
+    }
+  };
+
+  const handleSelfVolumeChange = (vol: number) => {
+    setSelfVolume(vol);
+    // 로컬 모니터링 gain 업데이트
+    localMonitor.setGain(vol / 100);
+    if (hasJoined) {
+      const engine = getAudioEngine();
+      const db = vol <= 0 ? -Infinity : (vol / 100) * 40 - 40;
+      engine.setVolume(db);
     }
   };
 
@@ -232,6 +388,9 @@ export default function JamroomDetail() {
       syncRef.current?.dispose();
       syncRef.current = null;
 
+      // 로컬 모니터링 정리
+      localMonitor.detach();
+
       // 로컬 스트림 정리
       if (localStream) {
         localStream.getTracks().forEach((track) => track.stop());
@@ -243,6 +402,14 @@ export default function JamroomDetail() {
         audio.srcObject = null;
       });
       remoteAudioRefs.current.clear();
+
+      // 리모트 모니터 정리
+      remoteMonitorsRef.current.forEach((nodes) => {
+        nodes.source.disconnect();
+        nodes.analyser.disconnect();
+        void nodes.ctx.close();
+      });
+      remoteMonitorsRef.current.clear();
 
       await api.jamRooms.leave(id);
       navigate("/jamroom");
@@ -271,9 +438,16 @@ export default function JamroomDetail() {
 
   const handleVolumeChange = (targetUserId: string, volume: number) => {
     setParticipantVolumes((prev) => new Map(prev).set(targetUserId, volume));
-    const audio = remoteAudioRefs.current.get(targetUserId);
-    if (audio) {
-      audio.volume = volume / 100;
+
+    if (targetUserId === user?.id) {
+      // 본인 볼륨: 로컬 모니터링 gain + 오디오 엔진
+      handleSelfVolumeChange(volume);
+    } else {
+      // 리모트 볼륨: Audio 엘리먼트 볼륨
+      const audio = remoteAudioRefs.current.get(targetUserId);
+      if (audio) {
+        audio.volume = volume / 100;
+      }
     }
   };
 
@@ -292,7 +466,7 @@ export default function JamroomDetail() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
       </div>
     );
   }
@@ -310,7 +484,7 @@ export default function JamroomDetail() {
       <button
         type="button"
         onClick={() => navigate("/jamroom")}
-        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-violet-500 dark:text-gray-500"
+        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-miami-500 dark:text-gray-500"
       >
         <ArrowLeft className="h-3 w-3" />
         합주방 목록으로
@@ -356,47 +530,94 @@ export default function JamroomDetail() {
               </div>
 
               {!hasJoined ? (
-                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-12 dark:border-gray-700">
-                  <Music className="h-12 w-12 text-gray-400" />
-                  <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                    합주방에 참가하여 함께 연주하세요
-                  </p>
-                  <Button className="mt-4" onClick={handleJoinRoom}>
-                    합주방 참가
-                  </Button>
-                </div>
+                showSoundCheck ? (
+                  <SoundCheckPanel
+                    selectedInstrument={selectedInstrument}
+                    onInstrumentChange={(inst) => setSelectedInstrument(inst)}
+                    onReady={handleSoundCheckReady}
+                    onCancel={handleSkipSoundCheck}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-12 dark:border-gray-700">
+                    <Music className="h-12 w-12 text-gray-400" />
+                    <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                      합주방에 참가하는 중...
+                    </p>
+                    <div className="mt-3 h-5 w-5 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
+                  </div>
+                )
               ) : (
                 <div className="space-y-4">
                   {/* 오디오 컨트롤 */}
-                  <div className="flex items-center justify-center gap-4 rounded-lg bg-gray-50 p-8 dark:bg-gray-800">
-                    <Button
-                      variant={isMuted ? "outline" : "default"}
-                      size="lg"
-                      onClick={handleToggleMute}
-                    >
+                  <div className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                    <Button variant={isMuted ? "outline" : "default"} onClick={handleToggleMute}>
                       {isMuted ? (
                         <>
-                          <MicOff className="mr-2 h-5 w-5" />
+                          <MicOff className="mr-2 h-4 w-4" />
                           음소거됨
                         </>
                       ) : (
                         <>
-                          <Mic className="mr-2 h-5 w-5" />
+                          <Mic className="mr-2 h-4 w-4" />
                           마이크 켜짐
                         </>
                       )}
                     </Button>
 
-                    <Button variant="outline" size="lg">
-                      <Volume2 className="mr-2 h-5 w-5" />
-                      볼륨
-                    </Button>
+                    {/* 내 입력 레벨 미터 (간소화) */}
+                    <div className="flex flex-1 items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">입력</span>
+                      <AudioLevelMeter level={isMuted ? 0 : localMonitor.level} compact />
+                    </div>
+
+                    {/* 로컬 모니터링 토글 */}
+                    <button
+                      type="button"
+                      title={localMonitor.monitoring ? "모니터링 끄기" : "내 소리 듣기"}
+                      onClick={() => localMonitor.setMonitoring(!localMonitor.monitoring)}
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                        localMonitor.monitoring
+                          ? "bg-miami-100 text-miami-700 dark:bg-miami-900/30 dark:text-miami-300"
+                          : "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                      }`}
+                    >
+                      <Volume2 className="h-3.5 w-3.5" />
+                      {localMonitor.monitoring ? "모니터" : "모니터"}
+                    </button>
+                  </div>
+
+                  {/* 악기 선택 (간소) */}
+                  <div className="flex items-center gap-2 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">악기</span>
+                    <select
+                      value={selectedInstrument}
+                      onChange={(e) => handleInstrumentChange(e.target.value as InstrumentType)}
+                      className="h-7 flex-1 rounded border border-gray-200 bg-transparent px-2 text-sm text-gray-600 outline-none dark:border-gray-700 dark:text-gray-300"
+                    >
+                      {INSTRUMENT_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.emoji} {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">볼륨</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={selfVolume}
+                      onChange={(e) => handleSelfVolumeChange(Number(e.target.value))}
+                      className="h-1 w-24 cursor-pointer accent-miami-500"
+                    />
+                    <span className="w-6 text-right text-xs tabular-nums text-gray-500">
+                      {selfVolume}
+                    </span>
                   </div>
 
                   {/* WebRTC 연결 상태 */}
-                  <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                  <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
                     <div className="flex items-center gap-2 text-sm">
-                      <Radio className="h-4 w-4 text-violet-500" />
+                      <Radio className="h-4 w-4 text-miami-500" />
                       <span className="font-medium text-gray-700 dark:text-gray-300">
                         오디오 연결 ({webrtc.remoteStreams.size}명과 연결됨)
                       </span>
@@ -415,25 +636,46 @@ export default function JamroomDetail() {
 
         {/* 사이드바 */}
         <div className="space-y-4 lg:col-span-1">
-          {/* 참가자 목록 */}
+          {/* 참가자 & 오디오 믹서 */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">참가자 ({participants.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {participants.map((participant) => (
-                  <ParticipantItem
-                    key={participant.id}
-                    participant={participant}
-                    isHost={participant.userId === room.hostId}
-                    isSelf={participant.userId === user?.id}
-                    hasJoined={hasJoined}
-                    volume={participantVolumes.get(participant.userId) ?? 100}
-                    onVolumeChange={handleVolumeChange}
-                  />
-                ))}
-              </div>
+              {hasJoined ? (
+                <AudioMixer
+                  participants={participants}
+                  hostId={room.hostId}
+                  selfUserId={user?.id || ""}
+                  hasJoined={hasJoined}
+                  participantVolumes={participantVolumes}
+                  participantLevels={participantLevels}
+                  selfMonitoring={localMonitor.monitoring}
+                  onVolumeChange={handleVolumeChange}
+                  onSelfMonitoringToggle={() =>
+                    localMonitor.setMonitoring(!localMonitor.monitoring)
+                  }
+                />
+              ) : (
+                <div className="space-y-2">
+                  {participants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-2 rounded-lg bg-gray-50 p-3 dark:bg-gray-800"
+                    >
+                      <div className="h-7 w-7 rounded-full bg-miami-100 dark:bg-miami-900/30" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {p.user?.displayName || p.user?.username}
+                        </p>
+                        {p.userId === room.hostId && (
+                          <span className="text-xs text-miami-600 dark:text-miami-400">호스트</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {hasJoined && (
                 <Button

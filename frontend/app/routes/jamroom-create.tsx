@@ -78,7 +78,7 @@ export default function JamroomCreate() {
       <button
         type="button"
         onClick={() => navigate("/jamroom")}
-        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-violet-500 dark:text-gray-500"
+        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-miami-500 dark:text-gray-500"
       >
         <ArrowLeft className="h-3 w-3" />
         합주방 목록으로
@@ -107,7 +107,7 @@ export default function JamroomCreate() {
               <Label htmlFor="description">설명</Label>
               <textarea
                 id="description"
-                className="h-20 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className="h-20 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-miami-500 focus:ring-2 focus:ring-miami-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="합주방에 대한 간단한 설명을 입력하세요"
@@ -118,7 +118,7 @@ export default function JamroomCreate() {
               <Label htmlFor="tabId">연주할 타브 (선택)</Label>
               <select
                 id="tabId"
-                className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm outline-none focus:border-miami-500 focus:ring-2 focus:ring-miami-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 value={formData.tabId}
                 onChange={(e) => setFormData({ ...formData, tabId: e.target.value })}
               >
@@ -176,7 +176,7 @@ export default function JamroomCreate() {
                   type="checkbox"
                   checked={formData.isPrivate}
                   onChange={(e) => setFormData({ ...formData, isPrivate: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  className="h-4 w-4 rounded border-gray-300 text-miami-600 focus:ring-miami-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   비공개 합주방 (비밀번호 필요)

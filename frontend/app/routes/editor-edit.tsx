@@ -6,6 +6,7 @@ import { PlaybackBar } from "~/components/editor/PlaybackBar";
 import { TabCanvas } from "~/components/editor/TabCanvas";
 import { Toolbar } from "~/components/editor/Toolbar";
 import { api } from "~/lib/api";
+import { getAudioEngine } from "~/lib/audio/audio-engine";
 import { useAudioPlayer } from "~/lib/audio/use-audio-player";
 import { useAuth } from "~/lib/auth";
 import { useEditorStore } from "~/lib/editor-store";
@@ -163,10 +164,30 @@ export default function EditorEdit() {
     setIsPublic((prev) => !prev);
   }, []);
 
+  const handleNotePreview = useCallback(
+    (stringIndex: number, fret: number) => {
+      const engine = getAudioEngine();
+      engine.playNotePreview(stringIndex, fret, editor.tab.tuning, editor.currentDuration);
+    },
+    [editor.tab.tuning, editor.currentDuration],
+  );
+
+  const handleNoteUpdate = useCallback(
+    (
+      noteId: string,
+      updates: Partial<
+        Pick<import("~/types/tab").Note, "fret" | "string" | "position" | "duration">
+      >,
+    ) => {
+      editor.updateNote(noteId, updates);
+    },
+    [editor],
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
       </div>
     );
   }
@@ -203,6 +224,8 @@ export default function EditorEdit() {
           selectedNoteTechniques={editor.selectedNoteTechniques}
           hasSelection={editor.selectedNoteIds.size > 0}
           onToggleTechnique={editor.toggleTechnique}
+          onClearTechniques={editor.clearTechniques}
+          onAddDirective={editor.addDirective}
         />
 
         <div className="flex-1 overflow-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -217,6 +240,8 @@ export default function EditorEdit() {
             onNoteClick={handleNoteClick}
             onCellClick={handleCellClick}
             onMeasureClick={handleMeasureClick}
+            onNotePreview={handleNotePreview}
+            onNoteUpdate={handleNoteUpdate}
           />
         </div>
 
@@ -234,7 +259,7 @@ export default function EditorEdit() {
 
       <button
         type="button"
-        className="fixed bottom-4 right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg lg:hidden"
+        className="fixed bottom-4 right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-miami-600 text-white shadow-lg lg:hidden"
         onClick={() => setShowInspector((v) => !v)}
         title="타브 정보"
       >

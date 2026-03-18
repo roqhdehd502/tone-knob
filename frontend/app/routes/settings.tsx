@@ -44,7 +44,7 @@ export default function Settings() {
                 className={cn(
                   "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
                   theme === opt.value
-                    ? "border-violet-500 bg-violet-50 dark:border-violet-400 dark:bg-violet-950/30"
+                    ? "border-miami-500 bg-miami-50 dark:border-miami-400 dark:bg-miami-950/30"
                     : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-gray-600",
                 )}
               >
@@ -52,7 +52,7 @@ export default function Settings() {
                   className={cn(
                     "flex h-10 w-10 items-center justify-center rounded-lg",
                     theme === opt.value
-                      ? "bg-violet-100 text-violet-600 dark:bg-violet-900 dark:text-violet-300"
+                      ? "bg-miami-100 text-miami-600 dark:bg-miami-900 dark:text-miami-300"
                       : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400",
                   )}
                 >
@@ -63,7 +63,7 @@ export default function Settings() {
                     className={cn(
                       "text-sm font-medium",
                       theme === opt.value
-                        ? "text-violet-700 dark:text-violet-300"
+                        ? "text-miami-700 dark:text-miami-300"
                         : "text-gray-900 dark:text-white",
                     )}
                   >
@@ -102,7 +102,7 @@ export default function Settings() {
         <CardContent>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <BookOpen className="h-5 w-5 text-violet-500" />
+              <BookOpen className="h-5 w-5 text-miami-500" />
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">온보딩 튜토리얼</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">

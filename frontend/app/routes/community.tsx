@@ -97,7 +97,7 @@ export default function Community() {
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                 activeTab === t.key
-                  ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                  ? "bg-miami-100 text-miami-700 dark:bg-miami-900/40 dark:text-miami-300"
                   : "text-gray-500 hover:text-gray-700 dark:text-gray-400",
               )}
             >
@@ -149,17 +149,17 @@ export default function Community() {
               <Link
                 key={tab.id}
                 to={`/editor/${tab.id}`}
-                className="group rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-violet-700"
+                className="group rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-miami-300 hover:shadow-md dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-miami-700"
               >
                 <div className="mb-2 flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-600 dark:bg-violet-900/40 dark:text-violet-400">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-miami-100 text-[10px] font-bold text-miami-600 dark:bg-miami-900/40 dark:text-miami-400">
                     {(tab.user?.displayName || tab.user?.username || "?").charAt(0).toUpperCase()}
                   </div>
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {tab.user?.displayName || tab.user?.username}
                   </span>
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
+                <h3 className="text-sm font-semibold text-gray-900 group-hover:text-miami-600 dark:text-white dark:group-hover:text-miami-400">
                   {tab.title}
                 </h3>
                 {tab.artist && <p className="mt-0.5 text-xs text-gray-500">{tab.artist}</p>}

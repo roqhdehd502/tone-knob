@@ -46,7 +46,7 @@ export default function Jamroom() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
       </div>
     );
   }
@@ -88,11 +88,11 @@ export default function Jamroom() {
             <Link
               key={room.id}
               to={`/jamroom/${room.id}`}
-              className="group rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-violet-700"
+              className="group rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-miami-300 hover:shadow-md dark:border-gray-800/80 dark:bg-gray-900 dark:hover:border-miami-700"
             >
               <div className="mb-2 flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 group-hover:text-violet-600 dark:text-white dark:group-hover:text-violet-400">
+                  <h3 className="text-sm font-semibold text-gray-900 group-hover:text-miami-600 dark:text-white dark:group-hover:text-miami-400">
                     {room.name}
                   </h3>
                   {room.description && (
@@ -116,7 +116,7 @@ export default function Jamroom() {
               </div>
 
               <div className="mt-2.5 flex items-center gap-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-[9px] font-bold text-violet-600 dark:bg-violet-900/40 dark:text-violet-400">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-miami-100 text-[9px] font-bold text-miami-600 dark:bg-miami-900/40 dark:text-miami-400">
                   {(room.host?.displayName || room.host?.username || "?").charAt(0).toUpperCase()}
                 </div>
                 <span className="text-xs text-gray-500 dark:text-gray-400">

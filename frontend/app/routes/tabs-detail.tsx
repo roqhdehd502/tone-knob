@@ -5,6 +5,8 @@ import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { TabCanvas } from "~/components/editor/TabCanvas";
+import { PlaybackBar } from "~/components/editor/PlaybackBar";
+import { useAudioPlayer } from "~/lib/audio/use-audio-player";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabDetail, TabDocument, TabVersion } from "~/types/tab";
@@ -128,7 +130,7 @@ export default function TabsDetail() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
       </div>
     );
   }
@@ -154,7 +156,7 @@ export default function TabsDetail() {
         <div>
           <Link
             to="/tabs"
-            className="mb-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-violet-500 dark:text-gray-500"
+            className="mb-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-miami-500 dark:text-gray-500"
           >
             <ArrowLeft className="h-3 w-3" />
             타브 목록
@@ -224,23 +226,8 @@ export default function TabsDetail() {
         </div>
       )}
 
-      {/* 타브 캔버스 (읽기 전용) */}
-      {content && content.sections.length > 0 && (
-        <Card className="overflow-auto p-4">
-          <TabCanvas
-            sections={content.sections}
-            tuning={content.tuning}
-            selectedNoteIds={new Set()}
-            selectedMeasureId={null}
-            currentTool="select"
-            currentDuration={0.25}
-            currentFret={0}
-            onNoteClick={() => {}}
-            onCellClick={() => {}}
-            onMeasureClick={() => {}}
-          />
-        </Card>
-      )}
+      {/* 재생 컨트롤 + 타브 캔버스 (읽기 전용) */}
+      {content && content.sections.length > 0 && <TabDetailPlayer content={content} />}
 
       {/* sections가 없을 때 안내 */}
       {content && content.sections.length === 0 && (
@@ -291,6 +278,43 @@ export default function TabsDetail() {
           </Card>
         )}
       </div>
+    </div>
+  );
+}
+
+function TabDetailPlayer({ content }: { content: TabDocument }) {
+  const player = useAudioPlayer(content);
+
+  return (
+    <div className="space-y-3">
+      <PlaybackBar
+        state={player.state}
+        position={player.position}
+        bpm={content.bpm}
+        metronome={player.metronome}
+        instrument={player.instrument}
+        volume={player.volume}
+        onPlay={() => player.play()}
+        onPause={player.pause}
+        onStop={player.stop}
+        onToggleMetronome={player.toggleMetronome}
+        onInstrumentChange={player.setInstrument}
+        onVolumeChange={player.setVolume}
+      />
+      <Card className="overflow-auto p-4">
+        <TabCanvas
+          sections={content.sections}
+          tuning={content.tuning}
+          selectedNoteIds={new Set()}
+          selectedMeasureId={null}
+          currentTool="select"
+          currentDuration={0.25}
+          currentFret={0}
+          onNoteClick={() => {}}
+          onCellClick={() => {}}
+          onMeasureClick={() => {}}
+        />
+      </Card>
     </div>
   );
 }

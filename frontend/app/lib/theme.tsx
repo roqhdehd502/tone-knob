@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -24,9 +18,7 @@ const STORAGE_KEY = "tone-knob-theme";
 
 function getSystemTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 function resolve(theme: Theme): "light" | "dark" {
@@ -38,9 +30,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return "system";
     return (localStorage.getItem(STORAGE_KEY) as Theme) || "system";
   });
-  const [resolved, setResolved] = useState<"light" | "dark">(() =>
-    resolve(theme),
-  );
+  const [resolved, setResolved] = useState<"light" | "dark">(() => resolve(theme));
 
   const applyTheme = useCallback((t: Theme) => {
     const r = resolve(t);
@@ -72,9 +62,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme, applyTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, resolved, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={{ theme, resolved, setTheme }}>{children}</ThemeContext.Provider>
   );
 }
 

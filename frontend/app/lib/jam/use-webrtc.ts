@@ -6,10 +6,7 @@ import {
 } from "./webrtc-audio-config";
 
 const ICE_SERVERS: RTCConfiguration = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-  ],
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }],
 };
 
 interface PeerState {
@@ -25,27 +22,15 @@ const RECONNECT_DELAY_MS = 2000;
 
 interface UseWebRTCOptions {
   localStream: MediaStream | null;
-  onSendOffer: (
-    targetUserId: string,
-    signal: RTCSessionDescriptionInit,
-  ) => void;
-  onSendAnswer: (
-    targetUserId: string,
-    signal: RTCSessionDescriptionInit,
-  ) => void;
-  onSendICECandidate: (
-    targetUserId: string,
-    signal: RTCIceCandidateInit,
-  ) => void;
+  onSendOffer: (targetUserId: string, signal: RTCSessionDescriptionInit) => void;
+  onSendAnswer: (targetUserId: string, signal: RTCSessionDescriptionInit) => void;
+  onSendICECandidate: (targetUserId: string, signal: RTCIceCandidateInit) => void;
 }
 
 export function useWebRTC(options: UseWebRTCOptions) {
-  const { localStream, onSendOffer, onSendAnswer, onSendICECandidate } =
-    options;
+  const { localStream, onSendOffer, onSendAnswer, onSendICECandidate } = options;
   const peersRef = useRef<Map<string, PeerState>>(new Map());
-  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(
-    new Map(),
-  );
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
 
   // 피어 상태 업데이트 헬퍼
   const updateRemoteStreams = useCallback(() => {
@@ -99,9 +84,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
               void initiateConnection(remoteUserId);
             }, RECONNECT_DELAY_MS * peer.reconnectAttempts);
           } else {
-            console.error(
-              `[WebRTC] Max reconnect attempts reached for ${remoteUserId}`,
-            );
+            console.error(`[WebRTC] Max reconnect attempts reached for ${remoteUserId}`);
             removePeer(remoteUserId);
           }
         } else if (state === "disconnected") {
@@ -198,9 +181,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
       if (!peer) return;
 
       try {
-        await peer.connection.setRemoteDescription(
-          new RTCSessionDescription(signal),
-        );
+        await peer.connection.setRemoteDescription(new RTCSessionDescription(signal));
         // 연결 수립 후 Jitter Buffer 설정
         applyJitterBufferConfig(peer.connection, 0.05);
       } catch (error) {

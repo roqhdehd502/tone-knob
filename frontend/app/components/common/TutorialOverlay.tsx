@@ -21,8 +21,8 @@ import { TUTORIAL_STEPS, useTutorial } from "~/lib/tutorial";
 import { cn } from "~/lib/utils";
 
 const STEP_ICONS: Record<string, React.ReactNode> = {
-  sparkles: <Sparkles className="h-8 w-8 text-violet-400" />,
-  "file-music": <FileMusic className="h-8 w-8 text-indigo-400" />,
+  sparkles: <Sparkles className="h-8 w-8 text-miami-400" />,
+  "file-music": <FileMusic className="h-8 w-8 text-miami-400" />,
   search: <Search className="h-8 w-8 text-cyan-400" />,
   radio: <Radio className="h-8 w-8 text-emerald-400" />,
   "sparkles-ai": <Wand2 className="h-8 w-8 text-amber-400" />,
@@ -30,8 +30,8 @@ const STEP_ICONS: Record<string, React.ReactNode> = {
 };
 
 const STEP_COLORS: string[] = [
-  "from-violet-600 to-indigo-600",
-  "from-indigo-600 to-blue-600",
+  "from-miami-600 to-miami-600",
+  "from-miami-600 to-blue-600",
   "from-cyan-600 to-teal-600",
   "from-emerald-600 to-green-600",
   "from-amber-600 to-orange-600",
@@ -100,7 +100,7 @@ export function TutorialOverlay() {
           {/* Icon */}
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-white bg-gray-900 shadow-lg dark:border-gray-900 dark:bg-gray-800">
-              {STEP_ICONS[step.icon] || <Sparkles className="h-8 w-8 text-violet-400" />}
+              {STEP_ICONS[step.icon] || <Sparkles className="h-8 w-8 text-miami-400" />}
             </div>
           </div>
         </div>
@@ -114,9 +114,9 @@ export function TutorialOverlay() {
                 className={cn(
                   "h-1.5 rounded-full transition-all",
                   idx === currentStep
-                    ? "w-6 bg-violet-500"
+                    ? "w-6 bg-miami-500"
                     : idx < currentStep
-                      ? "w-1.5 bg-violet-300 dark:bg-violet-700"
+                      ? "w-1.5 bg-miami-300 dark:bg-miami-700"
                       : "w-1.5 bg-gray-200 dark:bg-gray-700",
                 )}
               />
@@ -134,7 +134,7 @@ export function TutorialOverlay() {
             <button
               type="button"
               onClick={handleGoTo}
-              className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-miami-600 hover:underline dark:text-miami-400"
             >
               바로 가기 →
             </button>
