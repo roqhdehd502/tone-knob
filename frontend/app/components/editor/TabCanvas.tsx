@@ -1,5 +1,7 @@
 import { useCallback } from "react";
-import type { Section, Measure, Note, Duration } from "~/types/tab";
+
+import type { Duration, Measure, Note, Section } from "~/types/tab";
+import { TECHNIQUE_META } from "~/types/tab";
 
 // 레이아웃 상수
 const STRING_COUNT = 6;
@@ -218,22 +220,13 @@ function MeasureRenderer({
         width={MEASURE_WIDTH}
         height={STRING_COUNT * STRING_GAP + 16}
         rx={4}
-        className={
-          isSelected
-            ? "fill-violet-50 dark:fill-violet-950/30"
-            : "fill-transparent"
-        }
+        className={isSelected ? "fill-violet-50 dark:fill-violet-950/30" : "fill-transparent"}
         onClick={handleMeasureClick}
         style={{ cursor: "pointer" }}
       />
 
       {/* 마디 번호 */}
-      <text
-        x={4}
-        y={MEASURE_PADDING - 12}
-        fontSize={9}
-        className="fill-gray-400"
-      >
+      <text x={4} y={MEASURE_PADDING - 12} fontSize={9} className="fill-gray-400">
         {measureIndex + 1}
       </text>
 
@@ -275,8 +268,7 @@ function MeasureRenderer({
       {currentTool === "note" &&
         Array.from({ length: STRING_COUNT }).map((_, sIdx) =>
           Array.from({ length: NOTE_POSITIONS }).map((_, pIdx) => {
-            const cx =
-              10 + (pIdx / NOTE_POSITIONS) * (innerWidth - 20);
+            const cx = 10 + (pIdx / NOTE_POSITIONS) * (innerWidth - 20);
             const cy = MEASURE_PADDING + sIdx * STRING_GAP;
             const position = pIdx / NOTE_POSITIONS;
             return (
@@ -311,8 +303,7 @@ function MeasureRenderer({
 
       {/* 음표 렌더링 */}
       {measure.notes.map((note) => {
-        const cx =
-          10 + note.position * (innerWidth - 20);
+        const cx = 10 + note.position * (innerWidth - 20);
         const cy = MEASURE_PADDING + note.string * STRING_GAP;
         const isNoteSelected = selectedNoteIds.has(note.id);
 
@@ -333,6 +324,10 @@ function MeasureRenderer({
     </g>
   );
 }
+
+const TECHNIQUE_COLOR_MAP = new Map(
+  TECHNIQUE_META.map((t) => [t.id, { symbol: t.symbol, color: t.color }]),
+);
 
 function NoteRenderer({
   note,
@@ -361,6 +356,8 @@ function NoteRenderer({
     [note.id, sectionId, measureId, onNoteClick],
   );
 
+  const hasTechniques = note.techniques && note.techniques.length > 0;
+
   return (
     <g
       onClick={handleClick}
@@ -374,9 +371,7 @@ function NoteRenderer({
         height={16}
         rx={2}
         className={
-          isSelected
-            ? "fill-violet-200 dark:fill-violet-800"
-            : "fill-white dark:fill-gray-900"
+          isSelected ? "fill-violet-200 dark:fill-violet-800" : "fill-white dark:fill-gray-900"
         }
       />
       {/* 프렛 번호 */}
@@ -387,9 +382,7 @@ function NoteRenderer({
         fontSize={12}
         fontWeight="bold"
         className={
-          isSelected
-            ? "fill-violet-700 dark:fill-violet-200"
-            : "fill-gray-900 dark:fill-gray-100"
+          isSelected ? "fill-violet-700 dark:fill-violet-200" : "fill-gray-900 dark:fill-gray-100"
         }
       >
         {note.fret}
@@ -407,6 +400,26 @@ function NoteRenderer({
           strokeWidth={2}
         />
       )}
+      {/* 기법 표시 */}
+      {hasTechniques &&
+        note.techniques!.map((techId, tIdx) => {
+          const meta = TECHNIQUE_COLOR_MAP.get(techId);
+          if (!meta) return null;
+          return (
+            <text
+              key={techId}
+              x={cx}
+              y={cy - 12 - tIdx * 9}
+              textAnchor="middle"
+              fontSize={8}
+              fontWeight="bold"
+              fill={meta.color}
+              className="pointer-events-none"
+            >
+              {meta.symbol}
+            </text>
+          );
+        })}
     </g>
   );
 }

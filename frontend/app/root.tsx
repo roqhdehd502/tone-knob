@@ -7,9 +7,12 @@ import {
   ScrollRestoration,
 } from "react-router";
 
-import type { Route } from "./+types/root";
 import { AuthProvider } from "~/lib/auth";
 import { ThemeProvider } from "~/lib/theme";
+import { TutorialProvider } from "~/lib/tutorial";
+
+import type { Route } from "./+types/root";
+
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -51,7 +54,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Outlet />
+        <TutorialProvider>
+          <Outlet />
+        </TutorialProvider>
       </AuthProvider>
     </ThemeProvider>
   );

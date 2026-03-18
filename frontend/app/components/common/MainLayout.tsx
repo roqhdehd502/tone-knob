@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Outlet } from "react-router";
+
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { TutorialOverlay } from "./TutorialOverlay";
 
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,6 +17,7 @@ export function MainLayout() {
           <Outlet />
         </div>
       </main>
+      <TutorialOverlay />
     </div>
   );
 }

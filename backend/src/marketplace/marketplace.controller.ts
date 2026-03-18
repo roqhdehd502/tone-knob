@@ -14,9 +14,11 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 
+import { SetPriceDto } from './dto/set-price.dto';
 import { MarketplaceService } from './marketplace.service';
 
 @ApiTags('marketplace')
@@ -26,8 +28,19 @@ export class MarketplaceController {
 
   @Get('tabs')
   @ApiOperation({ summary: '유료 타브 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '유료 타브 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
   listPaidTabs(@Query('page') page?: string, @Query('limit') limit?: string) {
     return this.marketplaceService.listPaidTabs(
       page ? parseInt(page, 10) : 1,
@@ -39,18 +52,22 @@ export class MarketplaceController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '타브 가격 설정' })
+  @ApiResponse({ status: 201, description: '가격 설정 성공' })
+  @ApiResponse({ status: 403, description: '타브 소유자만 가격 설정 가능' })
   setPrice(
     @Param('tabId', ParseUUIDPipe) tabId: string,
     @Request() req: { user: { id: string } },
-    @Body() body: { price: number },
+    @Body() dto: SetPriceDto,
   ) {
-    return this.marketplaceService.setPrice(tabId, req.user.id, body.price);
+    return this.marketplaceService.setPrice(tabId, req.user.id, dto.price);
   }
 
   @Post('tabs/:tabId/purchase')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '타브 구매' })
+  @ApiResponse({ status: 201, description: '구매 성공' })
+  @ApiResponse({ status: 400, description: '이미 구매한 타브 / 잔액 부족' })
   purchase(
     @Param('tabId', ParseUUIDPipe) tabId: string,
     @Request() req: { user: { id: string } },
@@ -62,6 +79,7 @@ export class MarketplaceController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '타브 구매 여부 확인' })
+  @ApiResponse({ status: 200, description: '구매 여부 반환' })
   async hasPurchased(
     @Param('tabId', ParseUUIDPipe) tabId: string,
     @Request() req: { user: { id: string } },
@@ -77,8 +95,19 @@ export class MarketplaceController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '내 구매 내역' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '구매 내역 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
   getMyPurchases(
     @Request() req: { user: { id: string } },
     @Query('page') page?: string,
@@ -95,8 +124,19 @@ export class MarketplaceController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '내 판매 내역 및 수익' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '판매 내역 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
   getMySales(
     @Request() req: { user: { id: string } },
     @Query('page') page?: string,

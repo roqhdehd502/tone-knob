@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -28,8 +29,19 @@ export class NotificationController {
 
   @Get()
   @ApiOperation({ summary: '알림 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '알림 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
   async getNotifications(
     @Request() req: { user: { id: string } },
     @Query('page') page?: string,
@@ -44,6 +56,7 @@ export class NotificationController {
 
   @Get('unread-count')
   @ApiOperation({ summary: '읽지 않은 알림 수 조회' })
+  @ApiResponse({ status: 200, description: '읽지 않은 알림 수 반환' })
   async getUnreadCount(@Request() req: { user: { id: string } }) {
     const count = await this.notificationService.getUnreadCount(req.user.id);
     return { unreadCount: count };
@@ -51,6 +64,7 @@ export class NotificationController {
 
   @Post(':id/read')
   @ApiOperation({ summary: '알림 읽음 처리' })
+  @ApiResponse({ status: 201, description: '알림 읽음 처리 성공' })
   async markAsRead(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: { user: { id: string } },
@@ -61,6 +75,7 @@ export class NotificationController {
 
   @Post('read-all')
   @ApiOperation({ summary: '모든 알림 읽음 처리' })
+  @ApiResponse({ status: 201, description: '모든 알림 읽음 처리 성공' })
   async markAllAsRead(@Request() req: { user: { id: string } }) {
     await this.notificationService.markAllAsRead(req.user.id);
     return { message: '모든 알림을 읽음 처리했습니다.' };
@@ -68,6 +83,7 @@ export class NotificationController {
 
   @Delete(':id')
   @ApiOperation({ summary: '알림 삭제' })
+  @ApiResponse({ status: 200, description: '알림 삭제 성공' })
   async deleteNotification(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: { user: { id: string } },

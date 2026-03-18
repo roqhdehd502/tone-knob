@@ -1,20 +1,19 @@
-import { useState, useCallback, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
-import { TabCanvas } from "~/components/editor/TabCanvas";
-import { Toolbar } from "~/components/editor/Toolbar";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+
 import { InspectorPanel } from "~/components/editor/InspectorPanel";
 import { PlaybackBar } from "~/components/editor/PlaybackBar";
-import { useEditorStore } from "~/lib/editor-store";
+import { TabCanvas } from "~/components/editor/TabCanvas";
+import { Toolbar } from "~/components/editor/Toolbar";
+import { api } from "~/lib/api";
 import { useAudioPlayer } from "~/lib/audio/use-audio-player";
 import { useAuth } from "~/lib/auth";
-import { api } from "~/lib/api";
+import { useEditorStore } from "~/lib/editor-store";
 import type { Duration } from "~/types/tab";
+import { TECHNIQUE_META } from "~/types/tab";
 
 export function meta() {
-  return [
-    { title: "타브 편집 - Tone Knob" },
-    { name: "description", content: "타브 편집" },
-  ];
+  return [{ title: "타브 편집 - Tone Knob" }, { name: "description", content: "타브 편집" }];
 }
 
 export default function EditorEdit() {
@@ -47,21 +46,28 @@ export default function EditorEdit() {
         setError(err.message);
         setLoading(false);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      const isInput =
-        target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
 
       if (!isInput) {
         if (e.key === "v" && !e.ctrlKey && !e.metaKey) editor.setTool("select");
         if (e.key === "n" && !e.ctrlKey && !e.metaKey) editor.setTool("note");
         if (e.key === "e" && !e.ctrlKey && !e.metaKey) editor.setTool("eraser");
-        if (e.key === "m" && !e.ctrlKey && !e.metaKey) audio.toggleMetronome();
+        if (e.key === "m" && !e.ctrlKey && !e.metaKey && !e.shiftKey) audio.toggleMetronome();
+
+        // Technique shortcuts
+        if (editor.selectedNoteIds.size > 0) {
+          const tech = TECHNIQUE_META.find((t) => t.shortcut === e.key);
+          if (tech) {
+            e.preventDefault();
+            editor.toggleTechnique(tech.id);
+          }
+        }
         if (e.key === " ") {
           e.preventDefault();
           void audio.togglePlayPause();
@@ -112,7 +118,7 @@ export default function EditorEdit() {
   }, [user, id, editor, isPublic, navigate]);
 
   const handleNoteClick = useCallback(
-    (noteId: string, _sectionId: string, _measureId: string) => {
+    (noteId: string) => {
       if (editor.currentTool === "eraser") {
         editor.deleteNotes([noteId]);
       } else {
@@ -123,12 +129,7 @@ export default function EditorEdit() {
   );
 
   const handleCellClick = useCallback(
-    (
-      sectionId: string,
-      measureId: string,
-      stringIndex: number,
-      position: number,
-    ) => {
+    (sectionId: string, measureId: string, stringIndex: number, position: number) => {
       if (editor.currentTool === "note") {
         editor.addNote(sectionId, measureId, {
           string: stringIndex,
@@ -199,6 +200,9 @@ export default function EditorEdit() {
           onTogglePublish={handleTogglePublish}
           onAddMeasure={handleAddMeasure}
           onAddSection={handleAddSection}
+          selectedNoteTechniques={editor.selectedNoteTechniques}
+          hasSelection={editor.selectedNoteIds.size > 0}
+          onToggleTechnique={editor.toggleTechnique}
         />
 
         <div className="flex-1 overflow-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

@@ -1,6 +1,9 @@
-import { Sun, Moon, Monitor, Bell, Globe, Shield } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
-import { useTheme, type Theme } from "~/lib/theme";
+import { Bell, BookOpen, Globe, Monitor, Moon, Shield, Sun } from "lucide-react";
+
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { type Theme, useTheme } from "~/lib/theme";
+import { useTutorial } from "~/lib/tutorial";
 import { cn } from "~/lib/utils";
 
 export function meta() {
@@ -15,6 +18,7 @@ const themeOptions: { value: Theme; icon: typeof Sun; label: string; desc: strin
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
+  const { isCompleted, resetTutorial, startTutorial } = useTutorial();
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -85,6 +89,39 @@ export default function Settings() {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               알림 설정 기능이 곧 제공됩니다.
             </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 튜토리얼 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">튜토리얼</CardTitle>
+          <CardDescription>플랫폼 사용법을 다시 확인하세요</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-5 w-5 text-violet-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">온보딩 튜토리얼</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {isCompleted
+                    ? "튜토리얼을 이미 완료했습니다"
+                    : "튜토리얼을 아직 완료하지 않았습니다"}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (isCompleted) resetTutorial();
+                startTutorial();
+              }}
+            >
+              {isCompleted ? "다시 보기" : "시작하기"}
+            </Button>
           </div>
         </CardContent>
       </Card>

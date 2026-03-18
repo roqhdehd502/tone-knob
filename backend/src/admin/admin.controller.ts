@@ -14,12 +14,15 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 
 import { SettlementStatus } from '../entities/settlement.entity';
 import { SubscriptionStatus } from '../entities/subscription.entity';
 import { AdminService } from './admin.service';
+import { UpdateRoleDto } from './dto/update-role.dto';
+import { UpdateSettlementStatusDto } from './dto/update-settlement-status.dto';
 
 @ApiTags('admin')
 @Controller('api/admin')
@@ -32,6 +35,8 @@ export class AdminController {
 
   @Get('dashboard')
   @ApiOperation({ summary: '관리자 대시보드 통계' })
+  @ApiResponse({ status: 200, description: '대시보드 통계 반환' })
+  @ApiResponse({ status: 403, description: '관리자 권한 필요' })
   getDashboardStats(@Request() req: { user: { role?: string } }) {
     return this.adminService.getDashboardStats(req.user);
   }
@@ -40,9 +45,25 @@ export class AdminController {
 
   @Get('users')
   @ApiOperation({ summary: '사용자 목록' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiResponse({ status: 200, description: '사용자 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: '검색어 (이메일/유저네임)',
+  })
   listUsers(
     @Request() req: { user: { role?: string } },
     @Query('page') page?: string,
@@ -59,6 +80,8 @@ export class AdminController {
 
   @Get('users/:id')
   @ApiOperation({ summary: '사용자 상세 조회' })
+  @ApiResponse({ status: 200, description: '사용자 상세 반환' })
+  @ApiResponse({ status: 404, description: '사용자 없음' })
   getUserDetail(
     @Request() req: { user: { role?: string } },
     @Param('id') id: string,
@@ -68,16 +91,20 @@ export class AdminController {
 
   @Put('users/:id/role')
   @ApiOperation({ summary: '사용자 역할 변경' })
+  @ApiResponse({ status: 200, description: '역할 변경 성공' })
+  @ApiResponse({ status: 403, description: '관리자 권한 필요' })
   updateUserRole(
     @Request() req: { user: { role?: string } },
     @Param('id') id: string,
-    @Body() body: { role: string },
+    @Body() dto: UpdateRoleDto,
   ) {
-    return this.adminService.updateUserRole(req.user, id, body.role);
+    return this.adminService.updateUserRole(req.user, id, dto.role);
   }
 
   @Delete('users/:id')
   @ApiOperation({ summary: '사용자 삭제' })
+  @ApiResponse({ status: 200, description: '삭제 성공' })
+  @ApiResponse({ status: 403, description: '관리자 권한 필요' })
   deleteUser(
     @Request() req: { user: { role?: string } },
     @Param('id') id: string,
@@ -89,9 +116,25 @@ export class AdminController {
 
   @Get('settlements')
   @ApiOperation({ summary: '정산 목록' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'status', required: false, enum: SettlementStatus })
+  @ApiResponse({ status: 200, description: '정산 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: SettlementStatus,
+    description: '정산 상태 필터',
+  })
   listSettlements(
     @Request() req: { user: { role?: string } },
     @Query('page') page?: string,
@@ -108,16 +151,18 @@ export class AdminController {
 
   @Put('settlements/:id/status')
   @ApiOperation({ summary: '정산 상태 변경' })
+  @ApiResponse({ status: 200, description: '정산 상태 변경 성공' })
+  @ApiResponse({ status: 403, description: '관리자 권한 필요' })
   updateSettlementStatus(
     @Request() req: { user: { role?: string } },
     @Param('id') id: string,
-    @Body() body: { status: SettlementStatus; externalTransferId?: string },
+    @Body() dto: UpdateSettlementStatusDto,
   ) {
     return this.adminService.updateSettlementStatus(
       req.user,
       id,
-      body.status,
-      body.externalTransferId,
+      dto.status,
+      dto.externalTransferId,
     );
   }
 
@@ -125,9 +170,25 @@ export class AdminController {
 
   @Get('subscriptions')
   @ApiOperation({ summary: '구독 목록' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'status', required: false, enum: SubscriptionStatus })
+  @ApiResponse({ status: 200, description: '구독 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: SubscriptionStatus,
+    description: '구독 상태 필터',
+  })
   listSubscriptions(
     @Request() req: { user: { role?: string } },
     @Query('page') page?: string,

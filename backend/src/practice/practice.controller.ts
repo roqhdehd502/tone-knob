@@ -12,9 +12,11 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 
+import { RecordSessionDto } from './dto/record-session.dto';
 import { PracticeService } from './practice.service';
 
 @ApiTags('practice')
@@ -26,25 +28,20 @@ export class PracticeController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '연습 세션 기록' })
+  @ApiResponse({ status: 201, description: '세션 기록 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
   recordSession(
     @Request() req: { user: { id: string } },
-    @Body()
-    body: {
-      tabId?: string;
-      durationSeconds: number;
-      bpm?: number;
-      speedMultiplier?: number;
-      loopStartMeasure?: number;
-      loopEndMeasure?: number;
-    },
+    @Body() dto: RecordSessionDto,
   ) {
-    return this.practiceService.recordSession(req.user.id, body);
+    return this.practiceService.recordSession(req.user.id, dto);
   }
 
   @Get('stats')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '연습 통계 조회' })
+  @ApiResponse({ status: 200, description: '통계 조회 성공' })
   getStats(@Request() req: { user: { id: string } }) {
     return this.practiceService.getStats(req.user.id);
   }
@@ -53,8 +50,19 @@ export class PracticeController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '최근 연습 세션 목록' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '세션 목록 조회 성공' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호 (기본 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수 (기본 20)',
+  })
   getRecentSessions(
     @Request() req: { user: { id: string } },
     @Query('page') page?: string,

@@ -16,6 +16,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -34,6 +35,7 @@ export class CommunityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '타브 좋아요 토글' })
+  @ApiResponse({ status: 201, description: '좋아요 토글 성공' })
   async toggleLike(
     @Param('tabId', ParseUUIDPipe) tabId: string,
     @Request() req: { user: { id: string } },
@@ -45,6 +47,7 @@ export class CommunityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '타브 좋아요 여부 확인' })
+  @ApiResponse({ status: 200, description: '좋아요 여부 반환' })
   async isLiked(
     @Param('tabId', ParseUUIDPipe) tabId: string,
     @Request() req: { user: { id: string } },
@@ -59,6 +62,8 @@ export class CommunityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '댓글 작성' })
+  @ApiResponse({ status: 201, description: '댓글 작성 성공' })
+  @ApiResponse({ status: 401, description: '인증 필요' })
   async createComment(
     @Param('tabId', ParseUUIDPipe) tabId: string,
     @Body() dto: CreateCommentDto,
@@ -69,8 +74,19 @@ export class CommunityController {
 
   @Get('tabs/:tabId/comments')
   @ApiOperation({ summary: '댓글 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '댓글 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
   async getComments(
     @Param('tabId', ParseUUIDPipe) tabId: string,
     @Query('page') page?: string,
@@ -85,6 +101,7 @@ export class CommunityController {
 
   @Get('comments/:commentId/replies')
   @ApiOperation({ summary: '대댓글 조회' })
+  @ApiResponse({ status: 200, description: '대댓글 목록 반환' })
   async getReplies(@Param('commentId', ParseUUIDPipe) commentId: string) {
     return this.communityService.getReplies(commentId);
   }
@@ -93,6 +110,8 @@ export class CommunityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '댓글 수정' })
+  @ApiResponse({ status: 200, description: '댓글 수정 성공' })
+  @ApiResponse({ status: 403, description: '작성자만 수정 가능' })
   async updateComment(
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() dto: UpdateCommentDto,
@@ -105,6 +124,8 @@ export class CommunityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '댓글 삭제' })
+  @ApiResponse({ status: 200, description: '댓글 삭제 성공' })
+  @ApiResponse({ status: 403, description: '작성자만 삭제 가능' })
   async deleteComment(
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Request() req: { user: { id: string } },
@@ -119,6 +140,7 @@ export class CommunityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '사용자 팔로우 토글' })
+  @ApiResponse({ status: 201, description: '팔로우 토글 성공' })
   async toggleFollow(
     @Param('userId', ParseUUIDPipe) userId: string,
     @Request() req: { user: { id: string } },
@@ -130,6 +152,7 @@ export class CommunityController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: '팔로우 여부 확인' })
+  @ApiResponse({ status: 200, description: '팔로우 여부 반환' })
   async isFollowing(
     @Param('userId', ParseUUIDPipe) userId: string,
     @Request() req: { user: { id: string } },
@@ -143,8 +166,19 @@ export class CommunityController {
 
   @Get('users/:userId/followers')
   @ApiOperation({ summary: '팔로워 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '팔로워 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
   async getFollowers(
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query('page') page?: string,
@@ -159,8 +193,19 @@ export class CommunityController {
 
   @Get('users/:userId/following')
   @ApiOperation({ summary: '팔로잉 목록 조회' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: '팔로잉 목록 반환' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '페이지 번호',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: '페이지당 항목 수',
+  })
   async getFollowing(
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query('page') page?: string,
@@ -175,6 +220,7 @@ export class CommunityController {
 
   @Get('users/:userId/stats')
   @ApiOperation({ summary: '사용자 팔로워/팔로잉 수 조회' })
+  @ApiResponse({ status: 200, description: '팔로워/팔로잉 수 반환' })
   async getUserStats(@Param('userId', ParseUUIDPipe) userId: string) {
     const [followerCount, followingCount] = await Promise.all([
       this.communityService.getFollowerCount(userId),

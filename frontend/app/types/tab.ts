@@ -40,7 +40,40 @@ export type Technique =
   | "slide-down"
   | "vibrato"
   | "mute"
-  | "harmonic";
+  | "harmonic"
+  | "palm-mute"
+  | "ghost-note"
+  | "let-ring"
+  | "tap"
+  | "trill"
+  | "tremolo-pick"
+  | "glissando";
+
+export interface TechniqueMeta {
+  id: Technique;
+  label: string;
+  symbol: string;
+  shortcut: string;
+  color: string;
+}
+
+export const TECHNIQUE_META: TechniqueMeta[] = [
+  { id: "hammer-on", label: "해머온", symbol: "H", shortcut: "h", color: "#10b981" },
+  { id: "pull-off", label: "풀오프", symbol: "P", shortcut: "p", color: "#3b82f6" },
+  { id: "bend", label: "벤딩", symbol: "B", shortcut: "b", color: "#f59e0b" },
+  { id: "slide-up", label: "슬라이드↑", symbol: "/", shortcut: "/", color: "#8b5cf6" },
+  { id: "slide-down", label: "슬라이드↓", symbol: "\\", shortcut: "\\", color: "#8b5cf6" },
+  { id: "vibrato", label: "비브라토", symbol: "~", shortcut: "~", color: "#ec4899" },
+  { id: "mute", label: "뮤트", symbol: "X", shortcut: "x", color: "#6b7280" },
+  { id: "harmonic", label: "하모닉스", symbol: "◇", shortcut: "o", color: "#06b6d4" },
+  { id: "palm-mute", label: "팜뮤트", symbol: "PM", shortcut: "m", color: "#78716c" },
+  { id: "ghost-note", label: "고스트노트", symbol: "( )", shortcut: "g", color: "#a1a1aa" },
+  { id: "let-ring", label: "렛링", symbol: "LR", shortcut: "l", color: "#14b8a6" },
+  { id: "tap", label: "탭핑", symbol: "T", shortcut: "t", color: "#e11d48" },
+  { id: "trill", label: "트릴", symbol: "tr", shortcut: "r", color: "#7c3aed" },
+  { id: "tremolo-pick", label: "트레몰로", symbol: "≋", shortcut: "w", color: "#ea580c" },
+  { id: "glissando", label: "글리산도", symbol: "gl", shortcut: "d", color: "#0284c7" },
+];
 
 // 악기 종류
 export type InstrumentType =

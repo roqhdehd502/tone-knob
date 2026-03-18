@@ -1,11 +1,6 @@
-import { useState, useCallback } from "react";
-import type {
-  TabDocument,
-  Note,
-  Measure,
-  Section,
-  Duration,
-} from "~/types/tab";
+import { useCallback, useState } from "react";
+
+import type { Duration, Measure, Note, Section, TabDocument, Technique } from "~/types/tab";
 import { createEmptyTabDocument } from "~/types/tab";
 
 interface EditorState {
@@ -81,43 +76,36 @@ export function useEditorStore(initialTab?: TabDocument) {
     });
   }, []);
 
-  const addNote = useCallback(
-    (sectionId: string, measureId: string, note: Omit<Note, "id">) => {
-      setState((prev) => {
-        const newTab = structuredClone(prev.tab);
-        const section = newTab.sections.find(
-          (s: Section) => s.id === sectionId,
-        );
-        if (!section) return prev;
-        const measure = section.measures.find(
-          (m: Measure) => m.id === measureId,
-        );
-        if (!measure) return prev;
+  const addNote = useCallback((sectionId: string, measureId: string, note: Omit<Note, "id">) => {
+    setState((prev) => {
+      const newTab = structuredClone(prev.tab);
+      const section = newTab.sections.find((s: Section) => s.id === sectionId);
+      if (!section) return prev;
+      const measure = section.measures.find((m: Measure) => m.id === measureId);
+      if (!measure) return prev;
 
-        const existingIdx = measure.notes.findIndex(
-          (n: Note) => n.string === note.string && n.position === note.position,
-        );
-        const newNote: Note = { ...note, id: crypto.randomUUID() };
-        if (existingIdx >= 0) {
-          measure.notes[existingIdx] = newNote;
-        } else {
-          measure.notes.push(newNote);
-        }
+      const existingIdx = measure.notes.findIndex(
+        (n: Note) => n.string === note.string && n.position === note.position,
+      );
+      const newNote: Note = { ...note, id: crypto.randomUUID() };
+      if (existingIdx >= 0) {
+        measure.notes[existingIdx] = newNote;
+      } else {
+        measure.notes.push(newNote);
+      }
 
-        const newHistory = prev.history.slice(0, prev.historyIndex + 1);
-        newHistory.push(structuredClone(newTab));
-        if (newHistory.length > 50) newHistory.shift();
-        return {
-          ...prev,
-          tab: newTab,
-          history: newHistory,
-          historyIndex: newHistory.length - 1,
-          isDirty: true,
-        };
-      });
-    },
-    [],
-  );
+      const newHistory = prev.history.slice(0, prev.historyIndex + 1);
+      newHistory.push(structuredClone(newTab));
+      if (newHistory.length > 50) newHistory.shift();
+      return {
+        ...prev,
+        tab: newTab,
+        history: newHistory,
+        historyIndex: newHistory.length - 1,
+        isDirty: true,
+      };
+    });
+  }, []);
 
   const deleteNotes = useCallback((noteIds: string[]) => {
     const idSet = new Set(noteIds);
@@ -185,31 +173,26 @@ export function useEditorStore(initialTab?: TabDocument) {
     });
   }, []);
 
-  const reorderMeasures = useCallback(
-    (sectionId: string, oldIndex: number, newIndex: number) => {
-      if (oldIndex === newIndex) return;
-      setState((prev) => {
-        const newTab = structuredClone(prev.tab);
-        const section = newTab.sections.find(
-          (s: Section) => s.id === sectionId,
-        );
-        if (!section) return prev;
-        const [moved] = section.measures.splice(oldIndex, 1);
-        section.measures.splice(newIndex, 0, moved);
-        const newHistory = prev.history.slice(0, prev.historyIndex + 1);
-        newHistory.push(structuredClone(newTab));
-        if (newHistory.length > 50) newHistory.shift();
-        return {
-          ...prev,
-          tab: newTab,
-          history: newHistory,
-          historyIndex: newHistory.length - 1,
-          isDirty: true,
-        };
-      });
-    },
-    [],
-  );
+  const reorderMeasures = useCallback((sectionId: string, oldIndex: number, newIndex: number) => {
+    if (oldIndex === newIndex) return;
+    setState((prev) => {
+      const newTab = structuredClone(prev.tab);
+      const section = newTab.sections.find((s: Section) => s.id === sectionId);
+      if (!section) return prev;
+      const [moved] = section.measures.splice(oldIndex, 1);
+      section.measures.splice(newIndex, 0, moved);
+      const newHistory = prev.history.slice(0, prev.historyIndex + 1);
+      newHistory.push(structuredClone(newTab));
+      if (newHistory.length > 50) newHistory.shift();
+      return {
+        ...prev,
+        tab: newTab,
+        history: newHistory,
+        historyIndex: newHistory.length - 1,
+        isDirty: true,
+      };
+    });
+  }, []);
 
   const reorderSections = useCallback((oldIndex: number, newIndex: number) => {
     if (oldIndex === newIndex) return;
@@ -232,12 +215,7 @@ export function useEditorStore(initialTab?: TabDocument) {
 
   const updateTabMeta = useCallback(
     (
-      updates: Partial<
-        Pick<
-          TabDocument,
-          "title" | "artist" | "bpm" | "tuning" | "timeSignature"
-        >
-      >,
+      updates: Partial<Pick<TabDocument, "title" | "artist" | "bpm" | "tuning" | "timeSignature">>,
     ) => {
       pushHistory({ ...state.tab, ...updates });
     },
@@ -277,6 +255,53 @@ export function useEditorStore(initialTab?: TabDocument) {
     }));
   }, []);
 
+  const toggleTechnique = useCallback((technique: Technique) => {
+    setState((prev) => {
+      if (prev.selectedNoteIds.size === 0) return prev;
+      const newTab = structuredClone(prev.tab);
+      for (const section of newTab.sections) {
+        for (const measure of section.measures) {
+          for (const note of measure.notes) {
+            if (!prev.selectedNoteIds.has(note.id)) continue;
+            const techs = note.techniques ?? [];
+            const idx = techs.indexOf(technique);
+            if (idx >= 0) {
+              techs.splice(idx, 1);
+            } else {
+              techs.push(technique);
+            }
+            note.techniques = techs.length > 0 ? techs : undefined;
+          }
+        }
+      }
+      const newHistory = prev.history.slice(0, prev.historyIndex + 1);
+      newHistory.push(structuredClone(newTab));
+      if (newHistory.length > 50) newHistory.shift();
+      return {
+        ...prev,
+        tab: newTab,
+        history: newHistory,
+        historyIndex: newHistory.length - 1,
+        isDirty: true,
+      };
+    });
+  }, []);
+
+  const getSelectedNoteTechniques = useCallback((): Technique[] => {
+    if (state.selectedNoteIds.size === 0) return [];
+    const techs = new Set<Technique>();
+    for (const section of state.tab.sections) {
+      for (const measure of section.measures) {
+        for (const note of measure.notes) {
+          if (state.selectedNoteIds.has(note.id) && note.techniques) {
+            for (const t of note.techniques) techs.add(t);
+          }
+        }
+      }
+    }
+    return [...techs];
+  }, [state.selectedNoteIds, state.tab]);
+
   const markClean = useCallback(() => {
     setState((prev) => ({ ...prev, isDirty: false }));
   }, []);
@@ -299,6 +324,8 @@ export function useEditorStore(initialTab?: TabDocument) {
     setSelectedMeasure,
     setTab,
     markClean,
+    toggleTechnique,
+    selectedNoteTechniques: getSelectedNoteTechniques(),
     canUndo: state.historyIndex > 0,
     canRedo: state.historyIndex < state.history.length - 1,
   };
