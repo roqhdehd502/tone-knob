@@ -1,11 +1,16 @@
-import { Controller } from "@nestjs/common";
-import { MessagePattern, Payload } from "@nestjs/microservices";
+import { Controller, Inject } from "@nestjs/common";
+import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
+
+import { SUBSCRIPTION_EVENTS } from "@tone-knob/shared";
 
 import { SubscriptionService } from "./subscription/subscription.service";
 
 @Controller()
 export class SubscriptionSvcController {
-  constructor(private readonly subscriptionService: SubscriptionService) {}
+  constructor(
+    private readonly subscriptionService: SubscriptionService,
+    @Inject("COMMUNITY_SERVICE") private readonly communityClient: ClientProxy,
+  ) {}
 
   @MessagePattern("subscription.getPlans")
   async getPlans() {
@@ -26,16 +31,28 @@ export class SubscriptionSvcController {
       externalPaymentId?: string;
     },
   ) {
-    return this.subscriptionService.subscribe(
+    const subscription = await this.subscriptionService.subscribe(
       data.userId,
       data.plan as any,
       data.externalPaymentId,
     );
+    this.communityClient.emit(SUBSCRIPTION_EVENTS.ACTIVATED, {
+      userId: data.userId,
+      plan: subscription.plan,
+      subscriptionId: subscription.id,
+    });
+    return subscription;
   }
 
   @MessagePattern("subscription.cancel")
   async cancel(@Payload() data: { userId: string }) {
-    return this.subscriptionService.cancel(data.userId);
+    const subscription = await this.subscriptionService.cancel(data.userId);
+    this.communityClient.emit(SUBSCRIPTION_EVENTS.CANCELLED, {
+      userId: data.userId,
+      plan: subscription.plan,
+      subscriptionId: subscription.id,
+    });
+    return subscription;
   }
 
   @MessagePattern("subscription.getHistory")

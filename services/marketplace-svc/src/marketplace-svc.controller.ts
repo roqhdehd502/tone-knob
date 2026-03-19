@@ -40,11 +40,17 @@ export class MarketplaceSvcController {
   async setPrice(
     @Payload() data: { tabId: string; userId: string; price: number },
   ) {
-    return this.marketplaceService.setPrice(
+    const tab = await this.marketplaceService.setPrice(
       data.tabId,
       data.userId,
       data.price,
     );
+    this.communityClient.emit(MARKETPLACE_EVENTS.TAB_LISTED, {
+      tabId: data.tabId,
+      sellerId: data.userId,
+      price: data.price,
+    });
+    return tab;
   }
 
   @MessagePattern("marketplace.purchase")
@@ -125,7 +131,13 @@ export class MarketplaceSvcController {
 
   @MessagePattern("payment.refund")
   async refundPayment(@Payload() data: { paymentId: string }) {
-    return this.paymentService.refundPayment(data.paymentId);
+    const payment = await this.paymentService.refundPayment(data.paymentId);
+    this.communityClient.emit(PAYMENT_EVENTS.REFUNDED, {
+      paymentId: payment.id,
+      userId: payment.userId,
+      amount: payment.amount,
+    });
+    return payment;
   }
 
   @MessagePattern("payment.getById")

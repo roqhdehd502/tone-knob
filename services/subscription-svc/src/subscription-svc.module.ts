@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ClientsModule, Transport } from "@nestjs/microservices";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { Subscription } from "./entities/subscription.entity";
@@ -23,6 +24,20 @@ import { SubscriptionSvcController } from "./subscription-svc.controller";
         logging: configService.get("NODE_ENV") === "development",
       }),
     }),
+    ClientsModule.registerAsync([
+      {
+        name: "COMMUNITY_SERVICE",
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get("COMMUNITY_SVC_HOST", "localhost"),
+            port: parseInt(configService.get("COMMUNITY_SVC_PORT", "3005"), 10),
+          },
+        }),
+      },
+    ]),
     SubscriptionModule,
   ],
   controllers: [SubscriptionSvcController],

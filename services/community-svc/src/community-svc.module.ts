@@ -43,6 +43,7 @@ import { EventHandlerController } from "./events/event-handler.controller";
         logging: configService.get("NODE_ENV") === "development",
       }),
     }),
+    TypeOrmModule.forFeature([Follow, Tab, Like, Review]),
     BadgeModule,
     CommunityModule,
     NotificationModule,
