@@ -4,38 +4,47 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-@Entity('users')
+@Entity("users")
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: "varchar", length: 255, unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: "varchar", length: 50, unique: true })
   username: string;
 
-  @Column({ type: 'varchar', length: 255, select: false })
+  @Column({ type: "varchar", length: 50, default: "local" })
+  provider: string;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  providerId: string;
+
+  @Column({ type: "varchar", length: 255, select: false, nullable: true })
   passwordHash: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: "int", default: 0 })
+  knobBalance: number;
+
+  @Column({ type: "varchar", length: 100, nullable: true })
   displayName: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   avatarUrl: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: "varchar", length: 500, nullable: true })
   bio: string;
 
-  @Column({ type: 'varchar', length: 20, default: 'user' })
+  @Column({ type: "varchar", length: 20, default: "user" })
   role: string;
 
-  @Column({ type: 'varchar', length: 20, default: 'free' })
+  @Column({ type: "varchar", length: 20, default: "free" })
   subscriptionTier: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   subscriptionExpiresAt: Date;
 
   @CreateDateColumn()

@@ -3,12 +3,14 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
+import { KnobTransaction } from "./entities/knob-transaction.entity";
 import { Payment } from "./entities/payment.entity";
 import { Settlement } from "./entities/settlement.entity";
 import { Tab } from "./entities/tab.entity";
 import { TabPurchase } from "./entities/tab-purchase.entity";
 import { User } from "./entities/user.entity";
 
+import { KnobModule } from "./knob/knob.module";
 import { MarketplaceModule } from "./marketplace/marketplace.module";
 import { PaymentModule } from "./payment/payment.module";
 import { SettlementModule } from "./settlement/settlement.module";
@@ -23,7 +25,14 @@ import { MarketplaceSvcController } from "./marketplace-svc.controller";
       useFactory: (configService: ConfigService) => ({
         type: "postgres" as const,
         url: configService.get<string>("DATABASE_URL"),
-        entities: [User, Tab, TabPurchase, Payment, Settlement],
+        entities: [
+          User,
+          Tab,
+          TabPurchase,
+          Payment,
+          Settlement,
+          KnobTransaction,
+        ],
         synchronize: false,
         logging: configService.get("NODE_ENV") === "development",
       }),
@@ -46,6 +55,7 @@ import { MarketplaceSvcController } from "./marketplace-svc.controller";
         }),
       },
     ]),
+    KnobModule,
     MarketplaceModule,
     PaymentModule,
     SettlementModule,

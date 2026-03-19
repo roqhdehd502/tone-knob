@@ -1,10 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 
-import { MarketplaceProxyController } from './marketplace-proxy.controller';
-import { PaymentProxyController } from './payment-proxy.controller';
-import { SettlementProxyController } from './settlement-proxy.controller';
+import { KnobProxyController } from "./knob-proxy.controller";
+import { MarketplaceProxyController } from "./marketplace-proxy.controller";
+import { PaymentProxyController } from "./payment-proxy.controller";
+import { SettlementProxyController } from "./settlement-proxy.controller";
 
 @Module({
-  controllers: [MarketplaceProxyController, PaymentProxyController, SettlementProxyController],
+  controllers: [
+    MarketplaceProxyController,
+    PaymentProxyController,
+    SettlementProxyController,
+    KnobProxyController,
+  ],
 })
 export class MarketplaceProxyModule {}

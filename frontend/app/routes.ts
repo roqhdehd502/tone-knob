@@ -4,6 +4,9 @@ export default [
   // 인증 페이지 (레이아웃 없음)
   route("login", "routes/login.tsx"),
   route("register", "routes/register.tsx"),
+  route("auth/callback", "routes/auth-callback.tsx"),
+  route("terms", "routes/terms.tsx"),
+  route("privacy", "routes/privacy.tsx"),
 
   // 메인 레이아웃 적용 페이지
   layout("components/common/MainLayout.tsx", [

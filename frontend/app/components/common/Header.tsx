@@ -1,11 +1,13 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
-import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { Bell, Coins, LogOut, Menu, Search } from "lucide-react";
 
 import { ThemeToggle } from "~/components/common/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth";
+import { api } from "~/lib/api";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -13,6 +15,18 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle }: HeaderProps) {
   const { user, logout } = useAuth();
+  const [knobBalance, setKnobBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setKnobBalance(null);
+      return;
+    }
+    api.knob
+      .getBalance()
+      .then((res) => setKnobBalance(res.balance))
+      .catch(() => {});
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-50 h-14 border-b border-gray-200/60 bg-white/80 backdrop-blur-xl dark:border-gray-800/60 dark:bg-gray-950/80">
@@ -45,6 +59,15 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <ThemeToggle />
           {user ? (
             <>
+              {knobBalance !== null && (
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-300 dark:hover:bg-amber-900/50"
+                >
+                  <Coins className="h-3.5 w-3.5" />
+                  <span>{knobBalance.toLocaleString()}</span>
+                </Link>
+              )}
               <Button variant="ghost" size="icon" className="relative h-8 w-8">
                 <Bell className="h-4 w-4" />
                 <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-950" />

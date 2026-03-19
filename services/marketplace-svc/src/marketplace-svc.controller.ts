@@ -3,6 +3,7 @@ import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
 
 import { MARKETPLACE_EVENTS, PAYMENT_EVENTS } from "@tone-knob/shared";
 
+import { KnobService } from "./knob/knob.service";
 import { MarketplaceService } from "./marketplace/marketplace.service";
 import { PaymentService } from "./payment/payment.service";
 import { SettlementService } from "./settlement/settlement.service";
@@ -13,14 +14,26 @@ export class MarketplaceSvcController {
     private readonly marketplaceService: MarketplaceService,
     private readonly paymentService: PaymentService,
     private readonly settlementService: SettlementService,
+    private readonly knobService: KnobService,
     @Inject("COMMUNITY_SERVICE") private readonly communityClient: ClientProxy,
   ) {}
 
   // ─── Marketplace ───
 
   @MessagePattern("marketplace.listPaidTabs")
-  async listPaidTabs(@Payload() data: { page?: number; limit?: number }) {
-    return this.marketplaceService.listPaidTabs(data.page, data.limit);
+  async listPaidTabs(
+    @Payload()
+    data: {
+      page?: number;
+      limit?: number;
+      sort?: "popular" | "oldest" | "newest";
+    },
+  ) {
+    return this.marketplaceService.listPaidTabs(
+      data.page,
+      data.limit,
+      data.sort,
+    );
   }
 
   @MessagePattern("marketplace.setPrice")
@@ -152,5 +165,20 @@ export class MarketplaceSvcController {
   @MessagePattern("settlement.summary")
   async getSummary(@Payload() data: { sellerId: string }) {
     return this.settlementService.getSummary(data.sellerId);
+  }
+
+  // ─── Knob ───
+
+  @MessagePattern("knob.getBalance")
+  async getKnobBalance(@Payload() data: { userId: string }) {
+    const balance = await this.knobService.getBalance(data.userId);
+    return { balance };
+  }
+
+  @MessagePattern("knob.getHistory")
+  async getKnobHistory(
+    @Payload() data: { userId: string; page?: number; limit?: number },
+  ) {
+    return this.knobService.getHistory(data.userId, data.page, data.limit);
   }
 }

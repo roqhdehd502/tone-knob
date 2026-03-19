@@ -1,13 +1,15 @@
 # MSA 아키텍처 설계
 
-> **목적**: 현재 모놀리식 백엔드(`backend/`)를 마이크로서비스 아키텍처로 단계적으로 전환하여
+> **목적**: 기존 모놀리식 백엔드를 마이크로서비스 아키텍처로 전환하여
 > 서비스 독립성, 확장성, 장애 격리를 확보한다.
+>
+> ⚠️ `backend/` 디렉토리는 MSA 전환 완료 후 삭제되었습니다. 아래 “현재 구조 (Monolith)” 섹션은 전환 전 구조 기록입니다.
 
 ---
 
 ## 1. 현재 아키텍처 분석
 
-### 현재 구조 (Monolith)
+### 전환 전 구조 (Monolith) — 삭제됨
 
 ```
 tone-knob/
@@ -303,7 +305,7 @@ Supabase (단일 PostgreSQL)
 ### Phase 0: 기반 설정 ✅ 완료
 
 ```
-[ backend/ 모놀리스 ] ← 기존 운영 중 (점진적 축소 예정)
+[ backend/ 모놀리스 ] ← 기존 운영 중 (점진적 축소 예정, 현재 삭제됨)
 [ frontend/ SPA     ]
 ```
 
@@ -318,7 +320,6 @@ Supabase (단일 PostgreSQL)
 [ Gateway (services/gateway/) ] ← HTTP 진입점 (:3000)
     ↓ TCP
 [ auth-svc (:3001) ] ← Auth, User 분리
-[ backend/ (나머지 모듈) ]      ← 점진적 축소
 ```
 
 - [x] `services/gateway/` — HTTP 라우팅, JWT 로컬 검증, Rate Limiting, Swagger
@@ -332,7 +333,6 @@ Supabase (단일 PostgreSQL)
 [ Gateway (:3000) ]
     ↓ TCP
 [ auth-svc (:3001) ]  [ tab-svc (:3002) ]  [ jam-svc (TCP :3003 + HTTP :3004) ]
-[ backend/ (remaining) ]
 ```
 
 - [x] `services/tab-svc/` — Tab CRUD, TabVersion, Practice 추출 (TCP :3002)
@@ -383,6 +383,7 @@ Supabase (단일 PostgreSQL)
 - [x] `NotificationType` enum 확장 (PURCHASE, PAYMENT, AI_JOB, TAB_FORKED, TAB_PUBLISHED)
 - [x] `backend/DEPRECATED.md` 추가 — 모놀리스 코드 참조용 보존, 신규 개발 금지
 - [x] 전체 빌드 검증 (12 tasks 성공, 9개 서비스 dist/main.js 확인)
+- [x] `backend/` 디렉토리 삭제 — 전체 MSA 전환 완료 후 모놀리스 코드 제거, 근거 `package.json` workspaces에서도 제외
 
 ---
 
@@ -575,7 +576,7 @@ docker compose -f docker-compose.services.yml up -d  # 전체 서비스 컨테�
 
 ### 코드 변경 최소화 원칙
 
-- 기존 `backend/`는 **deprecated** 처리 (참조용 보존, 신규 개발 금지)
+- 기존 `backend/` 모놀리스는 MSA 전환 완료 후 **삭제됨** (Strangler Fig Pattern 완결)
 - `packages/shared`에 이벤트 상수·페이로드 타입 정의 (`events/` 디렉토리)
 - 서비스 추출은 항상 새 디렉토리 생성 후 → 검증 → 구버전 삭제 순서
 - 서비스 간 이벤트 드리븐 통신: `ClientProxy.emit()` → `@EventPattern()` (TCP 기반)

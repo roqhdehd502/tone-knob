@@ -12,6 +12,9 @@ import {
   Users,
   Eye,
   Heart,
+  Coins,
+  Award,
+  Star,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -36,6 +39,23 @@ export default function Profile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [myTabs, setMyTabs] = useState<TabListItem[]>([]);
   const [tabTotal, setTabTotal] = useState(0);
+  const [knobBalance, setKnobBalance] = useState(0);
+  const [badges, setBadges] = useState<
+    {
+      id: string;
+      badgeId: string;
+      isFeatured: boolean;
+      earnedAt: string;
+      badge: {
+        id: string;
+        code: string;
+        name: string;
+        description: string | null;
+        icon: string | null;
+        category: string;
+      };
+    }[]
+  >([]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -63,8 +83,27 @@ export default function Profile() {
           setTabTotal(res.total);
         })
         .catch(() => {});
+      api.knob
+        .getBalance()
+        .then((res) => setKnobBalance(res.balance))
+        .catch(() => {});
+      api.badges
+        .getMy()
+        .then((res) => setBadges(res))
+        .catch(() => {});
     }
   }, [user]);
+
+  const handleToggleFeatured = async (userBadgeId: string) => {
+    try {
+      const result = await api.badges.toggleFeatured(userBadgeId);
+      setBadges((prev) =>
+        prev.map((b) => (b.id === userBadgeId ? { ...b, isFeatured: result.isFeatured } : b)),
+      );
+    } catch {
+      // ignore
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -191,10 +230,15 @@ export default function Profile() {
       </Card>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { icon: FileMusic, value: tabTotal, label: "제작한 타브" },
           { icon: Radio, value: followerCount, label: "팔로워" },
+          {
+            icon: Coins,
+            value: knobBalance.toLocaleString(),
+            label: "Knob 잔액",
+          },
           {
             icon: Music,
             value: user.subscriptionTier === "free" ? "Free" : user.subscriptionTier,
@@ -208,6 +252,62 @@ export default function Profile() {
           </Card>
         ))}
       </div>
+
+      {/* Badge collection */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Award className="h-4 w-4 text-miami-600" />
+            뱃지 컬렉션
+            {badges.length > 0 && (
+              <span className="ml-auto text-xs font-normal text-gray-400">
+                {badges.filter((b) => b.isFeatured).length}/3 대표 뱃지
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {badges.length === 0 ? (
+            <div className="space-y-3 rounded-lg border border-dashed border-gray-200 p-6 text-center dark:border-gray-800">
+              <Award className="mx-auto h-8 w-8 text-gray-300 dark:text-gray-700" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                아직 획득한 뱃지가 없습니다
+              </p>
+              <p className="text-xs text-gray-400">활동을 통해 뱃지를 획득해보세요!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+              {badges.map((ub) => (
+                <button
+                  key={ub.id}
+                  onClick={() => handleToggleFeatured(ub.id)}
+                  className={`group relative flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-all ${
+                    ub.isFeatured
+                      ? "border-amber-300 bg-amber-50/80 dark:border-amber-700 dark:bg-amber-950/30"
+                      : "border-gray-200 bg-white hover:border-miami-200 hover:bg-miami-50/30 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-miami-800"
+                  }`}
+                >
+                  {ub.isFeatured && (
+                    <Star className="absolute right-1.5 top-1.5 h-3 w-3 fill-amber-400 text-amber-400" />
+                  )}
+                  <span className="text-2xl">{ub.badge.icon || "🏆"}</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">
+                    {ub.badge.name}
+                  </span>
+                  {ub.badge.description && (
+                    <span className="line-clamp-2 text-[10px] text-gray-400">
+                      {ub.badge.description}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(ub.earnedAt).toLocaleDateString("ko-KR")}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* My tabs */}
       <Card>

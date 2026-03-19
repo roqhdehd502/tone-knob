@@ -264,10 +264,15 @@ export const api = {
     },
   },
   marketplace: {
-    listPaidTabs: (params?: { page?: number; limit?: number }) => {
+    listPaidTabs: (params?: {
+      page?: number;
+      limit?: number;
+      sort?: "popular" | "oldest" | "newest";
+    }) => {
       const qs = new URLSearchParams();
       if (params?.page) qs.set("page", String(params.page));
       if (params?.limit) qs.set("limit", String(params.limit));
+      if (params?.sort) qs.set("sort", params.sort);
       const query = qs.toString();
       return request<TabListResponse>(`/api/marketplace/tabs${query ? `?${query}` : ""}`);
     },
@@ -400,6 +405,94 @@ export const api = {
     delete: (id: string) => request<void>(`/api/recordings/${id}`, { method: "DELETE" }),
     play: (id: string) => request<void>(`/api/recordings/${id}/play`, { method: "POST" }),
     getShareUrl: (id: string) => request<{ url: string }>(`/api/recordings/${id}/share`),
+  },
+  knob: {
+    getBalance: () => request<{ balance: number }>("/api/knob/balance"),
+    getHistory: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{
+        data: {
+          id: string;
+          type: string;
+          amount: number;
+          balanceAfter: number;
+          description: string | null;
+          createdAt: string;
+        }[];
+        total: number;
+      }>(`/api/knob/history${query ? `?${query}` : ""}`);
+    },
+  },
+  badges: {
+    getAll: () =>
+      request<
+        {
+          id: string;
+          code: string;
+          name: string;
+          description: string | null;
+          icon: string | null;
+          category: string;
+        }[]
+      >("/api/badges"),
+    getMy: () =>
+      request<
+        {
+          id: string;
+          badgeId: string;
+          isFeatured: boolean;
+          earnedAt: string;
+          badge: {
+            id: string;
+            code: string;
+            name: string;
+            description: string | null;
+            icon: string | null;
+            category: string;
+          };
+        }[]
+      >("/api/badges/my"),
+    getUserBadges: (userId: string) =>
+      request<
+        {
+          id: string;
+          badgeId: string;
+          isFeatured: boolean;
+          earnedAt: string;
+          badge: {
+            id: string;
+            code: string;
+            name: string;
+            description: string | null;
+            icon: string | null;
+            category: string;
+          };
+        }[]
+      >(`/api/badges/user/${userId}`),
+    getFeatured: (userId: string) =>
+      request<
+        {
+          id: string;
+          badgeId: string;
+          isFeatured: boolean;
+          earnedAt: string;
+          badge: {
+            id: string;
+            code: string;
+            name: string;
+            description: string | null;
+            icon: string | null;
+            category: string;
+          };
+        }[]
+      >(`/api/badges/user/${userId}/featured`),
+    toggleFeatured: (userBadgeId: string) =>
+      request<{ id: string; isFeatured: boolean }>(`/api/badges/${userBadgeId}/featured`, {
+        method: "PATCH",
+      }),
   },
   aiGen: {
     createTabJob: (data: {

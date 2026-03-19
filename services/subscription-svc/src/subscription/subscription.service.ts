@@ -2,18 +2,19 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { RpcException } from '@nestjs/microservices';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { RpcException } from "@nestjs/microservices";
 
-import { Repository } from 'typeorm';
+import { Repository } from "typeorm";
 
 import {
   Subscription,
   SubscriptionPlan,
   SubscriptionStatus,
-} from '../entities/subscription.entity';
-import { User } from '../entities/user.entity';
+} from "../entities/subscription.entity";
+import { Tab } from "../entities/tab.entity";
+import { User } from "../entities/user.entity";
 
 const PLAN_PRICES: Record<SubscriptionPlan, number> = {
   [SubscriptionPlan.FREE]: 0,
@@ -23,23 +24,23 @@ const PLAN_PRICES: Record<SubscriptionPlan, number> = {
 
 const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
   [SubscriptionPlan.FREE]: [
-    '타브 3개 제작',
-    '공개 타브 열람',
-    '합주방 참여 (월 5회)',
+    "타브 월 3회 제작",
+    "공개 타브 열람",
+    "합주방 무제한 참여",
   ],
   [SubscriptionPlan.PREMIUM]: [
-    '타브 무제한 제작',
-    '공개 타브 열람',
-    '합주방 무제한 참여',
-    '고급 테크닉 표기',
-    '버전 히스토리',
+    "타브 무제한 제작",
+    "공개 타브 열람",
+    "합주방 무제한 참여",
+    "고급 테크닉 표기",
+    "버전 히스토리",
   ],
   [SubscriptionPlan.PRO]: [
-    'Premium 기능 전부 포함',
-    'AI 타브 생성',
-    '마켓플레이스 판매',
-    '우선 고객 지원',
-    '분석 대시보드',
+    "Premium 기능 전부 포함",
+    "AI 타브 생성",
+    "마켓플레이스 판매",
+    "우선 고객 지원",
+    "분석 대시보드",
   ],
 };
 
@@ -50,6 +51,8 @@ export class SubscriptionService {
     private readonly subscriptionRepository: Repository<Subscription>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Tab)
+    private readonly tabRepository: Repository<Tab>,
   ) {}
 
   getPlans() {
@@ -63,7 +66,7 @@ export class SubscriptionService {
   async getCurrentSubscription(userId: string): Promise<Subscription | null> {
     return this.subscriptionRepository.findOne({
       where: { userId, status: SubscriptionStatus.ACTIVE },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -73,12 +76,16 @@ export class SubscriptionService {
     externalPaymentId?: string,
   ): Promise<Subscription> {
     if (plan === SubscriptionPlan.FREE) {
-      throw new RpcException(new ConflictException('무료 플랜은 별도 구독이 필요하지 않습니다'));
+      throw new RpcException(
+        new ConflictException("무료 플랜은 별도 구독이 필요하지 않습니다"),
+      );
     }
 
     const existing = await this.getCurrentSubscription(userId);
     if (existing && existing.plan === plan) {
-      throw new RpcException(new ConflictException('이미 동일한 플랜을 구독 중입니다'));
+      throw new RpcException(
+        new ConflictException("이미 동일한 플랜을 구독 중입니다"),
+      );
     }
 
     if (existing) {
@@ -109,7 +116,9 @@ export class SubscriptionService {
   async cancel(userId: string): Promise<Subscription> {
     const subscription = await this.getCurrentSubscription(userId);
     if (!subscription) {
-      throw new RpcException(new NotFoundException('활성 구독을 찾을 수 없습니다'));
+      throw new RpcException(
+        new NotFoundException("활성 구독을 찾을 수 없습니다"),
+      );
     }
 
     subscription.status = SubscriptionStatus.CANCELLED;
@@ -122,6 +131,36 @@ export class SubscriptionService {
     return saved;
   }
 
+  async canCreateTab(
+    userId: string,
+  ): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new RpcException(
+        new NotFoundException("사용자를 찾을 수 없습니다"),
+      );
+    }
+
+    if (
+      (user.subscriptionTier as string) !== (SubscriptionPlan.FREE as string)
+    ) {
+      return { allowed: true, remaining: -1, limit: -1 };
+    }
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const count = await this.tabRepository
+      .createQueryBuilder("tab")
+      .where("tab.userId = :userId", { userId })
+      .andWhere("tab.createdAt >= :start", { start: startOfMonth })
+      .getCount();
+
+    const limit = 3;
+    const remaining = Math.max(0, limit - count);
+    return { allowed: remaining > 0, remaining, limit };
+  }
+
   async getHistory(
     userId: string,
     page = 1,
@@ -129,7 +168,7 @@ export class SubscriptionService {
   ): Promise<{ data: Subscription[]; total: number }> {
     const [data, total] = await this.subscriptionRepository.findAndCount({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       skip: (page - 1) * limit,
       take: limit,
     });

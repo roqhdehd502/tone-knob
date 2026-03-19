@@ -27,6 +27,13 @@ const footerLinks = [
       { to: "/subscription", label: "구독" },
     ],
   },
+  {
+    title: "법적 고지",
+    links: [
+      { to: "/terms", label: "이용약관" },
+      { to: "/privacy", label: "개인정보처리방침" },
+    ],
+  },
 ];
 
 export function Footer() {
@@ -88,9 +95,29 @@ export function Footer() {
 
         {/* 하단 */}
         <div className="mt-8 border-t border-gray-200/60 pt-5 dark:border-gray-800/60">
-          <p className="text-center text-[11px] text-gray-400 dark:text-gray-500">
-            © {new Date().getFullYear()} Tone Knob. All rights reserved.
-          </p>
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">
+              © {new Date().getFullYear()} Tone Knob. All rights reserved.
+            </p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">
+              대표자: 나민우 | 이메일:{" "}
+              <a
+                href="mailto:mwna9409@gmail.com"
+                className="underline hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                mwna9409@gmail.com
+              </a>
+            </p>
+            <div className="flex items-center gap-3 text-[11px] text-gray-400 dark:text-gray-500">
+              <Link to="/terms" className="hover:text-gray-600 dark:hover:text-gray-300">
+                이용약관
+              </Link>
+              <span>|</span>
+              <Link to="/privacy" className="hover:text-gray-600 dark:hover:text-gray-300">
+                개인정보처리방침
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

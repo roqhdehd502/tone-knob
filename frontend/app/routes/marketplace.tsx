@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import {
   ShoppingBag,
-  Store,
   Eye,
   Heart,
   ChevronLeft,
   ChevronRight,
-  DollarSign,
+  Coins,
+  Flame,
+  Clock,
+  ArrowUpDown,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -21,20 +23,29 @@ export function meta() {
   ];
 }
 
+type SortOption = "popular" | "oldest" | "newest";
+
+const SORT_OPTIONS: { value: SortOption; label: string; icon: typeof Flame }[] = [
+  { value: "popular", label: "인기순", icon: Flame },
+  { value: "newest", label: "최신순", icon: Clock },
+  { value: "oldest", label: "등록순", icon: ArrowUpDown },
+];
+
 function formatPrice(price: number): string {
-  return price.toLocaleString("ko-KR") + "원";
+  return price.toLocaleString("ko-KR");
 }
 
 export default function Marketplace() {
   const [tabs, setTabs] = useState<(TabListItem & { price?: number })[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<SortOption>("newest");
   const [loading, setLoading] = useState(true);
 
-  const loadTabs = useCallback(async (p: number) => {
+  const loadTabs = useCallback(async (p: number, s: SortOption) => {
     setLoading(true);
     try {
-      const result = await api.marketplace.listPaidTabs({ page: p, limit: 12 });
+      const result = await api.marketplace.listPaidTabs({ page: p, limit: 12, sort: s });
       setTabs(result.data as (TabListItem & { price?: number })[]);
       setTotal(result.total);
       setPage(p);
@@ -46,16 +57,44 @@ export default function Marketplace() {
   }, []);
 
   useEffect(() => {
-    loadTabs(1);
-  }, [loadTabs]);
+    loadTabs(1, sort);
+  }, [loadTabs, sort]);
+
+  const handleSortChange = (s: SortOption) => {
+    setSort(s);
+    setPage(1);
+  };
 
   const totalPages = Math.ceil(total / 12);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">마켓플레이스</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">프리미엄 타브를 구매하세요</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">마켓플레이스</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            프리미엄 타브를 구매하세요
+          </p>
+        </div>
+        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50/80 p-0.5 dark:border-gray-700/80 dark:bg-gray-900/50">
+          {SORT_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => handleSortChange(opt.value)}
+                className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all ${
+                  sort === opt.value
+                    ? "bg-white text-miami-600 shadow-sm dark:bg-gray-800 dark:text-miami-400"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+              >
+                <Icon className="h-3 w-3" />
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {loading ? (
@@ -91,9 +130,9 @@ export default function Marketplace() {
                       {tab.user?.displayName || tab.user?.username}
                     </span>
                   </div>
-                  <span className="flex items-center gap-0.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                    <DollarSign className="h-3 w-3" />
-                    {tab.price ? formatPrice(tab.price) : "유료"}
+                  <span className="flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    <Coins className="h-3 w-3" />
+                    {tab.price ? formatPrice(tab.price) : "0"} K
                   </span>
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900 group-hover:text-miami-600 dark:text-white dark:group-hover:text-miami-400">
@@ -123,7 +162,7 @@ export default function Marketplace() {
                 size="sm"
                 variant="outline"
                 disabled={page <= 1}
-                onClick={() => loadTabs(page - 1)}
+                onClick={() => loadTabs(page - 1, sort)}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -134,7 +173,7 @@ export default function Marketplace() {
                 size="sm"
                 variant="outline"
                 disabled={page >= totalPages}
-                onClick={() => loadTabs(page + 1)}
+                onClick={() => loadTabs(page + 1, sort)}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
