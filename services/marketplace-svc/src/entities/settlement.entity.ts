@@ -6,56 +6,56 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { User } from './user.entity';
+import { User } from "./user.entity";
 
 export enum SettlementStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
+  PENDING = "pending",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
-@Entity('settlements')
+@Entity("settlements")
 export class Settlement {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   sellerId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'sellerId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "sellerId" })
   seller: User;
 
-  @Column({ type: 'integer' })
+  @Column({ type: "integer" })
   totalAmount: number;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: "integer", default: 0 })
   platformFee: number;
 
-  @Column({ type: 'integer' })
+  @Column({ type: "integer" })
   netAmount: number;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: SettlementStatus,
     default: SettlementStatus.PENDING,
   })
   status: SettlementStatus;
 
-  @Column({ type: 'date' })
+  @Column({ type: "date" })
   periodStart: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: "date" })
   periodEnd: Date;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: "varchar", length: 255, nullable: true })
   externalTransferId: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   note: string;
 
   @CreateDateColumn()

@@ -7,48 +7,48 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { User } from './user.entity';
+import { User } from "./user.entity";
 
-@Entity('jam_rooms')
+@Entity("jam_rooms")
 export class JamRoom {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: "varchar", length: 100 })
   name: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   description: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   hostId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'hostId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "hostId" })
   host: User;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: "uuid", nullable: true })
   tabId: string;
 
-  @Column({ type: 'integer', default: 4 })
+  @Column({ type: "integer", default: 4 })
   maxParticipants: number;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: "integer", default: 0 })
   currentParticipants: number;
 
   @Index()
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: "boolean", default: true })
   isActive: boolean;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: "boolean", default: false })
   isPrivate: boolean;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: "varchar", length: 50, nullable: true })
   password: string;
 
-  @Column({ type: 'integer', default: 120 })
+  @Column({ type: "integer", default: 120 })
   bpm: number;
 
   @CreateDateColumn()

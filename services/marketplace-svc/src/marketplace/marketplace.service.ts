@@ -4,9 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
 import { RpcException } from "@nestjs/microservices";
-
+import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
 import { KnobTransactionType } from "../entities/knob-transaction.entity";
@@ -26,12 +25,9 @@ export class MarketplaceService {
 
   async setPrice(tabId: string, userId: string, price: number): Promise<Tab> {
     const tab = await this.tabRepository.findOne({ where: { id: tabId } });
-    if (!tab)
-      throw new RpcException(new NotFoundException("타브를 찾을 수 없습니다"));
+    if (!tab) throw new RpcException(new NotFoundException("타브를 찾을 수 없습니다"));
     if (tab.userId !== userId) {
-      throw new RpcException(
-        new ForbiddenException("이 타브의 가격을 설정할 권한이 없습니다"),
-      );
+      throw new RpcException(new ForbiddenException("이 타브의 가격을 설정할 권한이 없습니다"));
     }
     tab.price = price;
     return this.tabRepository.save(tab);
@@ -86,24 +82,17 @@ export class MarketplaceService {
 
   async purchase(tabId: string, buyerId: string): Promise<TabPurchase> {
     const tab = await this.tabRepository.findOne({ where: { id: tabId } });
-    if (!tab)
-      throw new RpcException(new NotFoundException("타브를 찾을 수 없습니다"));
+    if (!tab) throw new RpcException(new NotFoundException("타브를 찾을 수 없습니다"));
     if (!tab.isPublic)
-      throw new RpcException(
-        new ForbiddenException("비공개 타브는 구매할 수 없습니다"),
-      );
-    if (tab.price <= 0)
-      throw new RpcException(new ForbiddenException("무료 타브입니다"));
+      throw new RpcException(new ForbiddenException("비공개 타브는 구매할 수 없습니다"));
+    if (tab.price <= 0) throw new RpcException(new ForbiddenException("무료 타브입니다"));
     if (tab.userId === buyerId)
-      throw new RpcException(
-        new ForbiddenException("자신의 타브는 구매할 수 없습니다"),
-      );
+      throw new RpcException(new ForbiddenException("자신의 타브는 구매할 수 없습니다"));
 
     const existing = await this.purchaseRepository.findOne({
       where: { buyerId, tabId },
     });
-    if (existing)
-      throw new RpcException(new ConflictException("이미 구매한 타브입니다"));
+    if (existing) throw new RpcException(new ConflictException("이미 구매한 타브입니다"));
 
     // Knob 재화 차감 (구매자)
     await this.knobService.spend(
@@ -164,9 +153,7 @@ export class MarketplaceService {
       })
       .getRawOne<{ total: string | null }>();
 
-    const totalRevenue = revenueResult?.total
-      ? parseInt(revenueResult.total, 10)
-      : 0;
+    const totalRevenue = revenueResult?.total ? parseInt(revenueResult.total, 10) : 0;
     return { data, total, totalRevenue };
   }
 

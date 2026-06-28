@@ -7,7 +7,6 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { Subscription } from "./entities/subscription.entity";
 import { Tab } from "./entities/tab.entity";
 import { User } from "./entities/user.entity";
-
 import { SubscriptionModule } from "./subscription/subscription.module";
 import { SubscriptionSvcController } from "./subscription-svc.controller";
 

@@ -1,10 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { ClientProxy } from "@nestjs/microservices";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { SUBSCRIPTION_EVENTS } from "@tone-knob/shared";
 
-import { SUBSCRIPTION_EVENTS } from '@tone-knob/shared';
-
-import { SubscriptionService } from './subscription.service';
+import { SubscriptionService } from "./subscription.service";
 
 @Injectable()
 export class SubscriptionExpiryScheduler {
@@ -12,7 +11,7 @@ export class SubscriptionExpiryScheduler {
 
   constructor(
     private readonly subscriptionService: SubscriptionService,
-    @Inject('COMMUNITY_SERVICE') private readonly communityClient: ClientProxy,
+    @Inject("COMMUNITY_SERVICE") private readonly communityClient: ClientProxy,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)

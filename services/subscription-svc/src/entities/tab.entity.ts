@@ -1,21 +1,15 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('tabs')
+@Entity("tabs")
 export class Tab {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @Column({ type: 'varchar', length: 200 })
+  @Column({ type: "varchar", length: 200 })
   title: string;
 
   @CreateDateColumn()

@@ -1,6 +1,7 @@
-import { Play, Pause, Square, SkipBack, Volume2, Guitar } from "lucide-react";
+import { Guitar, Pause, Play, SkipBack, Square, Volume2 } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
-import type { PlaybackState, PlaybackPosition } from "~/lib/audio/audio-engine";
+import type { PlaybackPosition, PlaybackState } from "~/lib/audio/audio-engine";
 import type { InstrumentType } from "~/types/tab";
 
 const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string }[] = [

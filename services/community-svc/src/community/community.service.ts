@@ -3,16 +3,15 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { RpcException } from '@nestjs/microservices';
+} from "@nestjs/common";
+import { RpcException } from "@nestjs/microservices";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
-import { Repository } from 'typeorm';
-
-import { Comment } from '../entities/comment.entity';
-import { Follow } from '../entities/follow.entity';
-import { Like } from '../entities/like.entity';
-import { Tab } from '../entities/tab.entity';
+import { Comment } from "../entities/comment.entity";
+import { Follow } from "../entities/follow.entity";
+import { Like } from "../entities/like.entity";
+import { Tab } from "../entities/tab.entity";
 
 @Injectable()
 export class CommunityService {
@@ -29,12 +28,9 @@ export class CommunityService {
 
   // ─── 좋아요 ───
 
-  async toggleLike(
-    tabId: string,
-    userId: string,
-  ): Promise<{ liked: boolean; likeCount: number }> {
+  async toggleLike(tabId: string, userId: string): Promise<{ liked: boolean; likeCount: number }> {
     const tab = await this.tabRepository.findOne({ where: { id: tabId } });
-    if (!tab) throw new RpcException(new NotFoundException('타브를 찾을 수 없습니다.'));
+    if (!tab) throw new RpcException(new NotFoundException("타브를 찾을 수 없습니다."));
 
     const existing = await this.likeRepository.findOne({
       where: { tabId, userId },
@@ -67,13 +63,13 @@ export class CommunityService {
     dto: { content: string; parentId?: string },
   ): Promise<Comment> {
     const tab = await this.tabRepository.findOne({ where: { id: tabId } });
-    if (!tab) throw new RpcException(new NotFoundException('타브를 찾을 수 없습니다.'));
+    if (!tab) throw new RpcException(new NotFoundException("타브를 찾을 수 없습니다."));
 
     if (dto.parentId) {
       const parent = await this.commentRepository.findOne({
         where: { id: dto.parentId, tabId },
       });
-      if (!parent) throw new RpcException(new NotFoundException('부모 댓글을 찾을 수 없습니다.'));
+      if (!parent) throw new RpcException(new NotFoundException("부모 댓글을 찾을 수 없습니다."));
     }
 
     const comment = this.commentRepository.create({
@@ -91,11 +87,11 @@ export class CommunityService {
     limit = 20,
   ): Promise<{ comments: Comment[]; total: number }> {
     const [comments, total] = await this.commentRepository
-      .createQueryBuilder('comment')
-      .leftJoinAndSelect('comment.user', 'user')
-      .where('comment.tabId = :tabId', { tabId })
-      .andWhere('comment.parentId IS NULL')
-      .orderBy('comment.createdAt', 'DESC')
+      .createQueryBuilder("comment")
+      .leftJoinAndSelect("comment.user", "user")
+      .where("comment.tabId = :tabId", { tabId })
+      .andWhere("comment.parentId IS NULL")
+      .orderBy("comment.createdAt", "DESC")
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -106,8 +102,8 @@ export class CommunityService {
   async getReplies(commentId: string): Promise<Comment[]> {
     return this.commentRepository.find({
       where: { parentId: commentId },
-      relations: ['user'],
-      order: { createdAt: 'ASC' },
+      relations: ["user"],
+      order: { createdAt: "ASC" },
     });
   }
 
@@ -117,9 +113,9 @@ export class CommunityService {
     dto: { content: string },
   ): Promise<Comment> {
     const comment = await this.commentRepository.findOne({ where: { id: commentId } });
-    if (!comment) throw new RpcException(new NotFoundException('댓글을 찾을 수 없습니다.'));
+    if (!comment) throw new RpcException(new NotFoundException("댓글을 찾을 수 없습니다."));
     if (comment.userId !== userId)
-      throw new RpcException(new ForbiddenException('본인의 댓글만 수정할 수 있습니다.'));
+      throw new RpcException(new ForbiddenException("본인의 댓글만 수정할 수 있습니다."));
 
     comment.content = dto.content;
     return this.commentRepository.save(comment);
@@ -127,9 +123,9 @@ export class CommunityService {
 
   async deleteComment(commentId: string, userId: string): Promise<{ success: true }> {
     const comment = await this.commentRepository.findOne({ where: { id: commentId } });
-    if (!comment) throw new RpcException(new NotFoundException('댓글을 찾을 수 없습니다.'));
+    if (!comment) throw new RpcException(new NotFoundException("댓글을 찾을 수 없습니다."));
     if (comment.userId !== userId)
-      throw new RpcException(new ForbiddenException('본인의 댓글만 삭제할 수 있습니다.'));
+      throw new RpcException(new ForbiddenException("본인의 댓글만 삭제할 수 있습니다."));
 
     await this.commentRepository.remove(comment);
     return { success: true };
@@ -137,12 +133,9 @@ export class CommunityService {
 
   // ─── 팔로우 ───
 
-  async toggleFollow(
-    followerId: string,
-    followingId: string,
-  ): Promise<{ following: boolean }> {
+  async toggleFollow(followerId: string, followingId: string): Promise<{ following: boolean }> {
     if (followerId === followingId)
-      throw new RpcException(new ConflictException('자기 자신을 팔로우할 수 없습니다.'));
+      throw new RpcException(new ConflictException("자기 자신을 팔로우할 수 없습니다."));
 
     const existing = await this.followRepository.findOne({
       where: { followerId, followingId },
@@ -170,8 +163,8 @@ export class CommunityService {
   ): Promise<{ followers: Follow[]; total: number }> {
     const [followers, total] = await this.followRepository.findAndCount({
       where: { followingId: userId },
-      relations: ['follower'],
-      order: { createdAt: 'DESC' },
+      relations: ["follower"],
+      order: { createdAt: "DESC" },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -185,8 +178,8 @@ export class CommunityService {
   ): Promise<{ following: Follow[]; total: number }> {
     const [following, total] = await this.followRepository.findAndCount({
       where: { followerId: userId },
-      relations: ['following'],
-      order: { createdAt: 'DESC' },
+      relations: ["following"],
+      order: { createdAt: "DESC" },
       skip: (page - 1) * limit,
       take: limit,
     });

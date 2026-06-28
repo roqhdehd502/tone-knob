@@ -6,7 +6,10 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main",
-    "start:debug": "nest start --debug --watch"
+    "start:debug": "nest start --debug --watch",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -28,6 +31,9 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@types/node": "^22.0.0",
-    "typescript": "~5.7.0"
+    "typescript": "~5.7.0",
+    "@tone-knob/eslint-config": "*",
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.1"
   }
 }

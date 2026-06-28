@@ -1,5 +1,7 @@
-import { useState, useCallback, useRef, useEffect, memo } from "react";
-import { Play, Pause, RotateCcw, Repeat, Minus, Plus, Timer, Gauge } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+
+import { Gauge, Minus, Pause, Play, Plus, Repeat, RotateCcw, Timer } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 
 interface PracticeModeProps {

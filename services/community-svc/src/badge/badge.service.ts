@@ -4,16 +4,14 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+} from "@nestjs/common";
+import { ClientProxy, RpcException } from "@nestjs/microservices";
+import { InjectRepository } from "@nestjs/typeorm";
+import { BADGE_EVENTS } from "@tone-knob/shared";
+import { Repository } from "typeorm";
 
-import { Repository } from 'typeorm';
-
-import { BADGE_EVENTS } from '@tone-knob/shared';
-
-import { Badge } from '../entities/badge.entity';
-import { UserBadge } from '../entities/user-badge.entity';
+import { Badge } from "../entities/badge.entity";
+import { UserBadge } from "../entities/user-badge.entity";
 
 @Injectable()
 export class BadgeService {
@@ -22,26 +20,26 @@ export class BadgeService {
     private readonly badgeRepository: Repository<Badge>,
     @InjectRepository(UserBadge)
     private readonly userBadgeRepository: Repository<UserBadge>,
-    @Inject('COMMUNITY_SERVICE') private readonly communityClient: ClientProxy,
+    @Inject("COMMUNITY_SERVICE") private readonly communityClient: ClientProxy,
   ) {}
 
   async getAllBadges(): Promise<Badge[]> {
-    return this.badgeRepository.find({ order: { sortOrder: 'ASC', createdAt: 'ASC' } });
+    return this.badgeRepository.find({ order: { sortOrder: "ASC", createdAt: "ASC" } });
   }
 
   async getUserBadges(userId: string): Promise<UserBadge[]> {
     return this.userBadgeRepository.find({
       where: { userId },
-      relations: ['badge'],
-      order: { earnedAt: 'DESC' },
+      relations: ["badge"],
+      order: { earnedAt: "DESC" },
     });
   }
 
   async getFeaturedBadges(userId: string): Promise<UserBadge[]> {
     return this.userBadgeRepository.find({
       where: { userId, isFeatured: true },
-      relations: ['badge'],
-      order: { earnedAt: 'ASC' },
+      relations: ["badge"],
+      order: { earnedAt: "ASC" },
     });
   }
 
@@ -55,7 +53,7 @@ export class BadgeService {
       where: { userId, badgeId: badge.id },
     });
     if (existing) {
-      throw new RpcException(new ConflictException('이미 획득한 뱃지입니다'));
+      throw new RpcException(new ConflictException("이미 획득한 뱃지입니다"));
     }
 
     const userBadge = this.userBadgeRepository.create({
@@ -77,10 +75,10 @@ export class BadgeService {
   async toggleFeatured(userBadgeId: string, userId: string): Promise<UserBadge> {
     const userBadge = await this.userBadgeRepository.findOne({
       where: { id: userBadgeId, userId },
-      relations: ['badge'],
+      relations: ["badge"],
     });
     if (!userBadge) {
-      throw new RpcException(new NotFoundException('뱃지를 찾을 수 없습니다'));
+      throw new RpcException(new NotFoundException("뱃지를 찾을 수 없습니다"));
     }
 
     if (!userBadge.isFeatured) {
@@ -89,7 +87,7 @@ export class BadgeService {
       });
       if (featuredCount >= 3) {
         throw new RpcException(
-          new BadRequestException('대표 뱃지는 최대 3개까지만 설정할 수 있습니다'),
+          new BadRequestException("대표 뱃지는 최대 3개까지만 설정할 수 있습니다"),
         );
       }
     }

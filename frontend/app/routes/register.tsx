@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Eye, EyeOff, Loader2, Guitar, Headphones, Mic2 } from "lucide-react";
+
+import { Eye, EyeOff, Guitar, Headphones, Loader2, Mic2 } from "lucide-react";
+
+import { ThemeToggle } from "~/components/common/ThemeToggle";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { ThemeToggle } from "~/components/common/ThemeToggle";
 import { useAuth } from "~/lib/auth";
 
 export function meta() {

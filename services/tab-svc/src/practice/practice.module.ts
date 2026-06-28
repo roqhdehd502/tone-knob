@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { PracticeSession } from '../entities/practice-session.entity';
-import { PracticeService } from './practice.service';
+import { PracticeSession } from "../entities/practice-session.entity";
+import { PracticeService } from "./practice.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([PracticeSession])],

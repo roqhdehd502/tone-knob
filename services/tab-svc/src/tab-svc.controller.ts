@@ -1,6 +1,5 @@
 import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
-
 import { TAB_EVENTS } from "@tone-knob/shared";
 
 import { PracticeService } from "./practice/practice.service";
@@ -111,16 +110,12 @@ export class TabSvcController {
   }
 
   @MessagePattern("tabs.getVersions")
-  async getVersions(
-    @Payload() data: { tabId: string; requestUserId?: string },
-  ) {
+  async getVersions(@Payload() data: { tabId: string; requestUserId?: string }) {
     return this.tabService.getVersions(data.tabId, data.requestUserId);
   }
 
   @MessagePattern("tabs.getFeed")
-  async getFeed(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
+  async getFeed(@Payload() data: { userId: string; page?: number; limit?: number }) {
     return this.tabService.getFeed(data.userId, data.page, data.limit);
   }
 
@@ -162,13 +157,7 @@ export class TabSvcController {
   }
 
   @MessagePattern("practice.recent")
-  async getRecentSessions(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.practiceService.getRecentSessions(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getRecentSessions(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.practiceService.getRecentSessions(data.userId, data.page, data.limit);
   }
 }

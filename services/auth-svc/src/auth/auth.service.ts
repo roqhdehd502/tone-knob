@@ -3,7 +3,6 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { RpcException } from "@nestjs/microservices";
 import { InjectRepository } from "@nestjs/typeorm";
-
 import * as bcrypt from "bcrypt";
 import { Repository } from "typeorm";
 
@@ -68,10 +67,7 @@ export class AuthService {
     return { user: userWithoutPassword as Omit<User, "passwordHash">, tokens };
   }
 
-  async login(data: {
-    email: string;
-    password: string;
-  }): Promise<AuthResponse> {
+  async login(data: { email: string; password: string }): Promise<AuthResponse> {
     const user = await this.userRepository.findOne({
       where: { email: data.email },
       select: [
@@ -97,15 +93,11 @@ export class AuthService {
     if (!user.passwordHash) {
       throw new RpcException({
         statusCode: 401,
-        message:
-          "소셜 로그인으로 가입한 계정입니다. 소셜 로그인을 사용해주세요.",
+        message: "소셜 로그인으로 가입한 계정입니다. 소셜 로그인을 사용해주세요.",
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      data.password,
-      user.passwordHash,
-    );
+    const isPasswordValid = await bcrypt.compare(data.password, user.passwordHash);
 
     if (!isPasswordValid) {
       throw new RpcException({
@@ -123,10 +115,9 @@ export class AuthService {
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
     try {
-      const payload = this.jwtService.verify<{ sub: string; email: string }>(
-        refreshToken,
-        { secret: this.configService.get<string>("JWT_SECRET") },
-      );
+      const payload = this.jwtService.verify<{ sub: string; email: string }>(refreshToken, {
+        secret: this.configService.getOrThrow<string>("JWT_SECRET"),
+      });
 
       const user = await this.userRepository.findOne({
         where: { id: payload.sub },
@@ -149,9 +140,7 @@ export class AuthService {
     }
   }
 
-  async validateUser(
-    userId: string,
-  ): Promise<Omit<User, "passwordHash"> | null> {
+  async validateUser(userId: string): Promise<Omit<User, "passwordHash"> | null> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     return user ?? null;
   }
@@ -201,10 +190,8 @@ export class AuthService {
 
   private async generateTokens(user: User): Promise<AuthTokens> {
     const payload = { sub: user.id, email: user.email };
-    const accessExp =
-      this.configService.get<string>("JWT_ACCESS_EXPIRATION") ?? "15m";
-    const refreshExp =
-      this.configService.get<string>("JWT_REFRESH_EXPIRATION") ?? "7d";
+    const accessExp = this.configService.get<string>("JWT_ACCESS_EXPIRATION") ?? "15m";
+    const refreshExp = this.configService.get<string>("JWT_REFRESH_EXPIRATION") ?? "7d";
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {

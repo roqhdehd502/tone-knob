@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 
-import { JamProxyController } from './jam-proxy.controller';
+import { JamProxyController } from "./jam-proxy.controller";
 
 @Module({
   controllers: [JamProxyController],

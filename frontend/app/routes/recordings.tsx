@@ -164,7 +164,7 @@ export default function RecordingsPage() {
     setUploading(true);
     try {
       const { url: audioUrl } = await api.media.upload(recordedBlob, {
-        folder: "recordings",
+        category: "recordings",
         fileName: "recording.webm",
       });
       await api.recordings.create({

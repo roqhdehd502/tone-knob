@@ -1,6 +1,5 @@
 import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
-
 import { SUBSCRIPTION_EVENTS } from "@tone-knob/shared";
 
 import { SubscriptionService } from "./subscription/subscription.service";
@@ -56,14 +55,8 @@ export class SubscriptionSvcController {
   }
 
   @MessagePattern("subscription.getHistory")
-  async getHistory(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.subscriptionService.getHistory(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getHistory(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.subscriptionService.getHistory(data.userId, data.page, data.limit);
   }
 
   @MessagePattern("subscription.canCreateTab")

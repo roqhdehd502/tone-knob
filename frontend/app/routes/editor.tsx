@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
-import { FileMusic, Plus, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
+
+import { FileMusic, Pencil, Plus } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
@@ -12,7 +14,6 @@ export function meta() {
 
 export default function Editor() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [myTabs, setMyTabs] = useState<TabListItem[]>([]);
   const [loading, setLoading] = useState(true);
 

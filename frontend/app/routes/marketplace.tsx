@@ -1,16 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
+
 import {
-  ShoppingBag,
-  Eye,
-  Heart,
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Coins,
-  Flame,
   Clock,
-  ArrowUpDown,
+  Coins,
+  Eye,
+  Flame,
+  Heart,
+  ShoppingBag,
 } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { api } from "~/lib/api";

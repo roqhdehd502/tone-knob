@@ -124,7 +124,7 @@ export default function AudioExtractPage() {
     setUploading(true);
     try {
       // Supabase Storage에 업로드 후 발급된 공개 URL을 AI 추출 작업에 전달
-      const { url } = await api.media.upload(audioFile, { folder: "audio-extract" });
+      const { url } = await api.media.upload(audioFile, { category: "audio-extract" });
       await api.aiGen.createAudioExtractionJob({
         audioUrl: url,
         instrument,

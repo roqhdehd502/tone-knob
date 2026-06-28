@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 
-import { AiProxyController } from './ai-proxy.controller';
+import { AiProxyController } from "./ai-proxy.controller";
 
 @Module({
   controllers: [AiProxyController],

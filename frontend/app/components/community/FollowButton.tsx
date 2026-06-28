@@ -1,5 +1,7 @@
-import { memo, useState, useEffect } from "react";
-import { UserPlus, UserCheck } from "lucide-react";
+import { memo, useEffect, useState } from "react";
+
+import { UserCheck, UserPlus } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { api } from "~/lib/api";
 

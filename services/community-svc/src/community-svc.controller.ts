@@ -1,6 +1,5 @@
 import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
-
 import { COMMUNITY_EVENTS } from "@tone-knob/shared";
 
 import { BadgeService } from "./badge/badge.service";
@@ -22,10 +21,7 @@ export class CommunitySvcController {
 
   @MessagePattern("community.toggleLike")
   async toggleLike(@Payload() data: { tabId: string; userId: string }) {
-    const result = await this.communityService.toggleLike(
-      data.tabId,
-      data.userId,
-    );
+    const result = await this.communityService.toggleLike(data.tabId, data.userId);
 
     this.communityClient.emit(COMMUNITY_EVENTS.TAB_LIKED, {
       userId: data.userId,
@@ -52,11 +48,7 @@ export class CommunitySvcController {
       dto: { content: string; parentId?: string };
     },
   ) {
-    const comment = await this.communityService.createComment(
-      data.tabId,
-      data.userId,
-      data.dto,
-    );
+    const comment = await this.communityService.createComment(data.tabId, data.userId, data.dto);
 
     this.communityClient.emit(COMMUNITY_EVENTS.COMMENT_CREATED, {
       commentId: comment.id,
@@ -69,9 +61,7 @@ export class CommunitySvcController {
   }
 
   @MessagePattern("community.getComments")
-  async getComments(
-    @Payload() data: { tabId: string; page?: number; limit?: number },
-  ) {
+  async getComments(@Payload() data: { tabId: string; page?: number; limit?: number }) {
     return this.communityService.getComments(data.tabId, data.page, data.limit);
   }
 
@@ -89,11 +79,7 @@ export class CommunitySvcController {
       dto: { content: string };
     },
   ) {
-    return this.communityService.updateComment(
-      data.commentId,
-      data.userId,
-      data.dto,
-    );
+    return this.communityService.updateComment(data.commentId, data.userId, data.dto);
   }
 
   @MessagePattern("community.deleteComment")
@@ -104,13 +90,8 @@ export class CommunitySvcController {
   // ─── 팔로우 ───
 
   @MessagePattern("community.toggleFollow")
-  async toggleFollow(
-    @Payload() data: { followerId: string; followingId: string },
-  ) {
-    const result = await this.communityService.toggleFollow(
-      data.followerId,
-      data.followingId,
-    );
+  async toggleFollow(@Payload() data: { followerId: string; followingId: string }) {
+    const result = await this.communityService.toggleFollow(data.followerId, data.followingId);
 
     if (result.following) {
       this.communityClient.emit(COMMUNITY_EVENTS.USER_FOLLOWED, {
@@ -123,32 +104,18 @@ export class CommunitySvcController {
   }
 
   @MessagePattern("community.isFollowing")
-  async isFollowing(
-    @Payload() data: { followerId: string; followingId: string },
-  ) {
+  async isFollowing(@Payload() data: { followerId: string; followingId: string }) {
     return this.communityService.isFollowing(data.followerId, data.followingId);
   }
 
   @MessagePattern("community.getFollowers")
-  async getFollowers(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.communityService.getFollowers(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getFollowers(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.communityService.getFollowers(data.userId, data.page, data.limit);
   }
 
   @MessagePattern("community.getFollowing")
-  async getFollowing(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.communityService.getFollowing(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getFollowing(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.communityService.getFollowing(data.userId, data.page, data.limit);
   }
 
   @MessagePattern("community.getUserStats")
@@ -177,24 +144,13 @@ export class CommunitySvcController {
   }
 
   @MessagePattern("notification.getByUser")
-  async getNotifications(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.notificationService.getByUser(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getNotifications(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.notificationService.getByUser(data.userId, data.page, data.limit);
   }
 
   @MessagePattern("notification.markAsRead")
-  async markAsRead(
-    @Payload() data: { notificationId: string; userId: string },
-  ) {
-    return this.notificationService.markAsRead(
-      data.notificationId,
-      data.userId,
-    );
+  async markAsRead(@Payload() data: { notificationId: string; userId: string }) {
+    return this.notificationService.markAsRead(data.notificationId, data.userId);
   }
 
   @MessagePattern("notification.markAllAsRead")
@@ -208,9 +164,7 @@ export class CommunitySvcController {
   }
 
   @MessagePattern("notification.delete")
-  async deleteNotification(
-    @Payload() data: { notificationId: string; userId: string },
-  ) {
+  async deleteNotification(@Payload() data: { notificationId: string; userId: string }) {
     return this.notificationService.delete(data.notificationId, data.userId);
   }
 
@@ -225,11 +179,7 @@ export class CommunitySvcController {
       dto: { rating: number; content?: string };
     },
   ) {
-    const review = await this.reviewService.create(
-      data.tabId,
-      data.userId,
-      data.dto,
-    );
+    const review = await this.reviewService.create(data.tabId, data.userId, data.dto);
 
     this.communityClient.emit(COMMUNITY_EVENTS.REVIEW_CREATED, {
       reviewId: review.id,
@@ -242,9 +192,7 @@ export class CommunitySvcController {
   }
 
   @MessagePattern("review.getByTab")
-  async getReviewsByTab(
-    @Payload() data: { tabId: string; page?: number; limit?: number },
-  ) {
+  async getReviewsByTab(@Payload() data: { tabId: string; page?: number; limit?: number }) {
     return this.reviewService.getByTab(data.tabId, data.page, data.limit);
   }
 
@@ -293,9 +241,7 @@ export class CommunitySvcController {
   }
 
   @MessagePattern("badge.toggleFeatured")
-  async toggleFeatured(
-    @Payload() data: { userBadgeId: string; userId: string },
-  ) {
+  async toggleFeatured(@Payload() data: { userBadgeId: string; userId: string }) {
     return this.badgeService.toggleFeatured(data.userBadgeId, data.userId);
   }
 }

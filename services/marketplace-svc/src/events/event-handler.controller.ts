@@ -1,16 +1,15 @@
-import { Controller, Logger } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
-
+import { Controller, Logger } from "@nestjs/common";
+import { EventPattern, Payload } from "@nestjs/microservices";
 import {
-  TAB_EVENTS,
-  JAM_EVENTS,
   AUTH_EVENTS,
-  TabCreatedEvent,
+  JAM_EVENTS,
   JamParticipantJoinedEvent,
+  TAB_EVENTS,
+  TabCreatedEvent,
   UserLoggedInEvent,
-} from '@tone-knob/shared';
+} from "@tone-knob/shared";
 
-import { KnobService } from '../knob/knob.service';
+import { KnobService } from "../knob/knob.service";
 
 @Controller()
 export class EventHandlerController {

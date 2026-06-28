@@ -1,4 +1,4 @@
-import { Module, Provider, Logger } from "@nestjs/common";
+import { Logger, Module, Provider } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
@@ -37,7 +37,7 @@ function buildOAuthProviders(): Provider[] {
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>("JWT_SECRET"),
+        secret: configService.getOrThrow<string>("JWT_SECRET"),
       }),
     }),
   ],

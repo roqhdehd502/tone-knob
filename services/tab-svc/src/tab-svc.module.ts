@@ -4,7 +4,6 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { TypeOrmModule } from "@nestjs/typeorm";
-
 import { Keyv } from "keyv";
 
 import { Follow } from "./entities/follow.entity";
@@ -55,12 +54,8 @@ import { TabSvcController } from "./tab-svc.controller";
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host:
-              configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
-            port: parseInt(
-              configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005",
-              10,
-            ),
+            host: configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
+            port: parseInt(configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005", 10),
           },
         }),
       },
@@ -71,12 +66,8 @@ import { TabSvcController } from "./tab-svc.controller";
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host:
-              configService.get<string>("MARKETPLACE_SVC_HOST") ?? "localhost",
-            port: parseInt(
-              configService.get<string>("MARKETPLACE_SVC_PORT") ?? "3006",
-              10,
-            ),
+            host: configService.get<string>("MARKETPLACE_SVC_HOST") ?? "localhost",
+            port: parseInt(configService.get<string>("MARKETPLACE_SVC_PORT") ?? "3006", 10),
           },
         }),
       },

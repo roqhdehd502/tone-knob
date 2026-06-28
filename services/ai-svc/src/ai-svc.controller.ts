@@ -1,10 +1,9 @@
 import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
-
 import { AI_EVENTS } from "@tone-knob/shared";
 
-import { AiJobStatus } from "./entities/ai-job.entity";
 import { AiGenService } from "./ai-gen/ai-gen.service";
+import { AiJobStatus } from "./entities/ai-job.entity";
 
 @Controller()
 export class AiSvcController {
@@ -49,9 +48,7 @@ export class AiSvcController {
   }
 
   @MessagePattern("ai.getMyJobs")
-  async getMyJobs(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
+  async getMyJobs(@Payload() data: { userId: string; page?: number; limit?: number }) {
     return this.aiGenService.getMyJobs(data.userId, data.page, data.limit);
   }
 

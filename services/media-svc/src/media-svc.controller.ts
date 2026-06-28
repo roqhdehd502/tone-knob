@@ -1,9 +1,9 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller } from "@nestjs/common";
+import { MessagePattern, Payload } from "@nestjs/microservices";
 
-import { CdnService } from './cdn/cdn.service';
-import { RegionService } from './region/region.service';
-import { StorageService } from './storage/storage.service';
+import { CdnService } from "./cdn/cdn.service";
+import { RegionService } from "./region/region.service";
+import { StorageService } from "./storage/storage.service";
 
 @Controller()
 export class MediaSvcController {
@@ -15,7 +15,7 @@ export class MediaSvcController {
 
   // ─── Storage ───
 
-  @MessagePattern('media.storage.upload')
+  @MessagePattern("media.storage.upload")
   async uploadFile(
     @Payload()
     data: {
@@ -33,62 +33,62 @@ export class MediaSvcController {
     );
   }
 
-  @MessagePattern('media.storage.remove')
+  @MessagePattern("media.storage.remove")
   async removeFile(@Payload() data: { path: string }) {
     await this.storageService.remove(data.path);
     return { success: true };
   }
 
-  @MessagePattern('media.storage.status')
+  @MessagePattern("media.storage.status")
   getStorageStatus() {
     return { enabled: this.storageService.isEnabled() };
   }
 
   // ─── CDN ───
 
-  @MessagePattern('media.cdn.toCdnUrl')
+  @MessagePattern("media.cdn.toCdnUrl")
   toCdnUrl(@Payload() data: { url: string }) {
     return this.cdnService.toCdnUrl(data.url);
   }
 
-  @MessagePattern('media.cdn.toOriginUrl')
+  @MessagePattern("media.cdn.toOriginUrl")
   toOriginUrl(@Payload() data: { url: string }) {
     return this.cdnService.toOriginUrl(data.url);
   }
 
-  @MessagePattern('media.cdn.getSignedUrl')
+  @MessagePattern("media.cdn.getSignedUrl")
   getSignedUrl(@Payload() data: { path: string; expiresInSeconds?: number }) {
     return this.cdnService.getSignedUrl(data.path, data.expiresInSeconds);
   }
 
-  @MessagePattern('media.cdn.transformUrls')
+  @MessagePattern("media.cdn.transformUrls")
   transformUrls(@Payload() data: { items: Record<string, unknown>[]; fields: string[] }) {
     return this.cdnService.transformUrls(data.items, data.fields);
   }
 
-  @MessagePattern('media.cdn.status')
+  @MessagePattern("media.cdn.status")
   getCdnStatus() {
     return this.cdnService.getCdnStatus();
   }
 
   // ─── Region ───
 
-  @MessagePattern('media.region.getAll')
+  @MessagePattern("media.region.getAll")
   getAllRegions() {
     return this.regionService.getAllRegions();
   }
 
-  @MessagePattern('media.region.select')
+  @MessagePattern("media.region.select")
   selectRegion(@Payload() data: { latitude?: number; longitude?: number }) {
     return this.regionService.selectRegion(data.latitude, data.longitude);
   }
 
-  @MessagePattern('media.region.getById')
+  @MessagePattern("media.region.getById")
   getRegionById(@Payload() data: { id: string }) {
     return this.regionService.getRegionById(data.id);
   }
 
-  @MessagePattern('media.region.checkHealth')
+  @MessagePattern("media.region.checkHealth")
   async checkHealth() {
     await this.regionService.checkHealth();
     return this.regionService.getAllRegions().map((r) => ({

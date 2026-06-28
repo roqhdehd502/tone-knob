@@ -7,31 +7,31 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
-} from 'typeorm';
+} from "typeorm";
 
-import { Tab } from './tab.entity';
-import { User } from './user.entity';
+import { Tab } from "./tab.entity";
+import { User } from "./user.entity";
 
-@Entity('likes')
-@Unique(['userId', 'tabId'])
+@Entity("likes")
+@Unique(["userId", "tabId"])
 export class Like {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tabId: string;
 
-  @ManyToOne(() => Tab, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tabId' })
+  @ManyToOne(() => Tab, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tabId" })
   tab: Tab;
 
   @CreateDateColumn()

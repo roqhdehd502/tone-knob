@@ -1,11 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { RpcException } from '@nestjs/microservices';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { RpcException } from "@nestjs/microservices";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
-import { Repository } from 'typeorm';
-
-import { AiJob, AiJobStatus, AiJobType } from '../entities/ai-job.entity';
+import { AiJob, AiJobStatus, AiJobType } from "../entities/ai-job.entity";
 
 const ML_DISPATCH_TIMEOUT_MS = 5000;
 
@@ -23,10 +22,10 @@ export class AiGenService {
     private readonly jobRepository: Repository<AiJob>,
     private readonly configService: ConfigService,
   ) {
-    this.mlServerUrl = this.configService.get<string>('ML_SERVER_URL') ?? 'http://localhost:8001';
+    this.mlServerUrl = this.configService.get<string>("ML_SERVER_URL") ?? "http://localhost:8001";
     this.gatewayPublicUrl =
-      this.configService.get<string>('GATEWAY_PUBLIC_URL') ?? 'http://localhost:3000';
-    this.mlWebhookSecret = this.configService.get<string>('ML_WEBHOOK_SECRET');
+      this.configService.get<string>("GATEWAY_PUBLIC_URL") ?? "http://localhost:3000";
+    this.mlWebhookSecret = this.configService.get<string>("ML_WEBHOOK_SECRET");
   }
 
   // === AI 타브 생성 ===
@@ -82,18 +81,14 @@ export class AiGenService {
 
   async getJob(jobId: string): Promise<AiJob> {
     const job = await this.jobRepository.findOne({ where: { id: jobId } });
-    if (!job) throw new RpcException(new NotFoundException('AI 작업을 찾을 수 없습니다'));
+    if (!job) throw new RpcException(new NotFoundException("AI 작업을 찾을 수 없습니다"));
     return job;
   }
 
-  async getMyJobs(
-    userId: string,
-    page = 1,
-    limit = 20,
-  ): Promise<{ data: AiJob[]; total: number }> {
+  async getMyJobs(userId: string, page = 1, limit = 20): Promise<{ data: AiJob[]; total: number }> {
     const [data, total] = await this.jobRepository.findAndCount({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -145,8 +140,8 @@ export class AiGenService {
 
     try {
       const res = await fetch(`${this.mlServerUrl}/jobs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobId,
           type,
@@ -158,14 +153,16 @@ export class AiGenService {
       });
 
       if (!res.ok) {
-        this.logger.warn(`ML 서버가 ${res.status}로 응답하여 더미 결과로 대체합니다 (job ${jobId})`);
+        this.logger.warn(
+          `ML 서버가 ${res.status}로 응답하여 더미 결과로 대체합니다 (job ${jobId})`,
+        );
         return false;
       }
       return true;
     } catch (err) {
       this.logger.warn(
         `ML 서버(${this.mlServerUrl})에 연결할 수 없어 더미 결과로 대체합니다 (job ${jobId}): ${
-          err instanceof Error ? err.message : 'Unknown error'
+          err instanceof Error ? err.message : "Unknown error"
         }`,
       );
       return false;
@@ -186,12 +183,12 @@ export class AiGenService {
       const dummyOutput =
         type === AiJobType.TAB_GENERATION
           ? {
-              title: `AI Generated Tab (${(typeof inputData.prompt === 'string' ? inputData.prompt : '').slice(0, 20)})`,
+              title: `AI Generated Tab (${(typeof inputData.prompt === "string" ? inputData.prompt : "").slice(0, 20)})`,
               content: '{"measures": [], "tempo": 120}',
-              instrument: inputData.instrument ?? 'guitar',
+              instrument: inputData.instrument ?? "guitar",
             }
           : {
-              title: 'Extracted Tab',
+              title: "Extracted Tab",
               content: '{"measures": [], "tempo": 100}',
               confidence: 0.85,
             };
@@ -204,7 +201,7 @@ export class AiGenService {
     } catch (err) {
       await this.jobRepository.update(jobId, {
         status: AiJobStatus.FAILED,
-        errorMessage: err instanceof Error ? err.message : 'Unknown error',
+        errorMessage: err instanceof Error ? err.message : "Unknown error",
       });
     }
   }

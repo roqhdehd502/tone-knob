@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
-import { History, RotateCcw, GitCompare, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { Clock, GitCompare, History, RotateCcw } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { api } from "~/lib/api";
-import type { TabVersion, TabDocument } from "~/types/tab";
+import type { TabDocument, TabVersion } from "~/types/tab";
 
 interface VersionHistoryProps {
   tabId: string;
-  currentContent: TabDocument;
   isOwner: boolean;
   onRestore: (content: TabDocument) => void;
 }
 
-export function VersionHistory({ tabId, currentContent, isOwner, onRestore }: VersionHistoryProps) {
+export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProps) {
   const [versions, setVersions] = useState<TabVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState<TabVersion | null>(null);

@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 
-import { UserProxyController } from './user-proxy.controller';
+import { UserProxyController } from "./user-proxy.controller";
 
 @Module({
   controllers: [UserProxyController],

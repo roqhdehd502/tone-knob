@@ -8,37 +8,37 @@ import {
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { Tab } from './tab.entity';
-import { User } from './user.entity';
+import { Tab } from "./tab.entity";
+import { User } from "./user.entity";
 
-@Entity('reviews')
-@Unique(['userId', 'tabId'])
+@Entity("reviews")
+@Unique(["userId", "tabId"])
 export class Review {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tabId: string;
 
-  @ManyToOne(() => Tab, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tabId' })
+  @ManyToOne(() => Tab, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tabId" })
   tab: Tab;
 
-  @Column({ type: 'integer' })
+  @Column({ type: "integer" })
   rating: number;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   content: string;
 
   @CreateDateColumn()

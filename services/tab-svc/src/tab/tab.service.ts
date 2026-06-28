@@ -1,14 +1,13 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { RpcException } from "@nestjs/microservices";
+import { InjectRepository } from "@nestjs/typeorm";
+import type { Cache } from "cache-manager";
+import { Repository } from "typeorm";
 
-import type { Cache } from 'cache-manager';
-import { Repository } from 'typeorm';
-
-import { Follow } from '../entities/follow.entity';
-import { Tab } from '../entities/tab.entity';
-import { TabVersion } from '../entities/tab-version.entity';
+import { Follow } from "../entities/follow.entity";
+import { Tab } from "../entities/tab.entity";
+import { TabVersion } from "../entities/tab-version.entity";
 
 const TAB_LIST_CACHE_TTL_MS = 30_000; // 타브 목록은 30초간 캐시 — 쓰기 발생 시 전체 무효화
 
@@ -52,7 +51,7 @@ export class TabService {
       tabId: saved.id,
       versionNumber: 1,
       content: dto.content,
-      changeDescription: '초기 버전',
+      changeDescription: "초기 버전",
       createdBy: userId,
     });
     await this.tabVersionRepository.save(version);
@@ -70,10 +69,12 @@ export class TabService {
   }): Promise<{ data: Tab[]; total: number; page: number; limit: number }> {
     const cacheKey = `tabs:list:${JSON.stringify(query)}`;
     try {
-      const cached =
-        await this.cache.get<{ data: Tab[]; total: number; page: number; limit: number }>(
-          cacheKey,
-        );
+      const cached = await this.cache.get<{
+        data: Tab[];
+        total: number;
+        page: number;
+        limit: number;
+      }>(cacheKey);
       if (cached) return cached;
     } catch (err) {
       this.logger.warn(`캐시 조회 실패 (무시): ${err instanceof Error ? err.message : err}`);
@@ -102,27 +103,36 @@ export class TabService {
     const skip = (page - 1) * limit;
 
     const qb = this.tabRepository
-      .createQueryBuilder('tab')
-      .leftJoinAndSelect('tab.user', 'user')
+      .createQueryBuilder("tab")
+      .leftJoinAndSelect("tab.user", "user")
       .select([
-        'tab.id', 'tab.title', 'tab.artist', 'tab.isPublic',
-        'tab.viewCount', 'tab.likeCount', 'tab.createdAt', 'tab.updatedAt',
-        'user.id', 'user.username', 'user.displayName', 'user.avatarUrl',
+        "tab.id",
+        "tab.title",
+        "tab.artist",
+        "tab.isPublic",
+        "tab.viewCount",
+        "tab.likeCount",
+        "tab.createdAt",
+        "tab.updatedAt",
+        "user.id",
+        "user.username",
+        "user.displayName",
+        "user.avatarUrl",
       ]);
 
     if (query.userId) {
-      qb.andWhere('tab.userId = :userId', { userId: query.userId });
+      qb.andWhere("tab.userId = :userId", { userId: query.userId });
     }
     if (query.isPublic !== undefined) {
-      qb.andWhere('tab.isPublic = :isPublic', { isPublic: query.isPublic });
+      qb.andWhere("tab.isPublic = :isPublic", { isPublic: query.isPublic });
     }
     if (query.search) {
-      qb.andWhere('(tab.title ILIKE :search OR tab.artist ILIKE :search)', {
+      qb.andWhere("(tab.title ILIKE :search OR tab.artist ILIKE :search)", {
         search: `%${query.search}%`,
       });
     }
 
-    qb.orderBy('tab.updatedAt', 'DESC').skip(skip).take(limit);
+    qb.orderBy("tab.updatedAt", "DESC").skip(skip).take(limit);
     const [data, total] = await qb.getManyAndCount();
     return { data, total, page, limit };
   }
@@ -130,10 +140,10 @@ export class TabService {
   async findOne(id: string): Promise<Tab> {
     const tab = await this.tabRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
     if (!tab) {
-      throw new RpcException({ statusCode: 404, message: '타브를 찾을 수 없습니다' });
+      throw new RpcException({ statusCode: 404, message: "타브를 찾을 수 없습니다" });
     }
     return tab;
   }
@@ -141,26 +151,32 @@ export class TabService {
   async findOneWithAccessCheck(id: string, requestUserId?: string): Promise<Tab> {
     const tab = await this.findOne(id);
     if (!tab.isPublic && tab.userId !== requestUserId) {
-      throw new RpcException({ statusCode: 403, message: '이 타브에 접근할 수 없습니다' });
+      throw new RpcException({ statusCode: 403, message: "이 타브에 접근할 수 없습니다" });
     }
-    void this.tabRepository.increment({ id }, 'viewCount', 1);
+    void this.tabRepository.increment({ id }, "viewCount", 1);
     return tab;
   }
 
   async update(
     id: string,
     userId: string,
-    dto: { title?: string; artist?: string; content?: Record<string, unknown>; isPublic?: boolean; changeDescription?: string },
+    dto: {
+      title?: string;
+      artist?: string;
+      content?: Record<string, unknown>;
+      isPublic?: boolean;
+      changeDescription?: string;
+    },
   ): Promise<Tab> {
     const tab = await this.findOne(id);
     if (tab.userId !== userId) {
-      throw new RpcException({ statusCode: 403, message: '이 타브를 수정할 권한이 없습니다' });
+      throw new RpcException({ statusCode: 403, message: "이 타브를 수정할 권한이 없습니다" });
     }
 
     if (dto.content) {
       const lastVersion = await this.tabVersionRepository.findOne({
         where: { tabId: id },
-        order: { versionNumber: 'DESC' },
+        order: { versionNumber: "DESC" },
       });
       const nextVersion = (lastVersion?.versionNumber ?? 0) + 1;
       const version = this.tabVersionRepository.create({
@@ -188,7 +204,7 @@ export class TabService {
   async remove(id: string, userId: string): Promise<{ success: true }> {
     const tab = await this.findOne(id);
     if (tab.userId !== userId) {
-      throw new RpcException({ statusCode: 403, message: '이 타브를 삭제할 권한이 없습니다' });
+      throw new RpcException({ statusCode: 403, message: "이 타브를 삭제할 권한이 없습니다" });
     }
     await this.tabRepository.remove(tab);
     await this.invalidateTabListCache();
@@ -198,7 +214,7 @@ export class TabService {
   async fork(id: string, userId: string): Promise<Tab> {
     const original = await this.findOne(id);
     if (!original.isPublic && original.userId !== userId) {
-      throw new RpcException({ statusCode: 403, message: '이 타브를 포크할 수 없습니다' });
+      throw new RpcException({ statusCode: 403, message: "이 타브를 포크할 수 없습니다" });
     }
 
     const forked = this.tabRepository.create({
@@ -226,12 +242,12 @@ export class TabService {
   async getVersions(tabId: string, requestUserId?: string): Promise<TabVersion[]> {
     const tab = await this.findOne(tabId);
     if (!tab.isPublic && tab.userId !== requestUserId) {
-      throw new RpcException({ statusCode: 403, message: '이 타브에 접근할 수 없습니다' });
+      throw new RpcException({ statusCode: 403, message: "이 타브에 접근할 수 없습니다" });
     }
     return this.tabVersionRepository.find({
       where: { tabId },
-      order: { versionNumber: 'DESC' },
-      relations: ['creator'],
+      order: { versionNumber: "DESC" },
+      relations: ["creator"],
     });
   }
 
@@ -244,9 +260,9 @@ export class TabService {
     const skip = (page - 1) * safeLimit;
 
     const followingIds = await this.followRepository
-      .createQueryBuilder('follow')
-      .select('follow.followingId')
-      .where('follow.followerId = :userId', { userId })
+      .createQueryBuilder("follow")
+      .select("follow.followingId")
+      .where("follow.followerId = :userId", { userId })
       .getRawMany<{ follow_followingId: string }>();
 
     const ids = followingIds.map((f) => f.follow_followingId);
@@ -255,16 +271,25 @@ export class TabService {
     }
 
     const [data, total] = await this.tabRepository
-      .createQueryBuilder('tab')
-      .leftJoinAndSelect('tab.user', 'user')
+      .createQueryBuilder("tab")
+      .leftJoinAndSelect("tab.user", "user")
       .select([
-        'tab.id', 'tab.title', 'tab.artist', 'tab.isPublic',
-        'tab.viewCount', 'tab.likeCount', 'tab.createdAt', 'tab.updatedAt',
-        'user.id', 'user.username', 'user.displayName', 'user.avatarUrl',
+        "tab.id",
+        "tab.title",
+        "tab.artist",
+        "tab.isPublic",
+        "tab.viewCount",
+        "tab.likeCount",
+        "tab.createdAt",
+        "tab.updatedAt",
+        "user.id",
+        "user.username",
+        "user.displayName",
+        "user.avatarUrl",
       ])
-      .where('tab.userId IN (:...ids)', { ids })
-      .andWhere('tab.isPublic = :isPublic', { isPublic: true })
-      .orderBy('tab.updatedAt', 'DESC')
+      .where("tab.userId IN (:...ids)", { ids })
+      .andWhere("tab.isPublic = :isPublic", { isPublic: true })
+      .orderBy("tab.updatedAt", "DESC")
       .skip(skip)
       .take(safeLimit)
       .getManyAndCount();
@@ -275,7 +300,10 @@ export class TabService {
   async togglePublish(id: string, userId: string): Promise<Tab> {
     const tab = await this.findOne(id);
     if (tab.userId !== userId) {
-      throw new RpcException({ statusCode: 403, message: '이 타브를 공개/비공개 전환할 권한이 없습니다' });
+      throw new RpcException({
+        statusCode: 403,
+        message: "이 타브를 공개/비공개 전환할 권한이 없습니다",
+      });
     }
     tab.isPublic = !tab.isPublic;
     const saved = await this.tabRepository.save(tab);

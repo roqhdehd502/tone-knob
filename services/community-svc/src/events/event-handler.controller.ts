@@ -1,46 +1,44 @@
 import { Controller, Logger } from "@nestjs/common";
 import { EventPattern, Payload } from "@nestjs/microservices";
 import { InjectRepository } from "@nestjs/typeorm";
-
-import { Repository } from "typeorm";
-
 import {
-  TAB_EVENTS,
-  MARKETPLACE_EVENTS,
-  PAYMENT_EVENTS,
   AI_EVENTS,
-  SUBSCRIPTION_EVENTS,
-  COMMUNITY_EVENTS,
-  BADGE_EVENTS,
-  KNOB_EVENTS,
-  TabCreatedEvent,
-  TabUpdatedEvent,
-  TabDeletedEvent,
-  TabPublishedEvent,
-  TabForkedEvent,
-  TabPurchasedEvent,
-  PaymentCompletedEvent,
   AiJobCompletedEvent,
   AiJobFailedEvent,
+  BADGE_EVENTS,
+  BadgeAwardedEvent,
+  BadgeFeaturedChangedEvent,
+  CommentCreatedEvent,
+  COMMUNITY_EVENTS,
+  KNOB_EVENTS,
+  KnobEarnedEvent,
+  KnobSpentEvent,
+  MARKETPLACE_EVENTS,
+  PAYMENT_EVENTS,
+  PaymentCompletedEvent,
+  ReviewCreatedEvent,
+  SUBSCRIPTION_EVENTS,
   SubscriptionActivatedEvent,
   SubscriptionCancelledEvent,
   SubscriptionExpiredEvent,
-  UserFollowedEvent,
+  TAB_EVENTS,
+  TabCreatedEvent,
+  TabDeletedEvent,
+  TabForkedEvent,
   TabLikedEvent,
-  CommentCreatedEvent,
-  ReviewCreatedEvent,
-  BadgeAwardedEvent,
-  BadgeFeaturedChangedEvent,
-  KnobEarnedEvent,
-  KnobSpentEvent,
+  TabPublishedEvent,
+  TabPurchasedEvent,
+  TabUpdatedEvent,
+  UserFollowedEvent,
 } from "@tone-knob/shared";
+import { Repository } from "typeorm";
 
+import { BadgeService } from "../badge/badge.service";
 import { Follow } from "../entities/follow.entity";
 import { Like } from "../entities/like.entity";
 import { NotificationType } from "../entities/notification.entity";
 import { Review } from "../entities/review.entity";
 import { Tab } from "../entities/tab.entity";
-import { BadgeService } from "../badge/badge.service";
 import { NotificationService } from "../notification/notification.service";
 
 @Controller()
@@ -62,10 +60,7 @@ export class EventHandlerController {
 
   // ─── Helpers ───
 
-  private async tryAwardBadge(
-    userId: string,
-    badgeCode: string,
-  ): Promise<void> {
+  private async tryAwardBadge(userId: string, badgeCode: string): Promise<void> {
     try {
       await this.badgeService.awardBadge(userId, badgeCode);
       this.logger.log(`Badge awarded: ${badgeCode} → user ${userId}`);
@@ -189,8 +184,7 @@ export class EventHandlerController {
   @EventPattern(AI_EVENTS.JOB_COMPLETED)
   async handleAiJobCompleted(@Payload() data: AiJobCompletedEvent) {
     this.logger.log(`AI job completed: ${data.jobId}`);
-    const typeLabel =
-      data.type === "tab_generation" ? "AI 타브 생성" : "오디오 추출";
+    const typeLabel = data.type === "tab_generation" ? "AI 타브 생성" : "오디오 추출";
     await this.notificationService.create({
       recipientId: data.userId,
       actorId: data.userId,
@@ -203,8 +197,7 @@ export class EventHandlerController {
   @EventPattern(AI_EVENTS.JOB_FAILED)
   async handleAiJobFailed(@Payload() data: AiJobFailedEvent) {
     this.logger.log(`AI job failed: ${data.jobId}`);
-    const typeLabel =
-      data.type === "tab_generation" ? "AI 타브 생성" : "오디오 추출";
+    const typeLabel = data.type === "tab_generation" ? "AI 타브 생성" : "오디오 추출";
     await this.notificationService.create({
       recipientId: data.userId,
       actorId: data.userId,
@@ -217,12 +210,8 @@ export class EventHandlerController {
   // ─── Subscription Events ───
 
   @EventPattern(SUBSCRIPTION_EVENTS.ACTIVATED)
-  async handleSubscriptionActivated(
-    @Payload() data: SubscriptionActivatedEvent,
-  ) {
-    this.logger.log(
-      `Subscription activated: ${data.subscriptionId} (${data.plan})`,
-    );
+  async handleSubscriptionActivated(@Payload() data: SubscriptionActivatedEvent) {
+    this.logger.log(`Subscription activated: ${data.subscriptionId} (${data.plan})`);
     // 뱃지: 프리미엄 멤버
     if (data.plan === "premium" || data.plan === "pro") {
       await this.tryAwardBadge(data.userId, "premium_member");
@@ -230,12 +219,8 @@ export class EventHandlerController {
   }
 
   @EventPattern(SUBSCRIPTION_EVENTS.CANCELLED)
-  async handleSubscriptionCancelled(
-    @Payload() data: SubscriptionCancelledEvent,
-  ) {
-    this.logger.log(
-      `Subscription cancelled: ${data.subscriptionId} (${data.plan})`,
-    );
+  async handleSubscriptionCancelled(@Payload() data: SubscriptionCancelledEvent) {
+    this.logger.log(`Subscription cancelled: ${data.subscriptionId} (${data.plan})`);
   }
 
   @EventPattern(SUBSCRIPTION_EVENTS.EXPIRED)

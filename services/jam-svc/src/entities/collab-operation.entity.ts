@@ -6,41 +6,41 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { CollabSession } from './collab-session.entity';
+import { CollabSession } from "./collab-session.entity";
 
 export enum OperationType {
-  INSERT = 'insert',
-  DELETE = 'delete',
-  UPDATE = 'update',
-  CURSOR = 'cursor',
+  INSERT = "insert",
+  DELETE = "delete",
+  UPDATE = "update",
+  CURSOR = "cursor",
 }
 
-@Entity('collab_operations')
-@Index(['sessionId', 'revision'])
+@Entity("collab_operations")
+@Index(["sessionId", "revision"])
 export class CollabOperation {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   sessionId: string;
 
-  @ManyToOne(() => CollabSession, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'sessionId' })
+  @ManyToOne(() => CollabSession, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "sessionId" })
   session: CollabSession;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @Column({ type: 'integer' })
+  @Column({ type: "integer" })
   revision: number;
 
-  @Column({ type: 'enum', enum: OperationType })
+  @Column({ type: "enum", enum: OperationType })
   type: OperationType;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: "jsonb" })
   payload: Record<string, unknown>;
 
   @CreateDateColumn()

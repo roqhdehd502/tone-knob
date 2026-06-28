@@ -1,10 +1,12 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import type { TabDocument, InstrumentType } from "~/types/tab";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import type { InstrumentType, TabDocument } from "~/types/tab";
+
 import {
   AudioEngine,
   getAudioEngine,
-  type PlaybackState,
   type PlaybackPosition,
+  type PlaybackState,
 } from "./audio-engine";
 
 export interface UseAudioPlayerReturn {

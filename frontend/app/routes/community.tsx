@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Users, Rss, Music, Eye, Heart, ChevronLeft, ChevronRight } from "lucide-react";
+
+import { ChevronLeft, ChevronRight, Eye, Heart, Music, Rss, Users } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
-import { cn } from "~/lib/utils";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
+import { cn } from "~/lib/utils";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {

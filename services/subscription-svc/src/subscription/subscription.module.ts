@@ -6,8 +6,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { Subscription } from "../entities/subscription.entity";
 import { Tab } from "../entities/tab.entity";
 import { User } from "../entities/user.entity";
-import { SubscriptionExpiryScheduler } from "./subscription-expiry.scheduler";
 import { SubscriptionService } from "./subscription.service";
+import { SubscriptionExpiryScheduler } from "./subscription-expiry.scheduler";
 
 @Module({
   imports: [

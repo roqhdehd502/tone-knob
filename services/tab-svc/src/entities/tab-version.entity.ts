@@ -5,37 +5,37 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { Tab } from './tab.entity';
-import { User } from './user.entity';
+import { Tab } from "./tab.entity";
+import { User } from "./user.entity";
 
-@Entity('tab_versions')
+@Entity("tab_versions")
 export class TabVersion {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tabId: string;
 
-  @ManyToOne(() => Tab, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tabId' })
+  @ManyToOne(() => Tab, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tabId" })
   tab: Tab;
 
-  @Column({ type: 'integer' })
+  @Column({ type: "integer" })
   versionNumber: number;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: "jsonb" })
   content: Record<string, unknown>;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   changeDescription: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: "uuid", nullable: true })
   createdBy: string;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'createdBy' })
+  @JoinColumn({ name: "createdBy" })
   creator: User;
 
   @CreateDateColumn()

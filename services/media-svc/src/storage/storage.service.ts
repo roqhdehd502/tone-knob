@@ -1,8 +1,7 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { RpcException } from '@nestjs/microservices';
-
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { RpcException } from "@nestjs/microservices";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export interface UploadResult {
   url: string;
@@ -18,18 +17,13 @@ export class StorageService {
   private readonly bucket: string;
 
   constructor(private readonly configService: ConfigService) {
-    const url = this.configService.get<string>('SUPABASE_URL');
-    const serviceRoleKey = this.configService.get<string>(
-      'SUPABASE_SERVICE_ROLE_KEY',
-    );
-    this.bucket = this.configService.get<string>(
-      'SUPABASE_STORAGE_BUCKET',
-      'media',
-    );
+    const url = this.configService.get<string>("SUPABASE_URL");
+    const serviceRoleKey = this.configService.get<string>("SUPABASE_SERVICE_ROLE_KEY");
+    this.bucket = this.configService.get<string>("SUPABASE_STORAGE_BUCKET", "media");
 
     if (!url || !serviceRoleKey) {
       this.logger.warn(
-        'SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY가 설정되지 않아 파일 업로드가 비활성화됩니다.',
+        "SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY가 설정되지 않아 파일 업로드가 비활성화됩니다.",
       );
       this.client = null;
     } else {
@@ -45,17 +39,17 @@ export class StorageService {
     fileBase64: string,
     fileName: string,
     contentType: string,
-    folder = 'uploads',
+    folder = "uploads",
   ): Promise<UploadResult> {
     if (!this.client) {
       throw new RpcException(
         new BadRequestException(
-          '파일 업로드가 설정되지 않았습니다 (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY 필요)',
+          "파일 업로드가 설정되지 않았습니다 (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY 필요)",
         ),
       );
     }
 
-    const buffer = Buffer.from(fileBase64, 'base64');
+    const buffer = Buffer.from(fileBase64, "base64");
     if (buffer.byteLength > MAX_FILE_SIZE_BYTES) {
       throw new RpcException(
         new BadRequestException(
@@ -64,7 +58,7 @@ export class StorageService {
       );
     }
 
-    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${folder}/${Date.now()}-${safeName}`;
 
     const { error } = await this.client.storage

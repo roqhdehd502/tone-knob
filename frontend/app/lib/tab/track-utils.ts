@@ -1,4 +1,4 @@
-import type { Track, InstrumentType, TabDocument, Section } from "~/types/tab";
+import type { InstrumentType, Section, TabDocument, Track } from "~/types/tab";
 import { STANDARD_TUNING } from "~/types/tab";
 
 const BASS_TUNING = ["G", "D", "A", "E"];
@@ -30,7 +30,7 @@ export function createTrack(
     sections: existingSections.map((section) => ({
       id: crypto.randomUUID(),
       name: section.name,
-      measures: section.measures.map((measure) => ({
+      measures: section.measures.map(() => ({
         id: crypto.randomUUID(),
         notes: [],
       })),

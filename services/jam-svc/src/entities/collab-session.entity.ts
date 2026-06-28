@@ -7,30 +7,30 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { Tab } from './tab.entity';
+import { Tab } from "./tab.entity";
 
-@Entity('collab_sessions')
+@Entity("collab_sessions")
 export class CollabSession {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index({ unique: true })
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tabId: string;
 
-  @ManyToOne(() => Tab, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tabId' })
+  @ManyToOne(() => Tab, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tabId" })
   tab: Tab;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: "integer", default: 0 })
   revision: number;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   snapshot: Record<string, unknown>;
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: "simple-array", nullable: true })
   activeUserIds: string[];
 
   @CreateDateColumn()

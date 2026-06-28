@@ -13,6 +13,10 @@ export const nest = tseslint.config(
         ...globals.jest,
       },
       sourceType: 'commonjs',
+      // no-floating-promises/no-unsafe-argument는 타입 정보가 필요한 규칙이라 projectService로 tsconfig를 연결해야 동작한다.
+      parserOptions: {
+        projectService: true,
+      },
     },
     rules: {
       '@typescript-eslint/no-floating-promises': 'warn',

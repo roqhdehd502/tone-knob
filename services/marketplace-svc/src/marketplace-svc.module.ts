@@ -10,13 +10,12 @@ import { Settlement } from "./entities/settlement.entity";
 import { Tab } from "./entities/tab.entity";
 import { TabPurchase } from "./entities/tab-purchase.entity";
 import { User } from "./entities/user.entity";
-
+import { EventHandlerController } from "./events/event-handler.controller";
 import { KnobModule } from "./knob/knob.module";
 import { MarketplaceModule } from "./marketplace/marketplace.module";
+import { MarketplaceSvcController } from "./marketplace-svc.controller";
 import { PaymentModule } from "./payment/payment.module";
 import { SettlementModule } from "./settlement/settlement.module";
-import { MarketplaceSvcController } from "./marketplace-svc.controller";
-import { EventHandlerController } from "./events/event-handler.controller";
 
 @Module({
   imports: [
@@ -28,14 +27,7 @@ import { EventHandlerController } from "./events/event-handler.controller";
       useFactory: (configService: ConfigService) => ({
         type: "postgres" as const,
         url: configService.get<string>("DATABASE_URL"),
-        entities: [
-          User,
-          Tab,
-          TabPurchase,
-          Payment,
-          Settlement,
-          KnobTransaction,
-        ],
+        entities: [User, Tab, TabPurchase, Payment, Settlement, KnobTransaction],
         synchronize: false,
         logging: configService.get("NODE_ENV") === "development",
       }),
@@ -48,12 +40,8 @@ import { EventHandlerController } from "./events/event-handler.controller";
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host:
-              configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
-            port: parseInt(
-              configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005",
-              10,
-            ),
+            host: configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
+            port: parseInt(configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005", 10),
           },
         }),
       },

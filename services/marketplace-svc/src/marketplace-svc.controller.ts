@@ -1,6 +1,5 @@
 import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
-
 import { MARKETPLACE_EVENTS, PAYMENT_EVENTS } from "@tone-knob/shared";
 
 import { KnobService } from "./knob/knob.service";
@@ -29,22 +28,12 @@ export class MarketplaceSvcController {
       sort?: "popular" | "oldest" | "newest";
     },
   ) {
-    return this.marketplaceService.listPaidTabs(
-      data.page,
-      data.limit,
-      data.sort,
-    );
+    return this.marketplaceService.listPaidTabs(data.page, data.limit, data.sort);
   }
 
   @MessagePattern("marketplace.setPrice")
-  async setPrice(
-    @Payload() data: { tabId: string; userId: string; price: number },
-  ) {
-    const tab = await this.marketplaceService.setPrice(
-      data.tabId,
-      data.userId,
-      data.price,
-    );
+  async setPrice(@Payload() data: { tabId: string; userId: string; price: number }) {
+    const tab = await this.marketplaceService.setPrice(data.tabId, data.userId, data.price);
     this.communityClient.emit(MARKETPLACE_EVENTS.TAB_LISTED, {
       tabId: data.tabId,
       sellerId: data.userId,
@@ -55,10 +44,7 @@ export class MarketplaceSvcController {
 
   @MessagePattern("marketplace.purchase")
   async purchase(@Payload() data: { tabId: string; buyerId: string }) {
-    const purchase = await this.marketplaceService.purchase(
-      data.tabId,
-      data.buyerId,
-    );
+    const purchase = await this.marketplaceService.purchase(data.tabId, data.buyerId);
     this.communityClient.emit(MARKETPLACE_EVENTS.TAB_PURCHASED, {
       purchaseId: purchase.id,
       buyerId: purchase.buyerId,
@@ -75,25 +61,13 @@ export class MarketplaceSvcController {
   }
 
   @MessagePattern("marketplace.getMyPurchases")
-  async getMyPurchases(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.marketplaceService.getMyPurchases(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getMyPurchases(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.marketplaceService.getMyPurchases(data.userId, data.page, data.limit);
   }
 
   @MessagePattern("marketplace.getMySales")
-  async getMySales(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.marketplaceService.getMySales(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getMySales(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.marketplaceService.getMySales(data.userId, data.page, data.limit);
   }
 
   // ─── Payment ───
@@ -113,10 +87,11 @@ export class MarketplaceSvcController {
 
   @MessagePattern("payment.confirm")
   async confirmPayment(
-    @Payload() data: { paymentId: string; externalPaymentId: string },
+    @Payload() data: { paymentId: string; userId: string; externalPaymentId: string },
   ) {
     const payment = await this.paymentService.confirmPayment(
       data.paymentId,
+      data.userId,
       data.externalPaymentId,
     );
     this.communityClient.emit(PAYMENT_EVENTS.COMPLETED, {
@@ -130,8 +105,8 @@ export class MarketplaceSvcController {
   }
 
   @MessagePattern("payment.refund")
-  async refundPayment(@Payload() data: { paymentId: string }) {
-    const payment = await this.paymentService.refundPayment(data.paymentId);
+  async refundPayment(@Payload() data: { paymentId: string; userId: string }) {
+    const payment = await this.paymentService.refundPayment(data.paymentId, data.userId);
     this.communityClient.emit(PAYMENT_EVENTS.REFUNDED, {
       paymentId: payment.id,
       userId: payment.userId,
@@ -141,19 +116,13 @@ export class MarketplaceSvcController {
   }
 
   @MessagePattern("payment.getById")
-  async getPayment(@Payload() data: { paymentId: string }) {
-    return this.paymentService.getPaymentById(data.paymentId);
+  async getPayment(@Payload() data: { paymentId: string; userId: string }) {
+    return this.paymentService.getPaymentById(data.paymentId, data.userId);
   }
 
   @MessagePattern("payment.getMyPayments")
-  async getMyPayments(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
-    return this.paymentService.getMyPayments(
-      data.userId,
-      data.page,
-      data.limit,
-    );
+  async getMyPayments(@Payload() data: { userId: string; page?: number; limit?: number }) {
+    return this.paymentService.getMyPayments(data.userId, data.page, data.limit);
   }
 
   // ─── Settlement ───
@@ -164,14 +133,8 @@ export class MarketplaceSvcController {
   }
 
   @MessagePattern("settlement.getMy")
-  async getMySettlements(
-    @Payload() data: { sellerId: string; page?: number; limit?: number },
-  ) {
-    return this.settlementService.getMySettlements(
-      data.sellerId,
-      data.page,
-      data.limit,
-    );
+  async getMySettlements(@Payload() data: { sellerId: string; page?: number; limit?: number }) {
+    return this.settlementService.getMySettlements(data.sellerId, data.page, data.limit);
   }
 
   @MessagePattern("settlement.summary")
@@ -188,9 +151,7 @@ export class MarketplaceSvcController {
   }
 
   @MessagePattern("knob.getHistory")
-  async getKnobHistory(
-    @Payload() data: { userId: string; page?: number; limit?: number },
-  ) {
+  async getKnobHistory(@Payload() data: { userId: string; page?: number; limit?: number }) {
     return this.knobService.getHistory(data.userId, data.page, data.limit);
   }
 }

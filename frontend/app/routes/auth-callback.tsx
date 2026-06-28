@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+
 import { Loader2 } from "lucide-react";
+
 import { useAuth } from "~/lib/auth";
 
 export function meta() {

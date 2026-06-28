@@ -1,6 +1,5 @@
 import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
-
 import { AUTH_EVENTS } from "@tone-knob/shared";
 
 import { AuthService } from "./auth/auth.service";

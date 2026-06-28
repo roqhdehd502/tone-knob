@@ -47,14 +47,14 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 async function uploadFile<T>(
   endpoint: string,
   file: Blob,
-  options?: { folder?: string; fileName?: string },
+  options?: { category?: string; fileName?: string },
 ): Promise<T> {
   const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
   const formData = new FormData();
   const fileName = options?.fileName ?? (file instanceof File ? file.name : "upload");
   formData.append("file", file, fileName);
-  if (options?.folder) formData.append("folder", options.folder);
+  if (options?.category) formData.append("category", options.category);
 
   const res = await fetch(`${API_BASE}${endpoint}`, {
     method: "POST",
@@ -559,7 +559,7 @@ export const api = {
       }>(`/api/ai-gen/jobs/${id}`),
   },
   media: {
-    upload: (file: Blob, options?: { folder?: string; fileName?: string }) =>
+    upload: (file: Blob, options?: { category?: string; fileName?: string }) =>
       uploadFile<{ url: string; path: string }>("/api/media/upload", file, options),
   },
 };

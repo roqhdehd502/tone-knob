@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger } from "@nestjs/common";
 import {
   ConnectedSocket,
   MessageBody,
@@ -7,11 +7,10 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from '@nestjs/websockets';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
 
-import { Server, Socket } from 'socket.io';
-
-import { JamRoomService } from './jam-room.service';
+import { JamRoomService } from "./jam-room.service";
 
 interface JoinRoomPayload {
   roomId: string;
@@ -25,8 +24,8 @@ interface SignalPayload {
 }
 
 @WebSocketGateway({
-  cors: { origin: '*', credentials: true },
-  namespace: '/jam',
+  cors: { origin: "*", credentials: true },
+  namespace: "/jam",
 })
 export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -51,18 +50,18 @@ export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect 
     if (userId && roomId) {
       try {
         await this.jamRoomService.updateParticipant(roomId, userId, { isConnected: false });
-        client.to(roomId).emit('user-disconnected', { userId });
+        client.to(roomId).emit("user-disconnected", { userId });
       } catch (error) {
-        this.logger.error('Error handling disconnect:', error);
+        this.logger.error("Error handling disconnect:", error);
       }
     }
 
-    this.userSocketMap.delete(userId || '');
+    this.userSocketMap.delete(userId || "");
     this.socketUserMap.delete(client.id);
     this.socketRoomMap.delete(client.id);
   }
 
-  @SubscribeMessage('join-room')
+  @SubscribeMessage("join-room")
   async handleJoinRoom(@MessageBody() data: JoinRoomPayload, @ConnectedSocket() client: Socket) {
     const { roomId, userId } = data;
     try {
@@ -77,7 +76,7 @@ export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect 
       });
 
       const participants = await this.jamRoomService.getParticipants(roomId);
-      client.emit('room-joined', {
+      client.emit("room-joined", {
         roomId,
         participants: participants.map((p) => ({
           userId: p.userId,
@@ -87,88 +86,103 @@ export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect 
         })),
       });
 
-      client.to(roomId).emit('user-joined', { userId, socketId: client.id });
+      client.to(roomId).emit("user-joined", { userId, socketId: client.id });
       this.logger.log(`User ${userId} joined room ${roomId}`);
     } catch (error) {
-      this.logger.error('Error joining room:', error);
-      client.emit('error', { message: '\ud569\uc8fc\ubc29 \ucc38\uac00 \uc2e4\ud328' });
+      this.logger.error("Error joining room:", error);
+      client.emit("error", { message: "\ud569\uc8fc\ubc29 \ucc38\uac00 \uc2e4\ud328" });
     }
   }
 
-  @SubscribeMessage('leave-room')
-  async handleLeaveRoom(@MessageBody() data: { roomId: string }, @ConnectedSocket() client: Socket) {
+  @SubscribeMessage("leave-room")
+  async handleLeaveRoom(
+    @MessageBody() data: { roomId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
     const userId = this.socketUserMap.get(client.id);
     if (!userId) return;
     try {
       await client.leave(data.roomId);
       await this.jamRoomService.leave(data.roomId, userId);
-      client.to(data.roomId).emit('user-left', { userId });
+      client.to(data.roomId).emit("user-left", { userId });
       this.userSocketMap.delete(userId);
       this.socketUserMap.delete(client.id);
       this.socketRoomMap.delete(client.id);
     } catch (error) {
-      this.logger.error('Error leaving room:', error);
+      this.logger.error("Error leaving room:", error);
     }
   }
 
-  @SubscribeMessage('webrtc-offer')
+  @SubscribeMessage("webrtc-offer")
   handleOffer(@MessageBody() data: SignalPayload, @ConnectedSocket() client: Socket) {
     const fromUserId = this.socketUserMap.get(client.id);
     if (data.targetUserId) {
       const targetSocketId = this.userSocketMap.get(data.targetUserId);
       if (targetSocketId) {
-        this.server.to(targetSocketId).emit('webrtc-offer', { fromUserId, signal: data.signal });
+        this.server.to(targetSocketId).emit("webrtc-offer", { fromUserId, signal: data.signal });
       }
     } else {
-      client.to(data.roomId).emit('webrtc-offer', { fromUserId, signal: data.signal });
+      client.to(data.roomId).emit("webrtc-offer", { fromUserId, signal: data.signal });
     }
   }
 
-  @SubscribeMessage('webrtc-answer')
+  @SubscribeMessage("webrtc-answer")
   handleAnswer(@MessageBody() data: SignalPayload, @ConnectedSocket() client: Socket) {
     const fromUserId = this.socketUserMap.get(client.id);
     if (data.targetUserId) {
       const targetSocketId = this.userSocketMap.get(data.targetUserId);
       if (targetSocketId) {
-        this.server.to(targetSocketId).emit('webrtc-answer', { fromUserId, signal: data.signal });
+        this.server.to(targetSocketId).emit("webrtc-answer", { fromUserId, signal: data.signal });
       }
     }
   }
 
-  @SubscribeMessage('webrtc-ice-candidate')
+  @SubscribeMessage("webrtc-ice-candidate")
   handleIceCandidate(@MessageBody() data: SignalPayload, @ConnectedSocket() client: Socket) {
     const fromUserId = this.socketUserMap.get(client.id);
     if (data.targetUserId) {
       const targetSocketId = this.userSocketMap.get(data.targetUserId);
       if (targetSocketId) {
-        this.server.to(targetSocketId).emit('webrtc-ice-candidate', { fromUserId, signal: data.signal });
+        this.server
+          .to(targetSocketId)
+          .emit("webrtc-ice-candidate", { fromUserId, signal: data.signal });
       }
     }
   }
 
-  @SubscribeMessage('toggle-mute')
-  async handleToggleMute(@MessageBody() data: { roomId: string; isMuted: boolean }, @ConnectedSocket() client: Socket) {
+  @SubscribeMessage("toggle-mute")
+  async handleToggleMute(
+    @MessageBody() data: { roomId: string; isMuted: boolean },
+    @ConnectedSocket() client: Socket,
+  ) {
     const userId = this.socketUserMap.get(client.id);
     if (!userId) return;
     try {
       await this.jamRoomService.updateParticipant(data.roomId, userId, { isMuted: data.isMuted });
-      client.to(data.roomId).emit('user-muted', { userId, isMuted: data.isMuted });
+      client.to(data.roomId).emit("user-muted", { userId, isMuted: data.isMuted });
     } catch (error) {
-      this.logger.error('Error toggling mute:', error);
+      this.logger.error("Error toggling mute:", error);
     }
   }
 
-  @SubscribeMessage('sync-playback')
+  @SubscribeMessage("sync-playback")
   handleSyncPlayback(
     @MessageBody() data: { roomId: string; position: number; isPlaying: boolean },
     @ConnectedSocket() client: Socket,
   ) {
     const userId = this.socketUserMap.get(client.id);
-    client.to(data.roomId).emit('playback-synced', { fromUserId: userId, position: data.position, isPlaying: data.isPlaying });
+    client.to(data.roomId).emit("playback-synced", {
+      fromUserId: userId,
+      position: data.position,
+      isPlaying: data.isPlaying,
+    });
   }
 
-  @SubscribeMessage('chat-message')
-  handleChatMessage(@MessageBody() data: { roomId: string; message: string }, @ConnectedSocket() client: Socket) {
+  @SubscribeMessage("chat-message")
+  handleChatMessage(
+    @MessageBody() data: { roomId: string; message: string },
+    @ConnectedSocket() client: Socket,
+  ) {
     const userId = this.socketUserMap.get(client.id);
     if (!userId || !data.message.trim()) return;
     const chatMessage = {
@@ -177,11 +191,11 @@ export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect 
       message: data.message.trim().slice(0, 500),
       timestamp: new Date().toISOString(),
     };
-    this.server.to(data.roomId).emit('chat-message', chatMessage);
+    this.server.to(data.roomId).emit("chat-message", chatMessage);
   }
 
-  @SubscribeMessage('ping-latency')
+  @SubscribeMessage("ping-latency")
   handlePingLatency(@MessageBody() data: { timestamp: number }, @ConnectedSocket() client: Socket) {
-    client.emit('pong-latency', { timestamp: data.timestamp });
+    client.emit("pong-latency", { timestamp: data.timestamp });
   }
 }

@@ -146,12 +146,6 @@ export class AdaptiveBitrateController {
           const bytesSent = report.bytesSent as number;
           const ts = report.timestamp as number;
 
-          if (this.prevBytesSent > 0 && this.prevTimestamp > 0) {
-            // 실제 전송 비트레이트 계산 (참고용)
-            const _elapsed = (ts - this.prevTimestamp) / 1000;
-            const _bytesDiff = bytesSent - this.prevBytesSent;
-          }
-
           this.prevBytesSent = bytesSent;
           this.prevTimestamp = ts;
         }

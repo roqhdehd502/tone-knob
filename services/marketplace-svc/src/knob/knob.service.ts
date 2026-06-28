@@ -1,16 +1,11 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { ClientProxy, RpcException } from "@nestjs/microservices";
+import { InjectRepository } from "@nestjs/typeorm";
+import { KNOB_EVENTS } from "@tone-knob/shared";
+import { MoreThanOrEqual, Repository } from "typeorm";
 
-import { MoreThanOrEqual, Repository } from 'typeorm';
-
-import { KNOB_EVENTS } from '@tone-knob/shared';
-
-import {
-  KnobTransaction,
-  KnobTransactionType,
-} from '../entities/knob-transaction.entity';
-import { User } from '../entities/user.entity';
+import { KnobTransaction, KnobTransactionType } from "../entities/knob-transaction.entity";
+import { User } from "../entities/user.entity";
 
 const COMMISSION_RATE = 0.3;
 
@@ -26,7 +21,7 @@ export class KnobService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(KnobTransaction)
     private readonly txRepository: Repository<KnobTransaction>,
-    @Inject('COMMUNITY_SERVICE') private readonly communityClient: ClientProxy,
+    @Inject("COMMUNITY_SERVICE") private readonly communityClient: ClientProxy,
   ) {}
 
   async getBalance(userId: string): Promise<number> {
@@ -41,7 +36,7 @@ export class KnobService {
   ): Promise<{ data: KnobTransaction[]; total: number }> {
     const [data, total] = await this.txRepository.findAndCount({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -56,16 +51,12 @@ export class KnobService {
     referenceId?: string,
   ): Promise<KnobTransaction> {
     if (amount <= 0) {
-      throw new RpcException(
-        new BadRequestException('차감 금액은 0보다 커야 합니다'),
-      );
+      throw new RpcException(new BadRequestException("차감 금액은 0보다 커야 합니다"));
     }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new RpcException(
-        new BadRequestException('사용자를 찾을 수 없습니다'),
-      );
+      throw new RpcException(new BadRequestException("사용자를 찾을 수 없습니다"));
     }
 
     if (user.knobBalance < amount) {
@@ -117,28 +108,22 @@ export class KnobService {
     );
   }
 
-  async earnFromTabCreated(
-    userId: string,
-    tabId: string,
-  ): Promise<KnobTransaction> {
+  async earnFromTabCreated(userId: string, tabId: string): Promise<KnobTransaction> {
     return this.recordEarn(
       userId,
       TAB_CREATED_REWARD,
       KnobTransactionType.EARN_TAB_CREATED,
-      '타브 제작 보상',
+      "타브 제작 보상",
       tabId,
     );
   }
 
-  async earnFromJamParticipation(
-    userId: string,
-    roomId: string,
-  ): Promise<KnobTransaction> {
+  async earnFromJamParticipation(userId: string, roomId: string): Promise<KnobTransaction> {
     return this.recordEarn(
       userId,
       JAM_PARTICIPATED_REWARD,
       KnobTransactionType.EARN_JAM_PARTICIPATED,
-      '합주 참여 보상',
+      "합주 참여 보상",
       roomId,
     );
   }
@@ -161,7 +146,7 @@ export class KnobService {
       userId,
       DAILY_LOGIN_REWARD,
       KnobTransactionType.EARN_DAILY_LOGIN,
-      '일일 로그인 보상',
+      "일일 로그인 보상",
     );
   }
 
@@ -174,9 +159,7 @@ export class KnobService {
   ): Promise<KnobTransaction> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new RpcException(
-        new BadRequestException('사용자를 찾을 수 없습니다'),
-      );
+      throw new RpcException(new BadRequestException("사용자를 찾을 수 없습니다"));
     }
 
     user.knobBalance += amount;

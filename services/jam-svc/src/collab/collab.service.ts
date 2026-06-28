@@ -1,14 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from "@nestjs/common";
+import { RpcException } from "@nestjs/microservices";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
-import { Repository } from 'typeorm';
-
-import {
-  CollabOperation,
-  OperationType,
-} from '../entities/collab-operation.entity';
-import { CollabSession } from '../entities/collab-session.entity';
+import { CollabOperation, OperationType } from "../entities/collab-operation.entity";
+import { CollabSession } from "../entities/collab-session.entity";
 
 export interface ApplyOperationResult {
   accepted: boolean;
@@ -37,7 +33,7 @@ export class CollabService {
   async getSession(tabId: string): Promise<CollabSession> {
     const session = await this.sessionRepository.findOne({ where: { tabId } });
     if (!session) {
-      throw new RpcException({ statusCode: 404, message: '협업 세션을 찾을 수 없습니다' });
+      throw new RpcException({ statusCode: 404, message: "협업 세션을 찾을 수 없습니다" });
     }
     return session;
   }
@@ -54,7 +50,7 @@ export class CollabService {
     if (clientRevision < session.revision) {
       const missedOps = await this.operationRepository.find({
         where: { sessionId: session.id },
-        order: { revision: 'ASC' },
+        order: { revision: "ASC" },
       });
       const filtered = missedOps.filter((op) => op.revision > clientRevision);
 
@@ -96,7 +92,7 @@ export class CollabService {
   async getOperationsSince(tabId: string, sinceRevision: number): Promise<CollabOperation[]> {
     const session = await this.getOrCreateSession(tabId);
     return this.operationRepository
-      .find({ where: { sessionId: session.id }, order: { revision: 'ASC' } })
+      .find({ where: { sessionId: session.id }, order: { revision: "ASC" } })
       .then((ops) => ops.filter((op) => op.revision > sinceRevision));
   }
 
@@ -139,10 +135,10 @@ export class CollabService {
 
       if (opOffset === undefined) continue;
 
-      if (opType === 'insert' && opOffset <= offset) {
+      if (opType === "insert" && opOffset <= offset) {
         const insertLen = (op.text as string | undefined)?.length ?? 0;
         offset += insertLen;
-      } else if (opType === 'delete' && opOffset < offset) {
+      } else if (opType === "delete" && opOffset < offset) {
         const delLen = opLength ?? 0;
         offset = Math.max(opOffset, offset - delLen);
       }

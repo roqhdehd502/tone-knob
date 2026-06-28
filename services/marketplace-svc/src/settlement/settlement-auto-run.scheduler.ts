@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
-import { SettlementService } from './settlement.service';
+import { SettlementService } from "./settlement.service";
 
 @Injectable()
 export class SettlementAutoRunScheduler {

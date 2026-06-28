@@ -44,7 +44,7 @@ export interface PaymentCompletedEvent {
   paymentId: string;
   userId: string;
   amount: number;
-  type: 'tab_purchase' | 'subscription';
+  type: "tab_purchase" | "subscription";
   referenceId: string;
 }
 
@@ -98,14 +98,14 @@ export interface SubscriptionCancelledEvent {
 export interface AiJobCompletedEvent {
   jobId: string;
   userId: string;
-  type: 'tab_generation' | 'audio_extraction';
+  type: "tab_generation" | "audio_extraction";
   outputData: Record<string, unknown>;
 }
 
 export interface AiJobFailedEvent {
   jobId: string;
   userId: string;
-  type: 'tab_generation' | 'audio_extraction';
+  type: "tab_generation" | "audio_extraction";
   errorMessage: string;
 }
 

@@ -1,12 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
-import { Repository } from 'typeorm';
-
-import {
-  Notification,
-  NotificationType,
-} from '../entities/notification.entity';
+import { Notification, NotificationType } from "../entities/notification.entity";
 
 @Injectable()
 export class NotificationService {
@@ -44,14 +40,13 @@ export class NotificationService {
     total: number;
     unreadCount: number;
   }> {
-    const [notifications, total] =
-      await this.notificationRepository.findAndCount({
-        where: { recipientId: userId },
-        relations: ['actor'],
-        order: { createdAt: 'DESC' },
-        skip: (page - 1) * limit,
-        take: limit,
-      });
+    const [notifications, total] = await this.notificationRepository.findAndCount({
+      where: { recipientId: userId },
+      relations: ["actor"],
+      order: { createdAt: "DESC" },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     const unreadCount = await this.notificationRepository.count({
       where: { recipientId: userId, isRead: false },

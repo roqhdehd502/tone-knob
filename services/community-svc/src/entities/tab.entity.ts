@@ -7,39 +7,39 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { User } from './user.entity';
+import { User } from "./user.entity";
 
-@Entity('tabs')
+@Entity("tabs")
 export class Tab {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
-  @Column({ type: 'varchar', length: 200 })
+  @Column({ type: "varchar", length: 200 })
   title: string;
 
-  @Column({ type: 'varchar', length: 200, nullable: true })
+  @Column({ type: "varchar", length: 200, nullable: true })
   artist: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: "boolean", default: false })
   isPublic: boolean;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: "integer", default: 0 })
   viewCount: number;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: "integer", default: 0 })
   likeCount: number;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: "integer", default: 0 })
   price: number;
 
   @CreateDateColumn()

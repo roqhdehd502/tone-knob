@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 
-import { MediaProxyController } from './media-proxy.controller';
+import { MediaProxyController } from "./media-proxy.controller";
 
 @Module({
   controllers: [MediaProxyController],

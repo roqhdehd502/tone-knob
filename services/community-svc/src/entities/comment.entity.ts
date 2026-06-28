@@ -7,40 +7,40 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { Tab } from './tab.entity';
-import { User } from './user.entity';
+import { Tab } from "./tab.entity";
+import { User } from "./user.entity";
 
-@Entity('comments')
+@Entity("comments")
 export class Comment {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tabId: string;
 
-  @ManyToOne(() => Tab, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tabId' })
+  @ManyToOne(() => Tab, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tabId" })
   tab: Tab;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   content: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: "uuid", nullable: true })
   parentId: string | null;
 
-  @ManyToOne(() => Comment, { onDelete: 'CASCADE', nullable: true })
-  @JoinColumn({ name: 'parentId' })
+  @ManyToOne(() => Comment, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "parentId" })
   parent: Comment | null;
 
   @CreateDateColumn()

@@ -7,58 +7,58 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-import { User } from './user.entity';
+import { User } from "./user.entity";
 
 export enum AiJobType {
-  TAB_GENERATION = 'tab_generation',
-  AUDIO_EXTRACTION = 'audio_extraction',
+  TAB_GENERATION = "tab_generation",
+  AUDIO_EXTRACTION = "audio_extraction",
 }
 
 export enum AiJobStatus {
-  QUEUED = 'queued',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
+  QUEUED = "queued",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
-@Entity('ai_jobs')
+@Entity("ai_jobs")
 export class AiJob {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
-  @Column({ type: 'enum', enum: AiJobType })
+  @Column({ type: "enum", enum: AiJobType })
   type: AiJobType;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: AiJobStatus,
     default: AiJobStatus.QUEUED,
   })
   status: AiJobStatus;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: "jsonb" })
   inputData: Record<string, unknown>;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   outputData: Record<string, unknown>;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   errorMessage: string;
 
-  @Column({ type: 'integer', default: 0 })
+  @Column({ type: "integer", default: 0 })
   progress: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: "varchar", length: 255, nullable: true })
   externalJobId: string;
 
   @CreateDateColumn()

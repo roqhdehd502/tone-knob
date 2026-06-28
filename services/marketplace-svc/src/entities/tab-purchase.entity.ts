@@ -7,50 +7,50 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
-} from 'typeorm';
+} from "typeorm";
 
-import { Tab } from './tab.entity';
-import { User } from './user.entity';
+import { Tab } from "./tab.entity";
+import { User } from "./user.entity";
 
 export enum PurchaseStatus {
-  COMPLETED = 'completed',
-  REFUNDED = 'refunded',
+  COMPLETED = "completed",
+  REFUNDED = "refunded",
 }
 
-@Entity('tab_purchases')
-@Unique(['buyerId', 'tabId'])
+@Entity("tab_purchases")
+@Unique(["buyerId", "tabId"])
 export class TabPurchase {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   buyerId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'buyerId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "buyerId" })
   buyer: User;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   sellerId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'sellerId' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "sellerId" })
   seller: User;
 
   @Index()
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   tabId: string;
 
-  @ManyToOne(() => Tab, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tabId' })
+  @ManyToOne(() => Tab, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tabId" })
   tab: Tab;
 
-  @Column({ type: 'integer' })
+  @Column({ type: "integer" })
   price: number;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: PurchaseStatus,
     default: PurchaseStatus.COMPLETED,
   })

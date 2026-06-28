@@ -3,11 +3,10 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
-import { AiJob } from "./entities/ai-job.entity";
-import { User } from "./entities/user.entity";
-
 import { AiGenModule } from "./ai-gen/ai-gen.module";
 import { AiSvcController } from "./ai-svc.controller";
+import { AiJob } from "./entities/ai-job.entity";
+import { User } from "./entities/user.entity";
 
 @Module({
   imports: [
@@ -31,12 +30,8 @@ import { AiSvcController } from "./ai-svc.controller";
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host:
-              configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
-            port: parseInt(
-              configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005",
-              10,
-            ),
+            host: configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
+            port: parseInt(configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005", 10),
           },
         }),
       },

@@ -4,20 +4,20 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-@Entity('tabs')
+@Entity("tabs")
 export class Tab {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: "uuid" })
   userId: string;
 
-  @Column({ type: 'varchar', length: 200 })
+  @Column({ type: "varchar", length: 200 })
   title: string;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: "jsonb" })
   content: Record<string, unknown>;
 
   @CreateDateColumn()

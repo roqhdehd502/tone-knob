@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router";
-import { Eye, Heart, Clock, GitFork, Globe, GlobeLock, ArrowLeft, Pencil } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Separator } from "~/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { TabCanvas } from "~/components/editor/TabCanvas";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+
+import { ArrowLeft, Clock, Eye, GitFork, Globe, GlobeLock, Heart, Pencil } from "lucide-react";
+
 import { PlaybackBar } from "~/components/editor/PlaybackBar";
-import { useAudioPlayer } from "~/lib/audio/use-audio-player";
+import { TabCanvas } from "~/components/editor/TabCanvas";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Separator } from "~/components/ui/separator";
 import { api } from "~/lib/api";
+import { useAudioPlayer } from "~/lib/audio/use-audio-player";
 import { useAuth } from "~/lib/auth";
 import type { TabDetail, TabDocument, TabVersion } from "~/types/tab";
 import { STANDARD_TUNING } from "~/types/tab";
@@ -23,7 +25,6 @@ const TUNING_PRESETS: Record<string, string[]> = {
   dadgad: ["D", "A", "G", "D", "A", "D"],
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeContent(raw: any): TabDocument {
   // bpm: legacy uses "tempo"
   const bpm = (raw.bpm ?? raw.tempo ?? 120) as number;
@@ -51,14 +52,11 @@ function normalizeContent(raw: any): TabDocument {
   // sections: legacy uses "tracks" array
   let sections = raw.sections as TabDocument["sections"] | undefined;
   if (!sections && Array.isArray(raw.tracks)) {
-    sections = raw.tracks.map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (track: any, i: number) => ({
-        id: (track.id as string) ?? `track-${i}`,
-        name: (track.name as string) ?? (track.instrument as string) ?? `Track ${i + 1}`,
-        measures: (track.measures as TabDocument["sections"][0]["measures"]) ?? [],
-      }),
-    );
+    sections = raw.tracks.map((track: any, i: number) => ({
+      id: (track.id as string) ?? `track-${i}`,
+      name: (track.name as string) ?? (track.instrument as string) ?? `Track ${i + 1}`,
+      measures: (track.measures as TabDocument["sections"][0]["measures"]) ?? [],
+    }));
   }
 
   return {
@@ -122,7 +120,7 @@ export default function TabsDetail() {
     try {
       const forked = await api.tabs.fork(id);
       navigate(`/tabs/${forked.id}`);
-    } catch (err) {
+    } catch {
       alert("포크에 실패했습니다.");
     }
   };

@@ -1,11 +1,6 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
-
+import { InjectRepository } from "@nestjs/typeorm";
 import { LessThan, Repository } from "typeorm";
 
 import {
@@ -23,11 +18,7 @@ const PLAN_PRICES: Record<SubscriptionPlan, number> = {
 };
 
 const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
-  [SubscriptionPlan.FREE]: [
-    "타브 월 3회 제작",
-    "공개 타브 열람",
-    "합주방 무제한 참여",
-  ],
+  [SubscriptionPlan.FREE]: ["타브 월 3회 제작", "공개 타브 열람", "합주방 무제한 참여"],
   [SubscriptionPlan.PREMIUM]: [
     "타브 무제한 제작",
     "공개 타브 열람",
@@ -76,16 +67,12 @@ export class SubscriptionService {
     externalPaymentId?: string,
   ): Promise<Subscription> {
     if (plan === SubscriptionPlan.FREE) {
-      throw new RpcException(
-        new ConflictException("무료 플랜은 별도 구독이 필요하지 않습니다"),
-      );
+      throw new RpcException(new ConflictException("무료 플랜은 별도 구독이 필요하지 않습니다"));
     }
 
     const existing = await this.getCurrentSubscription(userId);
     if (existing && existing.plan === plan) {
-      throw new RpcException(
-        new ConflictException("이미 동일한 플랜을 구독 중입니다"),
-      );
+      throw new RpcException(new ConflictException("이미 동일한 플랜을 구독 중입니다"));
     }
 
     if (existing) {
@@ -116,9 +103,7 @@ export class SubscriptionService {
   async cancel(userId: string): Promise<Subscription> {
     const subscription = await this.getCurrentSubscription(userId);
     if (!subscription) {
-      throw new RpcException(
-        new NotFoundException("활성 구독을 찾을 수 없습니다"),
-      );
+      throw new RpcException(new NotFoundException("활성 구독을 찾을 수 없습니다"));
     }
 
     subscription.status = SubscriptionStatus.CANCELLED;
@@ -136,14 +121,10 @@ export class SubscriptionService {
   ): Promise<{ allowed: boolean; remaining: number; limit: number }> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new RpcException(
-        new NotFoundException("사용자를 찾을 수 없습니다"),
-      );
+      throw new RpcException(new NotFoundException("사용자를 찾을 수 없습니다"));
     }
 
-    if (
-      (user.subscriptionTier as string) !== (SubscriptionPlan.FREE as string)
-    ) {
+    if ((user.subscriptionTier as string) !== (SubscriptionPlan.FREE as string)) {
       return { allowed: true, remaining: -1, limit: -1 };
     }
 

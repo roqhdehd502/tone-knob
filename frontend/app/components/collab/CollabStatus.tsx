@@ -1,4 +1,5 @@
-import { Users, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2, Users, Wifi, WifiOff } from "lucide-react";
+
 import type { CollabStatus as Status } from "~/hooks/useCollabEditor";
 
 interface CollabStatusProps {

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class CdnService {
@@ -8,11 +8,8 @@ export class CdnService {
   private readonly cdnEnabled: boolean;
 
   constructor(private readonly configService: ConfigService) {
-    this.cdnBaseUrl = this.configService.get<string>('CDN_BASE_URL', '');
-    this.s3BaseUrl = this.configService.get<string>(
-      'S3_BASE_URL',
-      'https://storage.tone-knob.com',
-    );
+    this.cdnBaseUrl = this.configService.get<string>("CDN_BASE_URL", "");
+    this.s3BaseUrl = this.configService.get<string>("S3_BASE_URL", "https://storage.tone-knob.com");
     this.cdnEnabled = Boolean(this.cdnBaseUrl);
   }
 
@@ -52,15 +49,12 @@ export class CdnService {
   }
 
   // 배치 URL 변환 (목록 응답에 사용)
-  transformUrls<T extends Record<string, unknown>>(
-    items: T[],
-    fields: string[],
-  ): T[] {
+  transformUrls<T extends Record<string, unknown>>(items: T[], fields: string[]): T[] {
     return items.map((item) => {
       const transformed = { ...item } as Record<string, unknown>;
       for (const field of fields) {
         const val = transformed[field];
-        if (typeof val === 'string') {
+        if (typeof val === "string") {
           transformed[field] = this.toCdnUrl(val);
         }
       }
@@ -75,7 +69,7 @@ export class CdnService {
   } {
     return {
       enabled: this.cdnEnabled,
-      cdnBaseUrl: this.cdnBaseUrl || '(not configured)',
+      cdnBaseUrl: this.cdnBaseUrl || "(not configured)",
       s3BaseUrl: this.s3BaseUrl,
     };
   }

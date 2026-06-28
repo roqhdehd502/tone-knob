@@ -1,15 +1,10 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { RpcException } from '@nestjs/microservices';
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { RpcException } from "@nestjs/microservices";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Between, Repository } from "typeorm";
 
-import { Between, Repository } from 'typeorm';
-
-import { Settlement, SettlementStatus } from '../entities/settlement.entity';
-import { PurchaseStatus, TabPurchase } from '../entities/tab-purchase.entity';
+import { Settlement, SettlementStatus } from "../entities/settlement.entity";
+import { PurchaseStatus, TabPurchase } from "../entities/tab-purchase.entity";
 
 const PLATFORM_FEE_RATE = 0.1;
 
@@ -31,16 +26,12 @@ export class SettlementService {
       where: { sellerId, periodStart: Between(periodStart, periodEnd) },
     });
     if (existing) {
-      throw new RpcException(new ForbiddenException('이번 달 정산은 이미 요청되었습니다'));
+      throw new RpcException(new ForbiddenException("이번 달 정산은 이미 요청되었습니다"));
     }
 
-    const totalAmount = await this.calculatePeriodRevenue(
-      sellerId,
-      periodStart,
-      periodEnd,
-    );
+    const totalAmount = await this.calculatePeriodRevenue(sellerId, periodStart, periodEnd);
     if (totalAmount === 0) {
-      throw new RpcException(new ForbiddenException('정산할 금액이 없습니다'));
+      throw new RpcException(new ForbiddenException("정산할 금액이 없습니다"));
     }
 
     return this.createSettlement(sellerId, periodStart, periodEnd, totalAmount);
@@ -53,11 +44,11 @@ export class SettlementService {
     const periodEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const sellers = await this.purchaseRepository
-      .createQueryBuilder('purchase')
-      .select('DISTINCT purchase.sellerId', 'sellerId')
-      .where('purchase.status = :status', { status: PurchaseStatus.COMPLETED })
-      .andWhere('purchase.createdAt >= :start', { start: periodStart })
-      .andWhere('purchase.createdAt <= :end', { end: periodEnd })
+      .createQueryBuilder("purchase")
+      .select("DISTINCT purchase.sellerId", "sellerId")
+      .where("purchase.status = :status", { status: PurchaseStatus.COMPLETED })
+      .andWhere("purchase.createdAt >= :start", { start: periodStart })
+      .andWhere("purchase.createdAt <= :end", { end: periodEnd })
       .getRawMany<{ sellerId: string }>();
 
     const created: Settlement[] = [];
@@ -67,16 +58,10 @@ export class SettlementService {
       });
       if (existing) continue;
 
-      const totalAmount = await this.calculatePeriodRevenue(
-        sellerId,
-        periodStart,
-        periodEnd,
-      );
+      const totalAmount = await this.calculatePeriodRevenue(sellerId, periodStart, periodEnd);
       if (totalAmount === 0) continue;
 
-      created.push(
-        await this.createSettlement(sellerId, periodStart, periodEnd, totalAmount),
-      );
+      created.push(await this.createSettlement(sellerId, periodStart, periodEnd, totalAmount));
     }
     return created;
   }
@@ -87,12 +72,12 @@ export class SettlementService {
     periodEnd: Date,
   ): Promise<number> {
     const result = await this.purchaseRepository
-      .createQueryBuilder('purchase')
-      .select('SUM(purchase.price)', 'total')
-      .where('purchase.sellerId = :sellerId', { sellerId })
-      .andWhere('purchase.status = :status', { status: PurchaseStatus.COMPLETED })
-      .andWhere('purchase.createdAt >= :start', { start: periodStart })
-      .andWhere('purchase.createdAt <= :end', { end: periodEnd })
+      .createQueryBuilder("purchase")
+      .select("SUM(purchase.price)", "total")
+      .where("purchase.sellerId = :sellerId", { sellerId })
+      .andWhere("purchase.status = :status", { status: PurchaseStatus.COMPLETED })
+      .andWhere("purchase.createdAt >= :start", { start: periodStart })
+      .andWhere("purchase.createdAt <= :end", { end: periodEnd })
       .getRawOne<{ total: string | null }>();
 
     return result?.total ? parseInt(result.total, 10) : 0;
@@ -126,7 +111,7 @@ export class SettlementService {
   ): Promise<{ data: Settlement[]; total: number }> {
     const [data, total] = await this.settlementRepository.findAndCount({
       where: { sellerId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -140,19 +125,23 @@ export class SettlementService {
     pendingAmount: number;
   }> {
     const completedResult = await this.settlementRepository
-      .createQueryBuilder('s')
-      .select('SUM(s.netAmount)', 'totalPaid')
-      .addSelect('SUM(s.totalAmount)', 'totalRevenue')
-      .addSelect('SUM(s.platformFee)', 'totalFees')
-      .where('s.sellerId = :sellerId', { sellerId })
-      .andWhere('s.status = :status', { status: SettlementStatus.COMPLETED })
-      .getRawOne<{ totalPaid: string | null; totalRevenue: string | null; totalFees: string | null }>();
+      .createQueryBuilder("s")
+      .select("SUM(s.netAmount)", "totalPaid")
+      .addSelect("SUM(s.totalAmount)", "totalRevenue")
+      .addSelect("SUM(s.platformFee)", "totalFees")
+      .where("s.sellerId = :sellerId", { sellerId })
+      .andWhere("s.status = :status", { status: SettlementStatus.COMPLETED })
+      .getRawOne<{
+        totalPaid: string | null;
+        totalRevenue: string | null;
+        totalFees: string | null;
+      }>();
 
     const pendingResult = await this.settlementRepository
-      .createQueryBuilder('s')
-      .select('SUM(s.netAmount)', 'pending')
-      .where('s.sellerId = :sellerId', { sellerId })
-      .andWhere('s.status = :status', { status: SettlementStatus.PENDING })
+      .createQueryBuilder("s")
+      .select("SUM(s.netAmount)", "pending")
+      .where("s.sellerId = :sellerId", { sellerId })
+      .andWhere("s.status = :status", { status: SettlementStatus.PENDING })
       .getRawOne<{ pending: string | null }>();
 
     return {
@@ -169,7 +158,7 @@ export class SettlementService {
     externalTransferId?: string,
   ): Promise<Settlement> {
     const settlement = await this.settlementRepository.findOne({ where: { id: settlementId } });
-    if (!settlement) throw new RpcException(new NotFoundException('정산 내역을 찾을 수 없습니다'));
+    if (!settlement) throw new RpcException(new NotFoundException("정산 내역을 찾을 수 없습니다"));
 
     settlement.status = status;
     if (externalTransferId) settlement.externalTransferId = externalTransferId;

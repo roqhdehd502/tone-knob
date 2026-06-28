@@ -7,7 +7,6 @@ import {
   Logger,
 } from "@nestjs/common";
 import * as Sentry from "@sentry/nestjs";
-
 import { Response } from "express";
 
 interface RpcError {
@@ -46,8 +45,7 @@ export class RpcToHttpExceptionFilter implements ExceptionFilter {
       rpcError?.statusCode ??
       rpcError?.status ??
       HttpStatus.INTERNAL_SERVER_ERROR;
-    const message =
-      nested?.message ?? rpcError?.message ?? "Internal server error";
+    const message = nested?.message ?? rpcError?.message ?? "Internal server error";
     const error = nested?.error ?? rpcError?.error ?? "Internal Server Error";
 
     if (statusCode >= 500) {

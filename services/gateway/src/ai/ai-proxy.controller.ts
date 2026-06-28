@@ -49,13 +49,8 @@ export class AiProxyController {
   })
   @ApiResponse({ status: 201, description: "작업이 생성되었습니다 (status: queued)" })
   @ApiResponse({ status: 401, description: "인증되지 않은 사용자" })
-  async createTabJob(
-    @Request() req: { user: { id: string } },
-    @Body() body: CreateAiTabJobDto,
-  ) {
-    return firstValueFrom(
-      this.aiClient.send("ai.createTabJob", { userId: req.user.id, ...body }),
-    );
+  async createTabJob(@Request() req: { user: { id: string } }, @Body() body: CreateAiTabJobDto) {
+    return firstValueFrom(this.aiClient.send("ai.createTabJob", { userId: req.user.id, ...body }));
   }
 
   @Post("audio-extraction")
@@ -84,7 +79,10 @@ export class AiProxyController {
   @Get("jobs")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "내 AI 작업 목록 조회", description: "로그인한 사용자가 요청한 타브 생성/오디오 추출 작업을 최신순으로 조회합니다." })
+  @ApiOperation({
+    summary: "내 AI 작업 목록 조회",
+    description: "로그인한 사용자가 요청한 타브 생성/오디오 추출 작업을 최신순으로 조회합니다.",
+  })
   @ApiQuery({
     name: "page",
     required: false,
@@ -115,7 +113,11 @@ export class AiProxyController {
   @Get("jobs/:id")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "AI 작업 상세 조회", description: "작업 상태(queued/processing/completed/failed)와 완료 시 결과(outputData)를 조회합니다. 진행 상태 폴링에 사용합니다." })
+  @ApiOperation({
+    summary: "AI 작업 상세 조회",
+    description:
+      "작업 상태(queued/processing/completed/failed)와 완료 시 결과(outputData)를 조회합니다. 진행 상태 폴링에 사용합니다.",
+  })
   @ApiParam({ name: "id", description: "AI 작업 ID" })
   @ApiResponse({ status: 200, description: "작업 상세 반환" })
   @ApiResponse({ status: 404, description: "작업을 찾을 수 없음" })
@@ -133,7 +135,11 @@ export class AiProxyController {
       "사용자 JWT 대신 x-ml-webhook-secret 헤더의 공유 시크릿으로 인증하며, ML_WEBHOOK_SECRET 미설정 시 검증을 생략합니다.",
   })
   @ApiParam({ name: "id", description: "AI 작업 ID" })
-  @ApiHeader({ name: "x-ml-webhook-secret", required: false, description: "ML_WEBHOOK_SECRET과 동일한 값 (미설정 환경에서는 생략 가능)" })
+  @ApiHeader({
+    name: "x-ml-webhook-secret",
+    required: false,
+    description: "ML_WEBHOOK_SECRET과 동일한 값 (미설정 환경에서는 생략 가능)",
+  })
   @ApiResponse({ status: 200, description: "웹훅 처리 완료" })
   @ApiResponse({ status: 403, description: "잘못된 웹훅 시크릿" })
   async handleWebhook(
@@ -146,8 +152,6 @@ export class AiProxyController {
       throw new ForbiddenException("유효하지 않은 웹훅 시크릿입니다");
     }
 
-    return firstValueFrom(
-      this.aiClient.send("ai.webhook", { jobId: id, ...body }),
-    );
+    return firstValueFrom(this.aiClient.send("ai.webhook", { jobId: id, ...body }));
   }
 }

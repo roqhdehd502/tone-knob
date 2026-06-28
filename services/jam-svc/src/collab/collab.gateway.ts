@@ -1,4 +1,4 @@
-import { JwtService } from '@nestjs/jwt';
+import { JwtService } from "@nestjs/jwt";
 import {
   ConnectedSocket,
   MessageBody,
@@ -7,12 +7,11 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from '@nestjs/websockets';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
 
-import { Server, Socket } from 'socket.io';
-
-import { OperationType } from '../entities/collab-operation.entity';
-import { CollabService } from './collab.service';
+import { OperationType } from "../entities/collab-operation.entity";
+import { CollabService } from "./collab.service";
 
 interface JwtPayload {
   sub: string;
@@ -25,7 +24,7 @@ interface AuthSocket extends Socket {
   userId?: string;
 }
 
-@WebSocketGateway({ namespace: '/collab', cors: { origin: '*' } })
+@WebSocketGateway({ namespace: "/collab", cors: { origin: "*" } })
 export class CollabGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -41,7 +40,7 @@ export class CollabGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const token: string | undefined =
         (client.handshake.auth?.token as string | undefined) ??
-        client.handshake.headers?.authorization?.split(' ')[1];
+        client.handshake.headers?.authorization?.split(" ")[1];
 
       if (!token) {
         void client.disconnect();
@@ -60,12 +59,12 @@ export class CollabGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (conn) {
       await this.collabService.leaveSession(conn.tabId, conn.userId);
       client.leave(`tab:${conn.tabId}`);
-      this.server.to(`tab:${conn.tabId}`).emit('user:left', { userId: conn.userId });
+      this.server.to(`tab:${conn.tabId}`).emit("user:left", { userId: conn.userId });
       this.connections.delete(client.id);
     }
   }
 
-  @SubscribeMessage('join')
+  @SubscribeMessage("join")
   async handleJoin(@MessageBody() data: { tabId: string }, @ConnectedSocket() client: AuthSocket) {
     if (!client.userId) return;
 
@@ -73,32 +72,42 @@ export class CollabGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await client.join(`tab:${data.tabId}`);
     this.connections.set(client.id, { userId: client.userId, tabId: data.tabId });
 
-    client.emit('session:state', {
+    client.emit("session:state", {
       revision: session.revision,
       snapshot: session.snapshot,
       activeUserIds: session.activeUserIds,
     });
 
-    client.to(`tab:${data.tabId}`).emit('user:joined', { userId: client.userId });
+    client.to(`tab:${data.tabId}`).emit("user:joined", { userId: client.userId });
   }
 
-  @SubscribeMessage('operation')
+  @SubscribeMessage("operation")
   async handleOperation(
-    @MessageBody() data: { tabId: string; revision: number; type: OperationType; payload: Record<string, unknown> },
+    @MessageBody()
+    data: {
+      tabId: string;
+      revision: number;
+      type: OperationType;
+      payload: Record<string, unknown>;
+    },
     @ConnectedSocket() client: AuthSocket,
   ) {
     if (!client.userId) return;
 
     const result = await this.collabService.applyOperation(
-      data.tabId, client.userId, data.revision, data.type, data.payload,
+      data.tabId,
+      client.userId,
+      data.revision,
+      data.type,
+      data.payload,
     );
 
-    client.emit('operation:ack', {
+    client.emit("operation:ack", {
       serverRevision: result.serverRevision,
       transformedPayload: result.transformedPayload,
     });
 
-    client.to(`tab:${data.tabId}`).emit('operation:broadcast', {
+    client.to(`tab:${data.tabId}`).emit("operation:broadcast", {
       userId: client.userId,
       serverRevision: result.serverRevision,
       type: data.type,
@@ -106,31 +115,36 @@ export class CollabGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  @SubscribeMessage('cursor')
-  handleCursor(@MessageBody() data: { tabId: string; position: unknown }, @ConnectedSocket() client: AuthSocket) {
+  @SubscribeMessage("cursor")
+  handleCursor(
+    @MessageBody() data: { tabId: string; position: unknown },
+    @ConnectedSocket() client: AuthSocket,
+  ) {
     if (!client.userId) return;
-    client.to(`tab:${data.tabId}`).emit('cursor:update', { userId: client.userId, position: data.position });
+    client
+      .to(`tab:${data.tabId}`)
+      .emit("cursor:update", { userId: client.userId, position: data.position });
   }
 
-  @SubscribeMessage('snapshot')
+  @SubscribeMessage("snapshot")
   async handleSnapshot(
     @MessageBody() data: { tabId: string; snapshot: Record<string, unknown> },
     @ConnectedSocket() client: AuthSocket,
   ) {
     if (!client.userId) return;
     await this.collabService.saveSnapshot(data.tabId, data.snapshot);
-    client.to(`tab:${data.tabId}`).emit('snapshot:saved', {
+    client.to(`tab:${data.tabId}`).emit("snapshot:saved", {
       revision: (await this.collabService.getSession(data.tabId)).revision,
     });
   }
 
-  @SubscribeMessage('sync')
+  @SubscribeMessage("sync")
   async handleSync(
     @MessageBody() data: { tabId: string; sinceRevision: number },
     @ConnectedSocket() client: AuthSocket,
   ) {
     if (!client.userId) return;
     const ops = await this.collabService.getOperationsSince(data.tabId, data.sinceRevision);
-    client.emit('sync:response', { operations: ops });
+    client.emit("sync:response", { operations: ops });
   }
 }
