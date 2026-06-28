@@ -1,21 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+
 import {
-  Sparkles,
-  Send,
-  Loader2,
   CheckCircle2,
-  XCircle,
-  Clock,
   ChevronDown,
+  Clock,
+  Loader2,
   Music,
   RefreshCw,
+  Send,
+  Sparkles,
+  XCircle,
 } from "lucide-react";
+
+import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { useAuth } from "~/lib/auth";
+import { Input } from "~/components/ui/input";
 import { api } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
 
 export function meta() {
   return [
@@ -130,11 +133,7 @@ export default function AiGeneratePage() {
   };
 
   if (authLoading || !user) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
@@ -264,8 +263,8 @@ export default function AiGeneratePage() {
 
       {loadingJobs ? (
         <Card>
-          <CardContent className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-miami-600" />
+          <CardContent>
+            <PageLoader size="sm" />
           </CardContent>
         </Card>
       ) : jobs.length === 0 ? (

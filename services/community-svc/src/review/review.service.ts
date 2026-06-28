@@ -93,12 +93,13 @@ export class ReviewService {
     return this.reviewRepository.save(review);
   }
 
-  async remove(reviewId: string, userId: string): Promise<void> {
+  async remove(reviewId: string, userId: string): Promise<{ success: true }> {
     const review = await this.reviewRepository.findOne({ where: { id: reviewId } });
     if (!review) throw new RpcException(new NotFoundException('리뷰를 찾을 수 없습니다'));
     if (review.userId !== userId)
       throw new RpcException(new ForbiddenException('이 리뷰를 삭제할 권한이 없습니다'));
     await this.reviewRepository.remove(review);
+    return { success: true };
   }
 
   async getMyReview(tabId: string, userId: string): Promise<Review | null> {

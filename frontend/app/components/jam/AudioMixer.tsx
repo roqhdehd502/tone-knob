@@ -7,8 +7,9 @@
  */
 import { memo } from "react";
 
-import { Crown, Guitar, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { Crown, Guitar, Mic, MicOff, Volume2, VolumeX, Wifi } from "lucide-react";
 
+import { getLatencyColor } from "~/lib/jam/latency";
 import type { JamParticipant } from "~/types/jam-room";
 
 import { AudioLevelMeter } from "./AudioLevelMeter";
@@ -29,6 +30,7 @@ interface MixerChannelProps {
   isSelf: boolean;
   volume: number;
   level: number;
+  ping: number | null;
   monitoring?: boolean;
   onVolumeChange: (userId: string, volume: number) => void;
   onMonitoringToggle?: () => void;
@@ -40,6 +42,7 @@ const MixerChannel = memo(function MixerChannel({
   isSelf,
   volume,
   level,
+  ping,
   monitoring,
   onVolumeChange,
   onMonitoringToggle,
@@ -82,7 +85,13 @@ const MixerChannel = memo(function MixerChannel({
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2 text-xs">
+          {ping !== null && (
+            <span className={`flex items-center gap-0.5 ${getLatencyColor(ping)}`}>
+              <Wifi className="h-3 w-3" />
+              {ping}ms
+            </span>
+          )}
           {isMuted && <MicOff className="h-3.5 w-3.5 text-red-400" />}
         </div>
       </div>
@@ -145,6 +154,10 @@ interface AudioMixerProps {
   hasJoined: boolean;
   participantVolumes: Map<string, number>;
   participantLevels: Map<string, number>;
+  /** 리모트 참가자 ping(ms) — WebRTC candidate-pair RTT */
+  participantPings: Map<string, number>;
+  /** 본인 ping(ms) — 시그널링 서버 RTT */
+  selfPing: number | null;
   selfMonitoring: boolean;
   onVolumeChange: (userId: string, volume: number) => void;
   onSelfMonitoringToggle: () => void;
@@ -157,6 +170,8 @@ export const AudioMixer = memo(function AudioMixer({
   hasJoined,
   participantVolumes,
   participantLevels,
+  participantPings,
+  selfPing,
   selfMonitoring,
   onVolumeChange,
   onSelfMonitoringToggle,
@@ -185,6 +200,7 @@ export const AudioMixer = memo(function AudioMixer({
             isSelf={isSelf}
             volume={participantVolumes.get(p.userId) ?? 100}
             level={participantLevels.get(p.userId) ?? 0}
+            ping={isSelf ? selfPing : (participantPings.get(p.userId) ?? null)}
             monitoring={isSelf ? selfMonitoring : undefined}
             onVolumeChange={onVolumeChange}
             onMonitoringToggle={isSelf ? onSelfMonitoringToggle : undefined}

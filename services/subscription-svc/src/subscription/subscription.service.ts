@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { RpcException } from "@nestjs/microservices";
 
-import { Repository } from "typeorm";
+import { LessThan, Repository } from "typeorm";
 
 import {
   Subscription,
@@ -159,6 +159,26 @@ export class SubscriptionService {
     const limit = 3;
     const remaining = Math.max(0, limit - count);
     return { allowed: remaining > 0, remaining, limit };
+  }
+
+  /** 만료일(currentPeriodEnd)이 지난 활성 구독을 EXPIRED로 전환하고 사용자를 FREE로 다운그레이드한다. */
+  async expireOverdueSubscriptions(): Promise<Subscription[]> {
+    const overdue = await this.subscriptionRepository.find({
+      where: {
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodEnd: LessThan(new Date()),
+      },
+    });
+
+    for (const subscription of overdue) {
+      subscription.status = SubscriptionStatus.EXPIRED;
+      await this.subscriptionRepository.save(subscription);
+      await this.userRepository.update(subscription.userId, {
+        subscriptionTier: SubscriptionPlan.FREE,
+      });
+    }
+
+    return overdue;
   }
 
   async getHistory(

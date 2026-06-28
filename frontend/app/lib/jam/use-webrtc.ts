@@ -1,8 +1,9 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import {
-  optimizeSdpForMusic,
   AdaptiveBitrateController,
   applyJitterBufferConfig,
+  optimizeSdpForMusic,
 } from "./webrtc-audio-config";
 
 const ICE_SERVERS: RTCConfiguration = {
@@ -19,6 +20,7 @@ interface PeerState {
 
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY_MS = 2000;
+const PING_POLL_INTERVAL_MS = 3000;
 
 interface UseWebRTCOptions {
   localStream: MediaStream | null;
@@ -31,6 +33,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
   const { localStream, onSendOffer, onSendAnswer, onSendICECandidate } = options;
   const peersRef = useRef<Map<string, PeerState>>(new Map());
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [peerPings, setPeerPings] = useState<Map<string, number>>(new Map());
 
   // 피어 상태 업데이트 헬퍼
   const updateRemoteStreams = useCallback(() => {
@@ -145,7 +148,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
   // offer 수신 처리
   const handleOffer = useCallback(
     async (fromUserId: string, signal: RTCSessionDescriptionInit) => {
-      let peer = peersRef.current.get(fromUserId);
+      const peer = peersRef.current.get(fromUserId);
       const pc = peer ? peer.connection : createPeerConnection(fromUserId);
 
       try {
@@ -241,6 +244,34 @@ export function useWebRTC(options: UseWebRTCOptions) {
     };
   }, []);
 
+  // 피어별 RTT(ping) 주기 측정 — getStats()의 활성 candidate-pair에서 currentRoundTripTime 추출
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void (async () => {
+        const next = new Map<string, number>();
+        for (const [userId, peer] of peersRef.current) {
+          try {
+            const stats = await peer.connection.getStats();
+            stats.forEach((report) => {
+              if (
+                report.type === "candidate-pair" &&
+                report.state === "succeeded" &&
+                typeof report.currentRoundTripTime === "number"
+              ) {
+                next.set(userId, Math.round(report.currentRoundTripTime * 1000));
+              }
+            });
+          } catch {
+            // 통계 조회 실패 시 해당 피어는 건너뜀
+          }
+        }
+        setPeerPings(next);
+      })();
+    }, PING_POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // 로컬 스트림 변경 시 기존 피어 트랙 교체
   useEffect(() => {
     if (!localStream) return;
@@ -258,6 +289,7 @@ export function useWebRTC(options: UseWebRTCOptions) {
 
   return {
     remoteStreams,
+    peerPings,
     initiateConnection,
     handleOffer,
     handleAnswer,

@@ -14,6 +14,7 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/microservices": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/schedule": "^6.1.3",
     "@nestjs/typeorm": "^11.0.0",
     "@tone-knob/shared": "*",
     "class-transformer": "^0.5.1",

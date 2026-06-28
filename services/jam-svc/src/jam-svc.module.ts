@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CollabOperation } from './entities/collab-operation.entity';
@@ -28,6 +29,23 @@ import { JamSvcController } from './jam-svc.controller';
           : false,
       }),
     }),
+    ClientsModule.registerAsync([
+      {
+        name: 'MARKETPLACE_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get<string>('MARKETPLACE_SVC_HOST') ?? 'localhost',
+            port: parseInt(
+              configService.get<string>('MARKETPLACE_SVC_PORT') ?? '3006',
+              10,
+            ),
+          },
+        }),
+      },
+    ]),
     JamRoomModule,
     CollabModule,
   ],

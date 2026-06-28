@@ -1,13 +1,16 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 
 import { Repository } from 'typeorm';
+
+import { BADGE_EVENTS } from '@tone-knob/shared';
 
 import { Badge } from '../entities/badge.entity';
 import { UserBadge } from '../entities/user-badge.entity';
@@ -19,6 +22,7 @@ export class BadgeService {
     private readonly badgeRepository: Repository<Badge>,
     @InjectRepository(UserBadge)
     private readonly userBadgeRepository: Repository<UserBadge>,
+    @Inject('COMMUNITY_SERVICE') private readonly communityClient: ClientProxy,
   ) {}
 
   async getAllBadges(): Promise<Badge[]> {
@@ -58,7 +62,16 @@ export class BadgeService {
       userId,
       badgeId: badge.id,
     });
-    return this.userBadgeRepository.save(userBadge);
+    const saved = await this.userBadgeRepository.save(userBadge);
+
+    this.communityClient.emit(BADGE_EVENTS.AWARDED, {
+      userId,
+      badgeCode: badge.code,
+      badgeName: badge.name,
+      userBadgeId: saved.id,
+    });
+
+    return saved;
   }
 
   async toggleFeatured(userBadgeId: string, userId: string): Promise<UserBadge> {
@@ -82,6 +95,14 @@ export class BadgeService {
     }
 
     userBadge.isFeatured = !userBadge.isFeatured;
-    return this.userBadgeRepository.save(userBadge);
+    const saved = await this.userBadgeRepository.save(userBadge);
+
+    this.communityClient.emit(BADGE_EVENTS.FEATURED_CHANGED, {
+      userId,
+      userBadgeId: saved.id,
+      isFeatured: saved.isFeatured,
+    });
+
+    return saved;
   }
 }

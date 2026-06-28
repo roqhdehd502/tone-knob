@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: community-svc
+  namespace: tone-knob
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: community-svc
+  template:
+    metadata:
+      labels:
+        app: community-svc
+    spec:
+      containers:
+        - name: community-svc
+          image: tone-knob/community-svc:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: tone-knob-config
+            - secretRef:
+                name: tone-knob-secrets
+          ports:
+            - containerPort: 3005
+          readinessProbe:
+            tcpSocket:
+              port: 3005
+            initialDelaySeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 3005
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: community-svc
+  namespace: tone-knob
+spec:
+  selector:
+    app: community-svc
+  ports:
+    - port: 3005
+      targetPort: 3005

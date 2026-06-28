@@ -1,21 +1,24 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+
 import {
   AudioWaveform,
-  Upload,
-  Loader2,
   CheckCircle2,
-  XCircle,
-  Clock,
   ChevronDown,
-  RefreshCw,
-  Music,
+  Clock,
   FileAudio,
+  Loader2,
+  Music,
+  RefreshCw,
+  Upload,
+  XCircle,
 } from "lucide-react";
+
+import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
 
 export function meta() {
   return [
@@ -117,13 +120,13 @@ export default function AudioExtractPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!audioFile && !audioUrl.startsWith("http")) return;
+    if (!audioFile) return;
     setUploading(true);
     try {
-      // 실제 환경에서는 파일을 스토리지에 업로드 후 URL을 받음
-      const uploadedUrl = audioUrl || "demo-audio-url";
+      // Supabase Storage에 업로드 후 발급된 공개 URL을 AI 추출 작업에 전달
+      const { url } = await api.media.upload(audioFile, { folder: "audio-extract" });
       await api.aiGen.createAudioExtractionJob({
-        audioUrl: uploadedUrl,
+        audioUrl: url,
         instrument,
         tuning,
       });
@@ -138,11 +141,7 @@ export default function AudioExtractPage() {
   };
 
   if (authLoading || !user) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
@@ -254,7 +253,7 @@ export default function AudioExtractPage() {
 
             <Button
               type="submit"
-              disabled={uploading || (!audioFile && !audioUrl.startsWith("http"))}
+              disabled={uploading || !audioFile}
               className="w-full bg-cyan-600 hover:bg-cyan-700"
             >
               {uploading ? (

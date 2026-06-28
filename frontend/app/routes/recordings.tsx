@@ -1,26 +1,29 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+
 import {
-  Mic,
-  Square,
-  Play,
-  Pause,
-  Upload,
-  Trash2,
-  Share2,
+  Clock,
   Globe,
-  Lock,
+  Headphones,
   Link2,
   Loader2,
-  Clock,
-  Headphones,
+  Lock,
+  Mic,
+  Pause,
+  Play,
+  Share2,
+  Square,
+  Trash2,
+  Upload,
 } from "lucide-react";
+
+import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { cn } from "~/lib/utils";
-import { useAuth } from "~/lib/auth";
+import { Input } from "~/components/ui/input";
 import { api } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
+import { cn } from "~/lib/utils";
 
 export function meta() {
   return [
@@ -160,9 +163,10 @@ export default function RecordingsPage() {
     if (!recordedBlob || !title.trim()) return;
     setUploading(true);
     try {
-      // 실제 환경에서는 파일을 스토리지에 업로드 후 URL을 받음
-      // 여기서는 데모 목적으로 blob URL 사용
-      const audioUrl = recordedUrl || "";
+      const { url: audioUrl } = await api.media.upload(recordedBlob, {
+        folder: "recordings",
+        fileName: "recording.webm",
+      });
       await api.recordings.create({
         title: title.trim(),
         audioUrl,
@@ -215,11 +219,7 @@ export default function RecordingsPage() {
   };
 
   if (authLoading || !user) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   const totalPages = Math.ceil(total / 20);
@@ -340,8 +340,8 @@ export default function RecordingsPage() {
 
       {loading ? (
         <Card>
-          <CardContent className="flex justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-miami-600" />
+          <CardContent>
+            <PageLoader size="sm" />
           </CardContent>
         </Card>
       ) : recordings.length === 0 ? (

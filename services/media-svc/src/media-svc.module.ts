@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { CdnModule } from './cdn/cdn.module';
 import { RegionModule } from './region/region.module';
+import { StorageModule } from './storage/storage.module';
 import { MediaSvcController } from './media-svc.controller';
 
 @Module({
@@ -10,6 +11,7 @@ import { MediaSvcController } from './media-svc.controller';
     ConfigModule.forRoot({ isGlobal: true }),
     CdnModule,
     RegionModule,
+    StorageModule,
   ],
   controllers: [MediaSvcController],
 })

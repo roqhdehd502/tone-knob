@@ -21,8 +21,8 @@ export interface AudioSettings {
   outputDeviceId: string;
   /** 샘플레이트 (Hz) */
   sampleRate: 44100 | 48000 | 96000;
-  /** 버퍼 크기 — AudioContext latencyHint에 매핑 */
-  bufferSize: "interactive" | "balanced" | "playback";
+  /** 버퍼 크기 — AudioContext latencyHint에 매핑. "zero"는 0초 latencyHint로 가장 낮은 레이턴시를 요청한다 */
+  bufferSize: "zero" | "interactive" | "balanced" | "playback";
   /** 에코 캔슬레이션 (일반 마이크용, 오디오 인터페이스에서는 OFF 권장) */
   echoCancellation: boolean;
   /** 노이즈 서프레션 (음악 시 OFF 권장) */
@@ -127,21 +127,24 @@ export function buildMediaConstraints(settings: AudioSettings): MediaStreamConst
 export function buildAudioContextOptions(settings: AudioSettings): AudioContextOptions {
   return {
     sampleRate: settings.sampleRate,
-    latencyHint: settings.bufferSize,
+    // "zero"는 표준 latencyHint enum이 아니므로 0초를 직접 요청해 가장 낮은 레이턴시를 유도한다
+    latencyHint: settings.bufferSize === "zero" ? 0 : settings.bufferSize,
   };
 }
 
-/** 출력 장치를 HTMLAudioElement 또는 AudioContext에 적용 */
+type SinkCapable = { setSinkId?: (id: string) => Promise<void> };
+
+/** 출력 장치를 HTMLAudioElement/HTMLMediaElement 또는 AudioContext에 적용 */
 export async function setOutputDevice(
-  element: HTMLAudioElement | HTMLMediaElement,
+  target: HTMLAudioElement | HTMLMediaElement | AudioContext,
   deviceId: string,
 ): Promise<void> {
   if (deviceId === "default") return;
   try {
-    // setSinkId는 Chrome/Edge 등에서 지원
-    const el = element as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
-    if (el.setSinkId) {
-      await el.setSinkId(deviceId);
+    // setSinkId는 Chrome/Edge 등에서 지원 (HTMLMediaElement, 최신 브라우저는 AudioContext도 지원)
+    const sinkCapable = target as SinkCapable;
+    if (sinkCapable.setSinkId) {
+      await sinkCapable.setSinkId(deviceId);
     }
   } catch (e) {
     console.warn("[AudioSettings] Failed to set output device:", e);
@@ -154,6 +157,11 @@ export const BUFFER_SIZE_OPTIONS: {
   label: string;
   desc: string;
 }[] = [
+  {
+    value: "zero",
+    label: "지연 없음 (Zero)",
+    desc: "가장 낮은 레이턴시 요청 — 환경에 따라 끊김(글리치) 가능성 있음",
+  },
   { value: "interactive", label: "저지연 (Interactive)", desc: "최소 레이턴시, CPU 사용 높음" },
   { value: "balanced", label: "균형 (Balanced)", desc: "적당한 레이턴시와 CPU 사용" },
   { value: "playback", label: "안정 (Playback)", desc: "높은 레이턴시, 안정적 재생" },

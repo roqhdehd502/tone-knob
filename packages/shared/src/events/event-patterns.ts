@@ -28,6 +28,7 @@ export const MARKETPLACE_EVENTS = {
 export const SUBSCRIPTION_EVENTS = {
   ACTIVATED: "event.subscription.activated",
   CANCELLED: "event.subscription.cancelled",
+  EXPIRED: "event.subscription.expired",
 } as const;
 
 // ─── AI Events (ai-svc → tab-svc, community-svc) ───
@@ -54,4 +55,14 @@ export const BADGE_EVENTS = {
 export const KNOB_EVENTS = {
   EARNED: "event.knob.earned",
   SPENT: "event.knob.spent",
+} as const;
+
+// ─── Jam Events (jam-svc → marketplace-svc) ───
+export const JAM_EVENTS = {
+  PARTICIPANT_JOINED: "event.jam.participantJoined",
+} as const;
+
+// ─── Auth Events (auth-svc → marketplace-svc) ───
+export const AUTH_EVENTS = {
+  USER_LOGGED_IN: "event.auth.userLoggedIn",
 } as const;

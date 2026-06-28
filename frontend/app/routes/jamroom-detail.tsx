@@ -37,6 +37,7 @@ import {
 } from "~/lib/jam/audio-settings";
 import type { SyncState } from "~/lib/jam/audio-synchronizer";
 import { AudioSynchronizer } from "~/lib/jam/audio-synchronizer";
+import { getLatencyColor } from "~/lib/jam/latency";
 import { useAudioMonitor } from "~/lib/jam/use-audio-monitor";
 import { useJamSocket } from "~/lib/jam/use-jam-socket";
 import { useWebRTC } from "~/lib/jam/use-webrtc";
@@ -168,12 +169,12 @@ export default function JamroomDetail() {
         audio = new Audio();
         audio.autoplay = true;
         remoteAudioRefs.current.set(userId, audio);
-        // 선택된 출력 장치 적용
-        void setOutputDevice(audio, audioSettings.outputDeviceId);
       }
       if (audio.srcObject !== stream) {
         audio.srcObject = stream;
       }
+      // 선택된 출력 장치를 매번 재적용 — 장치 변경 시 기존 엘리먼트에도 즉시 반영
+      void setOutputDevice(audio, audioSettings.outputDeviceId);
 
       // 리모트 레벨 미터용 AnalyserNode
       if (!remoteMonitorsRef.current.has(userId)) {
@@ -455,13 +456,6 @@ export default function JamroomDetail() {
     }
   };
 
-  const getLatencyColor = (ms: number | null) => {
-    if (ms === null) return "text-gray-400";
-    if (ms < 50) return "text-green-500";
-    if (ms < 100) return "text-yellow-500";
-    return "text-red-500";
-  };
-
   // 채팅 자동 스크롤
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -654,6 +648,8 @@ export default function JamroomDetail() {
                   hasJoined={hasJoined}
                   participantVolumes={participantVolumes}
                   participantLevels={participantLevels}
+                  participantPings={webrtc.peerPings}
+                  selfPing={socket.latency}
                   selfMonitoring={localMonitor.monitoring}
                   onVolumeChange={handleVolumeChange}
                   onSelfMonitoringToggle={() =>

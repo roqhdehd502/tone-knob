@@ -1,3 +1,5 @@
+import './instrument';
+
 import 'reflect-metadata';
 
 import { Logger, ValidationPipe } from '@nestjs/common';

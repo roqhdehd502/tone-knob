@@ -1,5 +1,7 @@
-import { Controller } from "@nestjs/common";
-import { MessagePattern, Payload } from "@nestjs/microservices";
+import { Controller, Inject } from "@nestjs/common";
+import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
+
+import { AUTH_EVENTS } from "@tone-knob/shared";
 
 import { AuthService } from "./auth/auth.service";
 import { UserService } from "./user/user.service";
@@ -9,6 +11,8 @@ export class AuthSvcController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    @Inject("MARKETPLACE_SERVICE")
+    private readonly marketplaceClient: ClientProxy,
   ) {}
 
   @MessagePattern("auth.register")
@@ -26,7 +30,11 @@ export class AuthSvcController {
 
   @MessagePattern("auth.login")
   async login(@Payload() data: { email: string; password: string }) {
-    return this.authService.login(data);
+    const result = await this.authService.login(data);
+    this.marketplaceClient.emit(AUTH_EVENTS.USER_LOGGED_IN, {
+      userId: result.user.id,
+    });
+    return result;
   }
 
   @MessagePattern("auth.refresh")
@@ -45,7 +53,11 @@ export class AuthSvcController {
       avatarUrl?: string;
     },
   ) {
-    return this.authService.socialLogin(data);
+    const result = await this.authService.socialLogin(data);
+    this.marketplaceClient.emit(AUTH_EVENTS.USER_LOGGED_IN, {
+      userId: result.user.id,
+    });
+    return result;
   }
 
   @MessagePattern("auth.validate")

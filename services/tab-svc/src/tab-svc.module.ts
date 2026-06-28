@@ -1,7 +1,11 @@
+import KeyvRedis from "@keyv/redis";
+import { CacheModule } from "@nestjs/cache-manager";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { TypeOrmModule } from "@nestjs/typeorm";
+
+import { Keyv } from "keyv";
 
 import { Follow } from "./entities/follow.entity";
 import { PracticeSession } from "./entities/practice-session.entity";
@@ -15,6 +19,20 @@ import { TabSvcController } from "./tab-svc.controller";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        stores: [
+          new Keyv({
+            store: new KeyvRedis(
+              configService.get<string>("REDIS_URL") ?? "redis://localhost:6379",
+            ),
+          }),
+        ],
+      }),
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -41,6 +59,22 @@ import { TabSvcController } from "./tab-svc.controller";
               configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
             port: parseInt(
               configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005",
+              10,
+            ),
+          },
+        }),
+      },
+      {
+        name: "MARKETPLACE_SERVICE",
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host:
+              configService.get<string>("MARKETPLACE_SVC_HOST") ?? "localhost",
+            port: parseInt(
+              configService.get<string>("MARKETPLACE_SVC_PORT") ?? "3006",
               10,
             ),
           },

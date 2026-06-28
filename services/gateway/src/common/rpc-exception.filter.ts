@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from "@nestjs/common";
+import * as Sentry from "@sentry/nestjs";
 
 import { Response } from "express";
 
@@ -30,7 +31,9 @@ export class RpcToHttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
     if (exception instanceof HttpException) {
-      response.status(exception.getStatus()).json(exception.getResponse());
+      const status = exception.getStatus();
+      if (status >= 500) Sentry.captureException(exception);
+      response.status(status).json(exception.getResponse());
       return;
     }
 
@@ -49,6 +52,7 @@ export class RpcToHttpExceptionFilter implements ExceptionFilter {
 
     if (statusCode >= 500) {
       this.logger.error(`RPC Error: ${JSON.stringify(exception)}`);
+      Sentry.captureException(exception);
     }
 
     response.status(statusCode).json({ statusCode, message, error });

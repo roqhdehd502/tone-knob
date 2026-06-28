@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from './auth/auth.module';
@@ -23,6 +24,23 @@ import { UserModule } from './user/user.module';
           : false,
       }),
     }),
+    ClientsModule.registerAsync([
+      {
+        name: 'MARKETPLACE_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get<string>('MARKETPLACE_SVC_HOST') ?? 'localhost',
+            port: parseInt(
+              configService.get<string>('MARKETPLACE_SVC_PORT') ?? '3006',
+              10,
+            ),
+          },
+        }),
+      },
+    ]),
     AuthModule,
     UserModule,
   ],

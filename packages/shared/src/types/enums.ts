@@ -9,10 +9,15 @@ export enum SubscriptionTier {
   PRO = 'pro',
 }
 
+export enum AiJobType {
+  TAB_GENERATION = 'tab_generation',
+  AUDIO_EXTRACTION = 'audio_extraction',
+}
+
 export enum AiJobStatus {
-  PENDING = 'pending',
+  QUEUED = 'queued',
   PROCESSING = 'processing',
-  DONE = 'done',
+  COMPLETED = 'completed',
   FAILED = 'failed',
 }
 
@@ -27,4 +32,9 @@ export enum PaymentStatus {
   COMPLETED = 'completed',
   FAILED = 'failed',
   REFUNDED = 'refunded',
+}
+
+export enum PaymentType {
+  SUBSCRIPTION = 'subscription',
+  TAB_PURCHASE = 'tab_purchase',
 }

@@ -66,11 +66,27 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <>
-      {isOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
       <aside
+        aria-label="사이드바 내비게이션"
         className={cn(
           "fixed left-0 top-14 z-40 flex h-[calc(100vh-3.5rem)] w-60 flex-col border-r border-gray-200/60 bg-white/95 backdrop-blur-sm transition-transform duration-200 dark:border-gray-800/60 dark:bg-gray-950/95",
           "lg:translate-x-0",

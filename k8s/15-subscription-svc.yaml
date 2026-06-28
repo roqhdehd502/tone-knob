@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscription-svc
+  namespace: tone-knob
+spec:
+  # 구독 만료 자동 처리(시간별 @Cron) 중복 실행 방지를 위해 1로 유지
+  replicas: 1
+  selector:
+    matchLabels:
+      app: subscription-svc
+  template:
+    metadata:
+      labels:
+        app: subscription-svc
+    spec:
+      containers:
+        - name: subscription-svc
+          image: tone-knob/subscription-svc:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: tone-knob-config
+            - secretRef:
+                name: tone-knob-secrets
+          ports:
+            - containerPort: 3007
+          readinessProbe:
+            tcpSocket:
+              port: 3007
+            initialDelaySeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 3007
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscription-svc
+  namespace: tone-knob
+spec:
+  selector:
+    app: subscription-svc
+  ports:
+    - port: 3007
+      targetPort: 3007

@@ -162,6 +162,10 @@ export function AudioSettingsPanel({
             </option>
           ))}
         </select>
+        <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+          VST 플러그인을 거친 소리도 입력할 수 있습니다 — DAW/VST 호스트의 출력을 가상 오디오
+          케이블(BlackHole, VB-Audio 등)로 라우팅하면 여기 목록에 입력 장치로 표시됩니다.
+        </p>
       </div>
 
       {/* 출력 장치 */}

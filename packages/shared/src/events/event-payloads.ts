@@ -80,6 +80,12 @@ export interface SubscriptionActivatedEvent {
   endDate: string;
 }
 
+export interface SubscriptionExpiredEvent {
+  subscriptionId: string;
+  userId: string;
+  plan: string;
+}
+
 export interface SubscriptionCancelledEvent {
   subscriptionId: string;
   userId: string;
@@ -128,4 +134,50 @@ export interface ReviewCreatedEvent {
   userId: string;
   tabId: string;
   rating: number;
+}
+
+// ─── Badge Events ───
+
+export interface BadgeAwardedEvent {
+  userId: string;
+  badgeCode: string;
+  badgeName: string;
+  userBadgeId: string;
+}
+
+export interface BadgeFeaturedChangedEvent {
+  userId: string;
+  userBadgeId: string;
+  isFeatured: boolean;
+}
+
+// ─── Knob Events ───
+
+export interface KnobEarnedEvent {
+  userId: string;
+  amount: number;
+  type: string;
+  balanceAfter: number;
+  referenceId?: string;
+}
+
+export interface KnobSpentEvent {
+  userId: string;
+  amount: number;
+  type: string;
+  balanceAfter: number;
+  referenceId?: string;
+}
+
+// ─── Jam Events ───
+
+export interface JamParticipantJoinedEvent {
+  userId: string;
+  roomId: string;
+}
+
+// ─── Auth Events ───
+
+export interface UserLoggedInEvent {
+  userId: string;
 }

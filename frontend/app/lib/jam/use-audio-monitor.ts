@@ -60,6 +60,7 @@ export function useAudioMonitor() {
       enableMonitoring = false,
       initialGain = 1,
       ctxOptions?: AudioContextOptions,
+      outputDeviceId?: string,
     ) => {
       // 기존 연결 정리
       detach();
@@ -69,6 +70,15 @@ export function useAudioMonitor() {
         sampleRate: ctxOptions?.sampleRate ?? 48000,
         latencyHint: ctxOptions?.latencyHint ?? "interactive",
       });
+
+      if (outputDeviceId && outputDeviceId !== "default") {
+        const sinkCapable = ctx as AudioContext & {
+          setSinkId?: (id: string) => Promise<void>;
+        };
+        sinkCapable.setSinkId?.(outputDeviceId).catch((e) => {
+          console.warn("[AudioMonitor] Failed to set output device:", e);
+        });
+      }
 
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
@@ -116,6 +126,20 @@ export function useAudioMonitor() {
       nodes.monitorConnected = false;
     }
     setState((s) => ({ ...s, monitoring: enabled }));
+  }, []);
+
+  /** 출력 장치 변경 — 기존 스트림/노드를 유지한 채 출력 싱크만 전환 */
+  const setOutputDevice = useCallback(async (deviceId: string) => {
+    const nodes = nodesRef.current;
+    if (!nodes || deviceId === "default") return;
+    const sinkCapable = nodes.ctx as AudioContext & {
+      setSinkId?: (id: string) => Promise<void>;
+    };
+    try {
+      await sinkCapable.setSinkId?.(deviceId);
+    } catch (e) {
+      console.warn("[AudioMonitor] Failed to set output device:", e);
+    }
   }, []);
 
   /** gain 설정 (0–1) */
@@ -242,6 +266,7 @@ export function useAudioMonitor() {
     detach,
     setMonitoring,
     setGain,
+    setOutputDevice,
     connectAmp,
     disconnectAmp,
     updateAmpSettings,

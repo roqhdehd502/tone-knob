@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
@@ -7,10 +7,16 @@ import { Repository } from 'typeorm';
 
 import { AiJob, AiJobStatus, AiJobType } from '../entities/ai-job.entity';
 
+const ML_DISPATCH_TIMEOUT_MS = 5000;
+
 @Injectable()
 export class AiGenService {
+  private readonly logger = new Logger(AiGenService.name);
+
   // ML 서버 엔드포인트 (환경변수로 설정)
   private readonly mlServerUrl: string;
+  private readonly gatewayPublicUrl: string;
+  private readonly mlWebhookSecret: string | undefined;
 
   constructor(
     @InjectRepository(AiJob)
@@ -18,6 +24,9 @@ export class AiGenService {
     private readonly configService: ConfigService,
   ) {
     this.mlServerUrl = this.configService.get<string>('ML_SERVER_URL') ?? 'http://localhost:8001';
+    this.gatewayPublicUrl =
+      this.configService.get<string>('GATEWAY_PUBLIC_URL') ?? 'http://localhost:3000';
+    this.mlWebhookSecret = this.configService.get<string>('ML_WEBHOOK_SECRET');
   }
 
   // === AI 타브 생성 ===
@@ -108,22 +117,70 @@ export class AiGenService {
     return this.jobRepository.save(job);
   }
 
-  // === ML 서버 디스패치 (스텁) ===
+  // === ML 서버 디스패치 ===
+  // 실제 ML 서버가 설정/응답 가능하면 비동기 작업을 위임하고 webhook으로 결과를 받는다.
+  // ML 서버가 없거나 연결에 실패하면(로컬 개발/데모 환경) 더미 결과로 대체한다.
 
   private async dispatchToMlServer(
     jobId: string,
     type: AiJobType,
     inputData: Record<string, unknown>,
   ): Promise<void> {
-    try {
-      // 실제 ML 서버 연동 시 아래 주석 해제
-      // await fetch(`${this.mlServerUrl}/jobs`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ jobId, type, inputData }),
-      // });
+    const dispatched = await this.tryDispatchToRealMlServer(jobId, type, inputData);
+    if (dispatched) {
+      await this.jobRepository.update(jobId, { status: AiJobStatus.PROCESSING });
+      return;
+    }
 
-      // 스텁: 3초 후 더미 결과로 완료 처리
+    await this.completeWithDummyResult(jobId, type, inputData);
+  }
+
+  private async tryDispatchToRealMlServer(
+    jobId: string,
+    type: AiJobType,
+    inputData: Record<string, unknown>,
+  ): Promise<boolean> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ML_DISPATCH_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(`${this.mlServerUrl}/jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId,
+          type,
+          inputData,
+          webhookUrl: `${this.gatewayPublicUrl}/api/ai-gen/webhook/${jobId}`,
+          webhookSecret: this.mlWebhookSecret,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        this.logger.warn(`ML 서버가 ${res.status}로 응답하여 더미 결과로 대체합니다 (job ${jobId})`);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      this.logger.warn(
+        `ML 서버(${this.mlServerUrl})에 연결할 수 없어 더미 결과로 대체합니다 (job ${jobId}): ${
+          err instanceof Error ? err.message : 'Unknown error'
+        }`,
+      );
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async completeWithDummyResult(
+    jobId: string,
+    type: AiJobType,
+    inputData: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      // 데모/로컬 개발용 더미 결과 (실제 ML 서버 미연결 시)
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const dummyOutput =

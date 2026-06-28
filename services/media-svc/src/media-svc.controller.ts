@@ -3,13 +3,46 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 import { CdnService } from './cdn/cdn.service';
 import { RegionService } from './region/region.service';
+import { StorageService } from './storage/storage.service';
 
 @Controller()
 export class MediaSvcController {
   constructor(
     private readonly cdnService: CdnService,
     private readonly regionService: RegionService,
+    private readonly storageService: StorageService,
   ) {}
+
+  // ─── Storage ───
+
+  @MessagePattern('media.storage.upload')
+  async uploadFile(
+    @Payload()
+    data: {
+      fileBase64: string;
+      fileName: string;
+      contentType: string;
+      folder?: string;
+    },
+  ) {
+    return this.storageService.upload(
+      data.fileBase64,
+      data.fileName,
+      data.contentType,
+      data.folder,
+    );
+  }
+
+  @MessagePattern('media.storage.remove')
+  async removeFile(@Payload() data: { path: string }) {
+    await this.storageService.remove(data.path);
+    return { success: true };
+  }
+
+  @MessagePattern('media.storage.status')
+  getStorageStatus() {
+    return { enabled: this.storageService.isEnabled() };
+  }
 
   // ─── CDN ───
 

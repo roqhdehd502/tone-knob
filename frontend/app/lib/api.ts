@@ -1,6 +1,6 @@
-import type { TabDetail, TabListResponse, TabDocument, TabVersion } from "~/types/tab";
-import type { JamRoom, JamParticipant, CreateJamRoomDto, JoinJamRoomDto } from "~/types/jam-room";
 import type { CommentData, FollowData } from "~/types/community";
+import type { CreateJamRoomDto, JamParticipant, JamRoom, JoinJamRoomDto } from "~/types/jam-room";
+import type { TabDetail, TabDocument, TabListResponse, TabVersion } from "~/types/tab";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -34,6 +34,33 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       window.location.href = "/login";
     }
   }
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "Network error" }));
+    throw new Error(error.message || `HTTP ${res.status}`);
+  }
+
+  return res.json() as Promise<T>;
+}
+
+/** multipart/form-data 파일 업로드 — request()와 달리 Content-Type을 브라우저가 boundary와 함께 설정하도록 둔다 */
+async function uploadFile<T>(
+  endpoint: string,
+  file: Blob,
+  options?: { folder?: string; fileName?: string },
+): Promise<T> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
+  const formData = new FormData();
+  const fileName = options?.fileName ?? (file instanceof File ? file.name : "upload");
+  formData.append("file", file, fileName);
+  if (options?.folder) formData.append("folder", options.folder);
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  });
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: "Network error" }));
@@ -530,5 +557,9 @@ export const api = {
         errorMessage: string | null;
         createdAt: string;
       }>(`/api/ai-gen/jobs/${id}`),
+  },
+  media: {
+    upload: (file: Blob, options?: { folder?: string; fileName?: string }) =>
+      uploadFile<{ url: string; path: string }>("/api/media/upload", file, options),
   },
 };

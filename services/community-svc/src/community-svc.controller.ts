@@ -1,13 +1,8 @@
-import { Controller, Logger } from "@nestjs/common";
-import { MessagePattern, Payload } from "@nestjs/microservices";
-import { InjectRepository } from "@nestjs/typeorm";
+import { Controller, Inject } from "@nestjs/common";
+import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
 
-import { Repository } from "typeorm";
+import { COMMUNITY_EVENTS } from "@tone-knob/shared";
 
-import { Follow } from "./entities/follow.entity";
-import { Like } from "./entities/like.entity";
-import { Review } from "./entities/review.entity";
-import { Tab } from "./entities/tab.entity";
 import { BadgeService } from "./badge/badge.service";
 import { CommunityService } from "./community/community.service";
 import { NotificationService } from "./notification/notification.service";
@@ -15,34 +10,13 @@ import { ReviewService } from "./review/review.service";
 
 @Controller()
 export class CommunitySvcController {
-  private readonly logger = new Logger(CommunitySvcController.name);
-
   constructor(
     private readonly badgeService: BadgeService,
     private readonly communityService: CommunityService,
     private readonly notificationService: NotificationService,
     private readonly reviewService: ReviewService,
-    @InjectRepository(Follow)
-    private readonly followRepository: Repository<Follow>,
-    @InjectRepository(Like)
-    private readonly likeRepository: Repository<Like>,
-    @InjectRepository(Review)
-    private readonly reviewRepository: Repository<Review>,
-    @InjectRepository(Tab)
-    private readonly tabRepository: Repository<Tab>,
+    @Inject("COMMUNITY_SERVICE") private readonly communityClient: ClientProxy,
   ) {}
-
-  private async tryAwardBadge(
-    userId: string,
-    badgeCode: string,
-  ): Promise<void> {
-    try {
-      await this.badgeService.awardBadge(userId, badgeCode);
-      this.logger.log(`Badge awarded: ${badgeCode} → user ${userId}`);
-    } catch {
-      // 이미 획득했거나 뱃지 코드가 없는 경우 무시
-    }
-  }
 
   // ─── 좋아요 ───
 
@@ -53,21 +27,11 @@ export class CommunitySvcController {
       data.userId,
     );
 
-    // 뱃지: 인기 타브 / 핫 타브 (좋아요 수 기반)
-    if (result.liked) {
-      const likeCount = await this.likeRepository.count({
-        where: { tabId: data.tabId },
-      });
-      const tab = await this.tabRepository.findOne({
-        where: { id: data.tabId },
-        select: ["userId"],
-      });
-      if (tab) {
-        if (likeCount >= 10)
-          await this.tryAwardBadge(tab.userId, "popular_tab");
-        if (likeCount >= 50) await this.tryAwardBadge(tab.userId, "hot_tab");
-      }
-    }
+    this.communityClient.emit(COMMUNITY_EVENTS.TAB_LIKED, {
+      userId: data.userId,
+      tabId: data.tabId,
+      isLiked: result.liked,
+    });
 
     return result;
   }
@@ -94,8 +58,12 @@ export class CommunitySvcController {
       data.dto,
     );
 
-    // 뱃지: 첫 댓글
-    await this.tryAwardBadge(data.userId, "first_comment");
+    this.communityClient.emit(COMMUNITY_EVENTS.COMMENT_CREATED, {
+      commentId: comment.id,
+      userId: data.userId,
+      tabId: data.tabId,
+      content: comment.content,
+    });
 
     return comment;
   }
@@ -145,17 +113,10 @@ export class CommunitySvcController {
     );
 
     if (result.following) {
-      // 뱃지: 첫 팔로우
-      await this.tryAwardBadge(data.followerId, "first_follow");
-
-      // 뱃지: 인플루언서 (팔로워 수 기반)
-      const followerCount = await this.followRepository.count({
-        where: { followingId: data.followingId },
+      this.communityClient.emit(COMMUNITY_EVENTS.USER_FOLLOWED, {
+        followerId: data.followerId,
+        followingId: data.followingId,
       });
-      if (followerCount >= 10)
-        await this.tryAwardBadge(data.followingId, "influencer_10");
-      if (followerCount >= 50)
-        await this.tryAwardBadge(data.followingId, "influencer_50");
     }
 
     return result;
@@ -270,12 +231,12 @@ export class CommunitySvcController {
       data.dto,
     );
 
-    // 뱃지: 리뷰어 (리뷰 5개 이상)
-    const reviewCount = await this.reviewRepository.count({
-      where: { userId: data.userId },
+    this.communityClient.emit(COMMUNITY_EVENTS.REVIEW_CREATED, {
+      reviewId: review.id,
+      userId: data.userId,
+      tabId: data.tabId,
+      rating: review.rating,
     });
-    if (reviewCount >= 5)
-      await this.tryAwardBadge(data.userId, "helpful_reviewer");
 
     return review;
   }

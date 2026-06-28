@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Crown, Zap, Check, Loader2, AlertCircle, Calendar } from "lucide-react";
+
+import { AlertCircle, Calendar, Check, Crown, Loader2, Zap } from "lucide-react";
+
+import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
-import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
 
 export function meta() {
   return [{ title: "구독 관리 - Tone Knob" }, { name: "description", content: "구독 플랜 관리" }];
@@ -99,11 +102,7 @@ export default function SubscriptionPage() {
   };
 
   if (authLoading || !user || loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   const activePlan = currentSub?.plan || "free";

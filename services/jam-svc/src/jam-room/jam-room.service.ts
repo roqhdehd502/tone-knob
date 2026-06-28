@@ -78,7 +78,11 @@ export class JamRoomService {
     return room;
   }
 
-  async join(roomId: string, userId: string, password?: string): Promise<JamParticipant> {
+  async join(
+    roomId: string,
+    userId: string,
+    password?: string,
+  ): Promise<{ participant: JamParticipant; isNew: boolean }> {
     const room = await this.findOne(roomId);
 
     if (!room.isActive) {
@@ -94,14 +98,15 @@ export class JamRoomService {
     const existing = await this.participantRepository.findOne({ where: { roomId, userId } });
     if (existing) {
       existing.isConnected = true;
-      return this.participantRepository.save(existing);
+      const participant = await this.participantRepository.save(existing);
+      return { participant, isNew: false };
     }
 
     const participant = this.participantRepository.create({ roomId, userId, isConnected: true });
     await this.participantRepository.save(participant);
     await this.jamRoomRepository.increment({ id: roomId }, 'currentParticipants', 1);
 
-    return participant;
+    return { participant, isNew: true };
   }
 
   async leave(roomId: string, userId: string): Promise<void> {

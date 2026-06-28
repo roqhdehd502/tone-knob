@@ -12,6 +12,8 @@ export class TabSvcController {
     private readonly tabService: TabService,
     private readonly practiceService: PracticeService,
     @Inject("COMMUNITY_SERVICE") private readonly communityClient: ClientProxy,
+    @Inject("MARKETPLACE_SERVICE")
+    private readonly marketplaceClient: ClientProxy,
   ) {}
 
   // ── Tab CRUD ──
@@ -30,13 +32,15 @@ export class TabSvcController {
     },
   ) {
     const tab = await this.tabService.create(data.userId, data.dto);
-    this.communityClient.emit(TAB_EVENTS.CREATED, {
+    const tabCreatedEvent = {
       tabId: tab.id,
       userId: data.userId,
       title: tab.title,
       instrument: tab.artist,
       createdAt: tab.createdAt,
-    });
+    };
+    this.communityClient.emit(TAB_EVENTS.CREATED, tabCreatedEvent);
+    this.marketplaceClient.emit(TAB_EVENTS.CREATED, tabCreatedEvent);
     return tab;
   }
 
@@ -86,11 +90,12 @@ export class TabSvcController {
 
   @MessagePattern("tabs.remove")
   async remove(@Payload() data: { id: string; userId: string }) {
-    await this.tabService.remove(data.id, data.userId);
+    const result = await this.tabService.remove(data.id, data.userId);
     this.communityClient.emit(TAB_EVENTS.DELETED, {
       tabId: data.id,
       userId: data.userId,
     });
+    return result;
   }
 
   @MessagePattern("tabs.fork")

@@ -1,28 +1,31 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
+
 import {
-  Music,
-  FileMusic,
-  Radio,
-  Calendar,
-  Edit3,
-  Save,
-  X,
-  Loader2,
-  Users,
-  Eye,
-  Heart,
-  Coins,
   Award,
+  Calendar,
+  Coins,
+  Edit3,
+  Eye,
+  FileMusic,
+  Heart,
+  Loader2,
+  Music,
+  Radio,
+  Save,
   Star,
+  Users,
+  X,
 } from "lucide-react";
+
+import { PageLoader } from "~/components/common/PageLoader";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
@@ -123,11 +126,7 @@ export default function Profile() {
   };
 
   if (isLoading || !user) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

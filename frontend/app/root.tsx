@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -7,13 +8,17 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { ErrorFallback } from "~/components/common/ErrorFallback";
 import { AuthProvider } from "~/lib/auth";
+import { captureException, initSentry } from "~/lib/sentry";
 import { ThemeProvider } from "~/lib/theme";
 import { TutorialProvider } from "~/lib/tutorial";
 
 import type { Route } from "./+types/root";
 
 import "./app.css";
+
+initSentry();
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -26,6 +31,9 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap",
   },
+  { rel: "manifest", href: "/manifest.webmanifest" },
+  { rel: "icon", href: "/images/logo-32.png", sizes: "32x32" },
+  { rel: "apple-touch-icon", href: "/images/logo-192.png" },
 ];
 
 // Inline script to apply theme before first paint to prevent flash
@@ -37,6 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#0891b2" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <Meta />
         <Links />
@@ -51,6 +60,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // 개발 모드에서는 Vite HMR과 충돌할 수 있어 프로덕션 빌드에서만 등록한다.
+  useEffect(() => {
+    if (import.meta.env.PROD && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -63,28 +79,25 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let title = "문제가 발생했습니다";
+  let description = "예상치 못한 오류가 발생했습니다. 다시 시도해주세요.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404 ? "The requested page could not be found." : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
+    title = error.status === 404 ? "페이지를 찾을 수 없습니다" : `오류 ${error.status}`;
+    description =
+      error.status === 404
+        ? "요청하신 페이지가 존재하지 않거나 이동되었습니다."
+        : error.statusText || description;
+  } else {
+    if (error instanceof Error) {
+      captureException(error);
+      if (import.meta.env.DEV) {
+        description = error.message;
+        stack = error.stack;
+      }
+    }
   }
 
-  return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
-    </main>
-  );
+  return <ErrorFallback title={title} description={description} stack={stack} />;
 }

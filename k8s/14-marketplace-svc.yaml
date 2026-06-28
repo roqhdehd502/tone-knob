@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marketplace-svc
+  namespace: tone-knob
+spec:
+  # 정산 자동 실행(월별 @Cron) 중복 실행 방지를 위해 1로 유지 — 스케일 아웃하려면
+  # 분산 락(예: Redis lock) 또는 별도 cron 전용 워커 분리가 선행되어야 한다.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: marketplace-svc
+  template:
+    metadata:
+      labels:
+        app: marketplace-svc
+    spec:
+      containers:
+        - name: marketplace-svc
+          image: tone-knob/marketplace-svc:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: tone-knob-config
+            - secretRef:
+                name: tone-knob-secrets
+          ports:
+            - containerPort: 3006
+          readinessProbe:
+            tcpSocket:
+              port: 3006
+            initialDelaySeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 3006
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: marketplace-svc
+  namespace: tone-knob
+spec:
+  selector:
+    app: marketplace-svc
+  ports:
+    - port: 3006
+      targetPort: 3006

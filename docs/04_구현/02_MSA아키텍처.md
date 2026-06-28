@@ -389,48 +389,63 @@ Supabase (단일 PostgreSQL)
 
 ## 9. 배포 전략
 
-### 9.1 서비스별 배포 플랫폼
+### 9.1 서비스별 배포 플랫폼 (확정안)
 
-| 서비스           | 플랫폼                | 이유                       |
-| ---------------- | --------------------- | -------------------------- |
-| frontend         | **Vercel** (정적)     | SPA 정적 파일              |
-| gateway          | **Vercel** (서버리스) | HTTP-only, 상태 없음       |
-| auth-svc         | **Vercel** (서버리스) | HTTP-only, 상태 없음       |
-| tab-svc          | **Vercel** (서버리스) | HTTP-only                  |
-| community-svc    | **Vercel** (서버리스) | HTTP-only                  |
-| marketplace-svc  | **Vercel** (서버리스) | HTTP-only                  |
-| subscription-svc | **Vercel** (서버리스) | HTTP-only                  |
-| **jam-svc**      | **Railway / Fly.io**  | WebSocket 필요 (상시 실행) |
-| **media-svc**    | **Railway / Fly.io**  | 파일 처리, 상시 실행       |
-| **ai-svc**       | **Railway / Fly.io**  | ML 서버 연동, GPU 옵션     |
+| 서비스               | 플랫폼            | 이유                                                              |
+| -------------------- | ----------------- | ------------------------------------------------------------------ |
+| frontend             | **Vercel** (정적) | SPA 정적 파일, `frontend/vercel.json` 기존 구비                    |
+| gateway              | **Fly.io**        | 유일한 공개 HTTP 진입점                                            |
+| 나머지 8개 마이크로서비스 | **Fly.io**        | TCP 마이크로서비스(`@nestjs/microservices`) 그대로 배포, 프라이빗 네트워킹으로 상호 통신 |
 
-### 9.2 Vercel 서버리스 서비스 구조
+또는 동일한 Dockerfile/`k8s/` 매니페스트로 **Kubernetes**(자체 호스팅/관리형) 배포도 가능 (8장 참고).
 
-각 서비스는 `api/index.ts` Vercel 핸들러를 가진다:
+> **변경 이력**: 최초 설계는 HTTP-only 서비스(gateway/auth-svc/tab-svc/community-svc/marketplace-svc/subscription-svc)를 Vercel 서버리스로, 상시 실행이 필요한 서비스(jam-svc/media-svc/ai-svc)만 Railway/Fly.io로 분리하는 것이었다(9.1~9.3절 원안, 아래 보존). 그러나 실제로는 gateway를 제외한 8개 서비스 모두 **TCP 마이크로서비스**(`Transport.TCP`)이고 HTTP 서버가 없다 — Vercel 서버리스 함수는 HTTP 요청/응답 모델이므로, 이를 배포하려면 서비스마다 HTTP 어댑터를 추가하고 모든 `@MessagePattern`/`ClientProxy.send` 호출부를 REST로 재작성해야 한다. 검증되지 않은 상태로 9개 서비스를 한꺼번에 재작성하는 리스크보다, **기존 Dockerfile/TCP 구조를 그대로 쓸 수 있는 Fly.io 단일 플랫폼**으로 통일하는 것이 더 안전하다고 판단해 확정안을 변경했다. 각 서비스의 `services/*/fly.toml`이 이미 작성되어 있다 (`fly deploy --config services/<svc>/fly.toml --dockerfile services/<svc>/Dockerfile`, 레포 루트에서 실행). Fly의 프라이빗 네트워킹(6PN, `<app>.internal:<port>`)이 TCP 인터-서비스 통신을 그대로 지원하므로 코드 변경이 전혀 필요 없다.
+
+### 9.2 (원안, 참고용) Vercel 서버리스 서비스 구조
+
+각 서비스에 HTTP 어댑터를 추가한다면 다음 구조였을 것이다 (현재는 미구현, 9.1의 변경 이력 참고):
 
 ```
 services/auth-svc/
 ├── src/               ← NestJS 소스
-├── api/index.ts       ← Vercel 서버리스 진입점
+├── api/index.ts       ← Vercel 서버리스 진입점 (HTTP 어댑터 필요, 미구현)
 └── vercel.json
 ```
 
-### 9.3 서비스 간 HTTP 통신 (배포 환경)
+### 9.3 서비스 간 통신 (Fly.io 배포 환경)
 
-배포 환경에서는 TCP 대신 HTTP를 사용한다 (Vercel 서버리스 제약):
-
-```
-개발환경:  @nestjs/microservices TCP (포트 기반)
-배포환경:  HTTP REST (각 서비스의 internal API 호출)
-```
-
-환경 변수로 URL 주입:
+개발 환경과 동일하게 TCP를 그대로 사용한다 — Fly 프라이빗 네트워킹이 `<app-name>.internal` DNS로 인터-서비스 TCP 연결을 지원하기 때문에 코드/프로토콜 변경이 없다:
 
 ```
-AUTH_SERVICE_URL=https://tone-knob-auth.vercel.app
-TAB_SERVICE_URL=https://tone-knob-tab.vercel.app
-JAM_SERVICE_URL=https://tone-knob-jam.fly.dev
+개발환경 (로컬/Docker Compose):  @nestjs/microservices TCP, host=localhost 또는 컨테이너명
+배포환경 (Fly.io):              @nestjs/microservices TCP, host=<app-name>.internal (동일 프로토콜)
 ```
+
+환경 변수로 호스트만 교체 (`services/gateway/fly.toml` 예시):
+
+```
+AUTH_SVC_HOST=tone-knob-auth-svc.internal
+TAB_SVC_HOST=tone-knob-tab-svc.internal
+JAM_SVC_HOST=tone-knob-jam-svc.internal
+```
+
+### 9.4 서비스 디스커버리 및 설정 관리
+
+별도의 서비스 레지스트리(Consul/Eureka)나 중앙 컨피그 서버(Spring Cloud Config 등)를 두지 않고,
+배포 환경별로 이미 존재하는 디스커버리 메커니즘에 위임하는 **정적 디스커버리** 전략을 택했다.
+
+| 환경                          | 디스커버리 방식                                                                     | 설정(Config) 저장소                              |
+| ----------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| 로컬 개발                     | `.env`의 `*_SVC_HOST`/`*_SVC_PORT` (기본값 `localhost`)                              | 서비스별 `.env`                                    |
+| Docker Compose                | Compose 네트워크의 컨테이너명 DNS (`auth-svc`, `tab-svc` ...)                         | `docker-compose.services.yml`의 `environment:`     |
+| Kubernetes (`k8s/`)           | k8s Service의 ClusterIP DNS (`auth-svc.tone-knob.svc.cluster.local` 등, 네임스페이스 내에서는 짧은 이름으로 해석) | `ConfigMap`(`tone-knob-config`) + `Secret`(`tone-knob-secrets`) — 사실상 경량 "컨피그 서버" 역할 |
+| 서버리스 (Vercel/Railway/Fly) | 배포 시점에 고정되는 `*_SERVICE_URL` 환경변수 (9.3절)                                | 각 플랫폼의 환경변수 대시보드                      |
+
+**왜 전용 서비스 레지스트리를 도입하지 않았는가**
+
+- Kubernetes는 Service 객체 자체가 이미 DNS 기반 서비스 디스커버리이고, ConfigMap/Secret이 중앙 설정 저장소 역할을 한다 — Consul/Eureka를 추가하면 같은 문제를 이중으로 해결하는 셋이 된다.
+- 인스턴스 수가 적고(서비스당 1~2 레플리카) 트래픽 기반 동적 라우팅이나 헬스 기반 자동 제외(circuit breaking 수준의 정교함)가 필요한 규모가 아니다.
+- 멀티 리전/멀티 클러스터로 확장하거나, 재배포 없이 런타임에 설정을 바꿔야 하는 요구가 생기면 그때 전용 컨피그 서버(예: AWS Parameter Store/Secrets Manager, HashiCorp Vault, 또는 k8s 환경이라면 External Secrets Operator)로 전환하는 것이 적절하다 — 현재 규모에서는 과한 인프라다.
 
 ---
 
@@ -539,13 +554,16 @@ WebSocket /collab    → jam-svc              (HTTP :3004) — 클라이언트 �
 - `community.toggleFollow`, `community.isFollowing`, `community.getFollowers`, `community.getFollowing`, `community.getUserStats`
 - `notification.create`, `notification.getByUser`, `notification.markAsRead`, `notification.markAllAsRead`, `notification.unreadCount`, `notification.delete`
 - `review.create`, `review.getByTab`, `review.update`, `review.remove`, `review.getMyReview`
-- 이벤트 수신: `event.tab.created`, `event.tab.published`, `event.tab.forked`, `event.marketplace.tabPurchased`, `event.payment.completed`, `event.ai.jobCompleted`, `event.ai.jobFailed`
+- 이벤트 수신: `event.tab.created`, `event.tab.published`, `event.tab.forked`, `event.marketplace.tabPurchased`, `event.payment.completed`, `event.ai.jobCompleted`, `event.ai.jobFailed`, `event.subscription.activated`, `event.subscription.cancelled`
+- 이벤트 수신 (self-loop): `event.community.userFollowed`, `event.community.tabLiked`, `event.community.commentCreated`, `event.community.reviewCreated`, `event.badge.awarded`, `event.badge.featuredChanged`, `event.knob.earned`, `event.knob.spent`
 
-**marketplace-svc (11 패턴)**
+**marketplace-svc (13 패턴)**
 
 - `marketplace.listPaidTabs`, `marketplace.setPrice`, `marketplace.purchase`, `marketplace.hasPurchased`, `marketplace.getMyPurchases`, `marketplace.getMySales`
 - `payment.create`, `payment.confirm`, `payment.refund`, `payment.getById`, `payment.getMyPayments`
 - `settlement.request`, `settlement.getMy`, `settlement.summary`
+- `knob.getBalance`, `knob.getHistory`
+- 이벤트 수신: `event.tab.created` (Knob 자동 적립), `event.jam.participantJoined` (Knob 자동 적립), `event.auth.userLoggedIn` (Knob 일일 적립)
 
 **subscription-svc (5 패턴)**
 

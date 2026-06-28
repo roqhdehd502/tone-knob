@@ -34,21 +34,76 @@ export class SettlementService {
       throw new RpcException(new ForbiddenException('이번 달 정산은 이미 요청되었습니다'));
     }
 
-    const result = await this.purchaseRepository
-      .createQueryBuilder('purchase')
-      .select('SUM(purchase.price)', 'total')
-      .addSelect('COUNT(*)', 'count')
-      .where('purchase.sellerId = :sellerId', { sellerId })
-      .andWhere('purchase.status = :status', { status: PurchaseStatus.COMPLETED })
-      .andWhere('purchase.createdAt >= :start', { start: periodStart })
-      .andWhere('purchase.createdAt <= :end', { end: periodEnd })
-      .getRawOne<{ total: string | null; count: string }>();
-
-    const totalAmount = result?.total ? parseInt(result.total, 10) : 0;
+    const totalAmount = await this.calculatePeriodRevenue(
+      sellerId,
+      periodStart,
+      periodEnd,
+    );
     if (totalAmount === 0) {
       throw new RpcException(new ForbiddenException('정산할 금액이 없습니다'));
     }
 
+    return this.createSettlement(sellerId, periodStart, periodEnd, totalAmount);
+  }
+
+  /** 전월 매출에 대해 아직 정산되지 않은 판매자들의 정산을 자동 생성한다. */
+  async runMonthlyAutoSettlement(): Promise<Settlement[]> {
+    const now = new Date();
+    const periodStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const periodEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    const sellers = await this.purchaseRepository
+      .createQueryBuilder('purchase')
+      .select('DISTINCT purchase.sellerId', 'sellerId')
+      .where('purchase.status = :status', { status: PurchaseStatus.COMPLETED })
+      .andWhere('purchase.createdAt >= :start', { start: periodStart })
+      .andWhere('purchase.createdAt <= :end', { end: periodEnd })
+      .getRawMany<{ sellerId: string }>();
+
+    const created: Settlement[] = [];
+    for (const { sellerId } of sellers) {
+      const existing = await this.settlementRepository.findOne({
+        where: { sellerId, periodStart: Between(periodStart, periodEnd) },
+      });
+      if (existing) continue;
+
+      const totalAmount = await this.calculatePeriodRevenue(
+        sellerId,
+        periodStart,
+        periodEnd,
+      );
+      if (totalAmount === 0) continue;
+
+      created.push(
+        await this.createSettlement(sellerId, periodStart, periodEnd, totalAmount),
+      );
+    }
+    return created;
+  }
+
+  private async calculatePeriodRevenue(
+    sellerId: string,
+    periodStart: Date,
+    periodEnd: Date,
+  ): Promise<number> {
+    const result = await this.purchaseRepository
+      .createQueryBuilder('purchase')
+      .select('SUM(purchase.price)', 'total')
+      .where('purchase.sellerId = :sellerId', { sellerId })
+      .andWhere('purchase.status = :status', { status: PurchaseStatus.COMPLETED })
+      .andWhere('purchase.createdAt >= :start', { start: periodStart })
+      .andWhere('purchase.createdAt <= :end', { end: periodEnd })
+      .getRawOne<{ total: string | null }>();
+
+    return result?.total ? parseInt(result.total, 10) : 0;
+  }
+
+  private async createSettlement(
+    sellerId: string,
+    periodStart: Date,
+    periodEnd: Date,
+    totalAmount: number,
+  ): Promise<Settlement> {
     const platformFee = Math.round(totalAmount * PLATFORM_FEE_RATE);
     const netAmount = totalAmount - platformFee;
 

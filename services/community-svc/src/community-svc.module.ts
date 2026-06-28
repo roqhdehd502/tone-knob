@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ClientsModule, Transport } from "@nestjs/microservices";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { Badge } from "./entities/badge.entity";
@@ -44,6 +45,26 @@ import { EventHandlerController } from "./events/event-handler.controller";
       }),
     }),
     TypeOrmModule.forFeature([Follow, Tab, Like, Review]),
+    // 자기 자신(community-svc)에게 내부 이벤트를 emit하기 위한 self-loop 클라이언트.
+    // EventHandlerController가 동일 TCP 포트에서 @EventPattern으로 수신한다.
+    ClientsModule.registerAsync([
+      {
+        name: "COMMUNITY_SERVICE",
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host:
+              configService.get<string>("COMMUNITY_SVC_HOST") ?? "localhost",
+            port: parseInt(
+              configService.get<string>("COMMUNITY_SVC_PORT") ?? "3005",
+              10,
+            ),
+          },
+        }),
+      },
+    ]),
     BadgeModule,
     CommunityModule,
     NotificationModule,

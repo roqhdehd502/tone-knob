@@ -21,6 +21,7 @@ export enum NotificationType {
   AI_JOB = "ai_job",
   TAB_FORKED = "tab_forked",
   TAB_PUBLISHED = "tab_published",
+  BADGE_AWARDED = "badge_awarded",
 }
 
 @Entity("notifications")

@@ -1,0 +1,32 @@
+# gateway가 REST API를 처리하고, jam-svc가 Socket.IO(/jam 합주방 실시간 통신)를 별도 HTTP 서버(3004)로
+# 직접 서빙하므로 동일 퍼블릭 도메인에서 경로 기반으로 두 백엔드로 분기한다.
+# (frontend는 두 경우 모두 동일한 VITE_API_URL 호스트를 사용 — io(`${apiUrl}/jam`)의 `/jam`은
+#  Socket.IO 네임스페이스이고, 실제 HTTP 업그레이드 경로는 기본값인 /socket.io 이다)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tone-knob-ingress
+  namespace: tone-knob
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.your-domain.example
+      http:
+        paths:
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: jam-svc
+                port:
+                  number: 3004
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 3000

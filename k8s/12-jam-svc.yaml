@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jam-svc
+  namespace: tone-knob
+spec:
+  # 합주방 WebSocket 연결은 클라이언트가 특정 파드에 고정되어야 하므로(stateful),
+  # 다중 레플리카로 수평 확장하려면 Socket.IO Redis 어댑터 등 별도 작업이 필요하다. 우선 1로 시작.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jam-svc
+  template:
+    metadata:
+      labels:
+        app: jam-svc
+    spec:
+      containers:
+        - name: jam-svc
+          image: tone-knob/jam-svc:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: tone-knob-config
+            - secretRef:
+                name: tone-knob-secrets
+          ports:
+            - containerPort: 3003
+            - containerPort: 3004
+          readinessProbe:
+            tcpSocket:
+              port: 3004
+            initialDelaySeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 3004
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jam-svc
+  namespace: tone-knob
+spec:
+  selector:
+    app: jam-svc
+  ports:
+    - name: tcp
+      port: 3003
+      targetPort: 3003
+    - name: http
+      port: 3004
+      targetPort: 3004

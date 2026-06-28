@@ -22,9 +22,9 @@ export class NotificationService {
     referenceId?: string;
     message: string;
   }): Promise<Notification> {
-    if (data.recipientId === data.actorId)
-      return null as unknown as Notification;
-
+    // recipientId === actorId 케이스(AI_JOB, PAYMENT, BADGE 등 시스템 알림)는
+    // 의도된 자기 알림이므로 차단하지 않는다. 다른 사용자의 행동에 대한 알림은
+    // 호출부(event-handler.controller 등)에서 자기 자신인 경우를 이미 걸러서 호출한다.
     const notification = this.notificationRepository.create({
       recipientId: data.recipientId,
       actorId: data.actorId,
@@ -60,18 +60,20 @@ export class NotificationService {
     return { notifications, total, unreadCount };
   }
 
-  async markAsRead(notificationId: string, userId: string): Promise<void> {
+  async markAsRead(notificationId: string, userId: string): Promise<{ success: true }> {
     await this.notificationRepository.update(
       { id: notificationId, recipientId: userId },
       { isRead: true },
     );
+    return { success: true };
   }
 
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllAsRead(userId: string): Promise<{ success: true }> {
     await this.notificationRepository.update(
       { recipientId: userId, isRead: false },
       { isRead: true },
     );
+    return { success: true };
   }
 
   async getUnreadCount(userId: string): Promise<number> {
@@ -80,10 +82,11 @@ export class NotificationService {
     });
   }
 
-  async delete(notificationId: string, userId: string): Promise<void> {
+  async delete(notificationId: string, userId: string): Promise<{ success: true }> {
     await this.notificationRepository.delete({
       id: notificationId,
       recipientId: userId,
     });
+    return { success: true };
   }
 }

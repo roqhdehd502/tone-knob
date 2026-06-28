@@ -13,14 +13,18 @@
     "dev": "nest start --watch"
   },
   "dependencies": {
+    "@keyv/redis": "^5.1.6",
+    "@nestjs/cache-manager": "^3.1.3",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
     "@nestjs/microservices": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "@tone-knob/shared": "*",
+    "cache-manager": "^7.2.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
+    "keyv": "^5.6.0",
     "pg": "^8.19.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

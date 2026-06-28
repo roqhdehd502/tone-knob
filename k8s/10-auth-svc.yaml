@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-svc
+  namespace: tone-knob
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-svc
+  template:
+    metadata:
+      labels:
+        app: auth-svc
+    spec:
+      containers:
+        - name: auth-svc
+          image: tone-knob/auth-svc:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: tone-knob-config
+            - secretRef:
+                name: tone-knob-secrets
+          ports:
+            - containerPort: 3001
+          readinessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-svc
+  namespace: tone-knob
+spec:
+  selector:
+    app: auth-svc
+  ports:
+    - port: 3001
+      targetPort: 3001

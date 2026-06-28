@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
+
+import { KNOB_EVENTS } from '@tone-knob/shared';
 
 import {
   KnobTransaction,
@@ -12,6 +14,11 @@ import { User } from '../entities/user.entity';
 
 const COMMISSION_RATE = 0.3;
 
+// 활동 기반 자동 적립 보상액 (Knob 단위)
+const TAB_CREATED_REWARD = 10;
+const JAM_PARTICIPATED_REWARD = 5;
+const DAILY_LOGIN_REWARD = 3;
+
 @Injectable()
 export class KnobService {
   constructor(
@@ -19,6 +26,7 @@ export class KnobService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(KnobTransaction)
     private readonly txRepository: Repository<KnobTransaction>,
+    @Inject('COMMUNITY_SERVICE') private readonly communityClient: ClientProxy,
   ) {}
 
   async getBalance(userId: string): Promise<number> {
@@ -79,7 +87,17 @@ export class KnobService {
       description,
       referenceId,
     });
-    return this.txRepository.save(tx);
+    const saved = await this.txRepository.save(tx);
+
+    this.communityClient.emit(KNOB_EVENTS.SPENT, {
+      userId,
+      amount,
+      type,
+      balanceAfter: saved.balanceAfter,
+      referenceId,
+    });
+
+    return saved;
   }
 
   async earnFromSale(
@@ -90,26 +108,98 @@ export class KnobService {
     const netAmount = Math.floor(saleAmount * (1 - COMMISSION_RATE));
     if (netAmount <= 0) return {} as KnobTransaction;
 
-    const user = await this.userRepository.findOne({
-      where: { id: sellerId },
+    return this.recordEarn(
+      sellerId,
+      netAmount,
+      KnobTransactionType.EARN_TAB_SALE,
+      `타브 판매 수익 (수수료 ${Math.round(COMMISSION_RATE * 100)}% 차감)`,
+      referenceId,
+    );
+  }
+
+  async earnFromTabCreated(
+    userId: string,
+    tabId: string,
+  ): Promise<KnobTransaction> {
+    return this.recordEarn(
+      userId,
+      TAB_CREATED_REWARD,
+      KnobTransactionType.EARN_TAB_CREATED,
+      '타브 제작 보상',
+      tabId,
+    );
+  }
+
+  async earnFromJamParticipation(
+    userId: string,
+    roomId: string,
+  ): Promise<KnobTransaction> {
+    return this.recordEarn(
+      userId,
+      JAM_PARTICIPATED_REWARD,
+      KnobTransactionType.EARN_JAM_PARTICIPATED,
+      '합주 참여 보상',
+      roomId,
+    );
+  }
+
+  /** 하루 1회로 제한되는 일일 로그인 보상. 이미 지급된 경우 null을 반환한다. */
+  async earnDailyLogin(userId: string): Promise<KnobTransaction | null> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const alreadyEarnedToday = await this.txRepository.findOne({
+      where: {
+        userId,
+        type: KnobTransactionType.EARN_DAILY_LOGIN,
+        createdAt: MoreThanOrEqual(todayStart),
+      },
     });
+    if (alreadyEarnedToday) return null;
+
+    return this.recordEarn(
+      userId,
+      DAILY_LOGIN_REWARD,
+      KnobTransactionType.EARN_DAILY_LOGIN,
+      '일일 로그인 보상',
+    );
+  }
+
+  private async recordEarn(
+    userId: string,
+    amount: number,
+    type: KnobTransactionType,
+    description?: string,
+    referenceId?: string,
+  ): Promise<KnobTransaction> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new RpcException(
-        new BadRequestException('판매자를 찾을 수 없습니다'),
+        new BadRequestException('사용자를 찾을 수 없습니다'),
       );
     }
 
-    user.knobBalance += netAmount;
+    user.knobBalance += amount;
     await this.userRepository.save(user);
 
     const tx = this.txRepository.create({
-      userId: sellerId,
-      type: KnobTransactionType.EARN_TAB_SALE,
-      amount: netAmount,
+      userId,
+      type,
+      amount,
       balanceAfter: user.knobBalance,
-      description: `타브 판매 수익 (수수료 ${Math.round(COMMISSION_RATE * 100)}% 차감)`,
+      description,
       referenceId,
     });
-    return this.txRepository.save(tx);
+    const saved = await this.txRepository.save(tx);
+
+    this.communityClient.emit(KNOB_EVENTS.EARNED, {
+      userId,
+      amount,
+      type,
+      balanceAfter: saved.balanceAfter,
+      referenceId,
+    });
+
+    return saved;
   }
 }

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tab-svc
+  namespace: tone-knob
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tab-svc
+  template:
+    metadata:
+      labels:
+        app: tab-svc
+    spec:
+      containers:
+        - name: tab-svc
+          image: tone-knob/tab-svc:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: tone-knob-config
+            - secretRef:
+                name: tone-knob-secrets
+          ports:
+            - containerPort: 3002
+          readinessProbe:
+            tcpSocket:
+              port: 3002
+            initialDelaySeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 3002
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tab-svc
+  namespace: tone-knob
+spec:
+  selector:
+    app: tab-svc
+  ports:
+    - port: 3002
+      targetPort: 3002

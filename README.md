@@ -73,10 +73,17 @@ cd frontend && npm run dev      # http://localhost:5173
 | `DATABASE_URL`            | 7개 서비스 (DB 사용)             | Supabase PostgreSQL URL (공유 DB, 독립 커넥션) |
 | `JWT_SECRET`              | auth-svc, gateway, jam-svc       | JWT 서명/검증 시크릿 (동일 값 필수, 64자+)     |
 | `COMMUNITY_SVC_HOST/PORT` | tab-svc, marketplace-svc, ai-svc | 이벤트 발행 대상                               |
+| `MARKETPLACE_SVC_HOST/PORT` | auth-svc, tab-svc, jam-svc     | 이벤트 발행 대상 (Knob 활동 기반 자동 적립)    |
 | `GOOGLE_CLIENT_ID/SECRET` | gateway                          | Google OAuth2 (선택, 미설정 시 비활성)         |
 | `GITHUB_CLIENT_ID/SECRET` | gateway                          | GitHub OAuth2 (선택, 미설정 시 비활성)         |
-| `ML_SERVER_URL`           | ai-svc                           | ML 서버 엔드포인트                             |
+| `ML_SERVER_URL`           | ai-svc                           | ML 서버 엔드포인트 (미연결 시 더미 결과로 대체) |
+| `GATEWAY_PUBLIC_URL`      | ai-svc                           | ML 서버가 콜백할 Gateway 공개 주소             |
+| `ML_WEBHOOK_SECRET`       | ai-svc, gateway                  | ML 웹훅 인증 공유 시크릿 (동일 값 필수, 선택)  |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | media-svc      | Supabase Storage 연동 (미설정 시 업로드 비활성) |
+| `REDIS_URL`               | tab-svc                          | 타브 목록 캐싱 (30초 TTL, 연결 실패 시 캐시 없이 동작) |
+| `SENTRY_DSN`              | gateway                          | 에러 모니터링 (선택, 미설정 시 SDK 비활성)     |
 | `VITE_API_URL`            | frontend                         | Gateway URL                                    |
+| `VITE_SENTRY_DSN`         | frontend                         | 클라이언트 에러 모니터링 (선택, 미설정 시 SDK 비활성) |
 
 ## 서비스 아키텍처
 
@@ -95,8 +102,10 @@ auth    tab-svc  jam-svc  community  marketplace  subscription  media  ai-svc
 서비스 간 비동기 이벤트 (TCP `ClientProxy.emit()` → `@EventPattern()`):
 
 - **tab-svc** → community-svc: 타브 생성/수정/삭제/발행/포크
-- **marketplace-svc** → community-svc: 구매 완료, 결제 완료
+- **marketplace-svc** → community-svc: 구매 완료, 결제 완료, Knob 적립/차감
 - **ai-svc** → community-svc: AI 작업 완료/실패 → 알림 자동 생성
+- **community-svc** → community-svc (self-loop): 좋아요/팔로우/댓글/리뷰, 뱃지 수여 → 알림 자동 생성
+- **tab-svc / jam-svc / auth-svc** → marketplace-svc: 타브 제작/합주 참여/로그인 → Knob 활동 기반 자동 적립
 
 ## 주요 기능
 
@@ -126,10 +135,48 @@ psql "<DATABASE_URL>" -f supabase/seed.sql
 docker compose -f docker-compose.services.yml up -d
 ```
 
+## Kubernetes 배포
+
+`k8s/` 디렉토리에 9개 마이크로서비스 + Gateway + Redis용 Deployment/Service 매니페스트와 ConfigMap/Secret/Ingress가 있다.
+Postgres는 Supabase(관리형)를 그대로 사용하므로 별도 매니페스트가 없다.
+
+```bash
+# 1. 각 서비스 이미지 빌드 후 사용할 레지스트리에 푸시 (예: tone-knob/auth-svc:latest)
+#    docker build -f services/auth-svc/Dockerfile -t tone-knob/auth-svc:latest .
+
+# 2. k8s/02-secret.yaml의 CHANGE_ME 값들을 실제 값으로 교체 (DATABASE_URL, JWT_SECRET 등)
+
+# 3. 적용
+kubectl apply -f k8s/
+```
+
+- 정산(marketplace-svc)/구독 만료(subscription-svc) 자동 처리는 `@nestjs/schedule` 기반 단일 인스턴스 크론이므로
+  중복 실행 방지를 위해 `replicas: 1`로 고정되어 있다 (분산 락 도입 전까지 스케일 아웃 금지).
+- jam-svc의 Socket.IO(`/socket.io`)는 REST API(gateway)와 별도 HTTP 포트(3004)로 서빙되므로 Ingress에서
+  경로 기반으로 분기한다 (`k8s/19-ingress.yaml`).
+
+## Fly.io 배포 (프론트엔드는 Vercel)
+
+각 백엔드 서비스(`services/*/fly.toml`)는 기존 Dockerfile/TCP 구조를 그대로 사용하며, Fly 프라이빗 네트워킹
+(`<app-name>.internal:<port>`)으로 서로 통신한다 — 코드 변경이 필요 없다. 자세한 배경은
+[MSA 아키텍처 §9.1](./docs/04_구현/02_MSA아키텍처.md#91-서비스별-배포-플랫폼-확정안) 참고.
+
+```bash
+# 레포 루트에서 서비스별로 실행 (예: auth-svc)
+fly deploy --config services/auth-svc/fly.toml --dockerfile services/auth-svc/Dockerfile
+
+# gateway는 각 서비스의 *_SVC_HOST를 <app-name>.internal 형태로 설정해야 한다 (services/gateway/fly.toml 참고)
+```
+
+프론트엔드는 기존 `frontend/vercel.json`으로 Vercel에 정적 배포한다 (`VITE_API_URL`을 gateway의 Fly 퍼블릭 URL로 설정).
+
+**블로커**: 실제 Fly.io/Vercel 계정·자격증명이 없어 위 명령의 실제 실행 결과는 검증하지 못했다 — `fly.toml` 9개 파일은 TOML 문법 검증만 완료된 상태.
+
 ## 테스트
 
 ```bash
-# 프론트엔드 E2E (Playwright)
+# 프론트엔드 E2E (Playwright) — webServer가 frontend 개발 서버와 MSA 백엔드 전체(dev:services)를 함께 기동한다.
+# 실제 Supabase Postgres(DATABASE_URL)에 연결 가능해야 registration-flow.spec.ts 등 백엔드 연동 테스트가 통과한다.
 cd frontend && npx playwright test
 ```
 

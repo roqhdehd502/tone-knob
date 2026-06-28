@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientsModule, Transport } from "@nestjs/microservices";
+import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { KnobTransaction } from "./entities/knob-transaction.entity";
@@ -15,10 +16,12 @@ import { MarketplaceModule } from "./marketplace/marketplace.module";
 import { PaymentModule } from "./payment/payment.module";
 import { SettlementModule } from "./settlement/settlement.module";
 import { MarketplaceSvcController } from "./marketplace-svc.controller";
+import { EventHandlerController } from "./events/event-handler.controller";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -60,6 +63,6 @@ import { MarketplaceSvcController } from "./marketplace-svc.controller";
     PaymentModule,
     SettlementModule,
   ],
-  controllers: [MarketplaceSvcController],
+  controllers: [MarketplaceSvcController, EventHandlerController],
 })
 export class MarketplaceSvcModule {}

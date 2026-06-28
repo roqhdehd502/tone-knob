@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { BarChart3, Clock, Flame, Music, TrendingUp, Calendar, Loader2 } from "lucide-react";
+
+import { Calendar, Clock, Flame, Music, TrendingUp } from "lucide-react";
+
+import { PageLoader } from "~/components/common/PageLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { useAuth } from "~/lib/auth";
 import { api } from "~/lib/api";
+import { useAuth } from "~/lib/auth";
 
 export function meta() {
   return [
@@ -50,11 +53,7 @@ export default function Dashboard() {
   }, [user]);
 
   if (authLoading || !user || loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-miami-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

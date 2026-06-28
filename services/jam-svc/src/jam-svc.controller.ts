@@ -1,11 +1,17 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller, Inject } from '@nestjs/common';
+import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+
+import { JAM_EVENTS } from '@tone-knob/shared';
 
 import { JamRoomService } from './jam-room/jam-room.service';
 
 @Controller()
 export class JamSvcController {
-  constructor(private readonly jamRoomService: JamRoomService) {}
+  constructor(
+    private readonly jamRoomService: JamRoomService,
+    @Inject('MARKETPLACE_SERVICE')
+    private readonly marketplaceClient: ClientProxy,
+  ) {}
 
   @MessagePattern('jam.create')
   async create(
@@ -26,7 +32,20 @@ export class JamSvcController {
 
   @MessagePattern('jam.join')
   async join(@Payload() data: { roomId: string; userId: string; password?: string }) {
-    return this.jamRoomService.join(data.roomId, data.userId, data.password);
+    const { participant, isNew } = await this.jamRoomService.join(
+      data.roomId,
+      data.userId,
+      data.password,
+    );
+
+    if (isNew) {
+      this.marketplaceClient.emit(JAM_EVENTS.PARTICIPANT_JOINED, {
+        userId: data.userId,
+        roomId: data.roomId,
+      });
+    }
+
+    return participant;
   }
 
   @MessagePattern('jam.leave')

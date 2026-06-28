@@ -70,9 +70,9 @@ export function SoundCheckPanel({
       const s = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(s);
       setCheckState("active");
-      // 설정 기반 AudioContext 옵션으로 로컬 모니터링 연결
+      // 설정 기반 AudioContext 옵션으로 로컬 모니터링 연결 (출력 장치 포함)
       const ctxOpts = buildAudioContextOptions(audioSettings);
-      monitor.attach(s, true, 1, ctxOpts);
+      monitor.attach(s, true, 1, ctxOpts, audioSettings.outputDeviceId);
     } catch (err) {
       console.error("Microphone access failed:", err);
       setCheckState("error");
@@ -89,25 +89,28 @@ export function SoundCheckPanel({
     setCheckState("idle");
   }, [stream, monitor]);
 
-  // 설정이 변경되면 활성 스트림 재시작
-  const restartWithNewSettings = useCallback(async () => {
-    if (checkState !== "active") return;
-    monitor.detach();
-    if (stream) {
-      stream.getTracks().forEach((t) => t.stop());
-    }
-    try {
-      const constraints = buildMediaConstraints(audioSettings);
-      const s = await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(s);
-      const ctxOpts = buildAudioContextOptions(audioSettings);
-      monitor.attach(s, true, monitor.gain, ctxOpts);
-    } catch (err) {
-      console.error("Failed to restart with new settings:", err);
-      setCheckState("error");
-      setErrorMsg("새 설정으로 마이크 접근에 실패했습니다.");
-    }
-  }, [checkState, stream, audioSettings, monitor]);
+  // 설정이 변경되면 활성 스트림 재시작 — nextSettings를 직접 받아 stale closure를 방지한다
+  const restartWithNewSettings = useCallback(
+    async (nextSettings: AudioSettings) => {
+      if (checkState !== "active") return;
+      monitor.detach();
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
+      try {
+        const constraints = buildMediaConstraints(nextSettings);
+        const s = await navigator.mediaDevices.getUserMedia(constraints);
+        setStream(s);
+        const ctxOpts = buildAudioContextOptions(nextSettings);
+        monitor.attach(s, true, monitor.gain, ctxOpts, nextSettings.outputDeviceId);
+      } catch (err) {
+        console.error("Failed to restart with new settings:", err);
+        setCheckState("error");
+        setErrorMsg("새 설정으로 마이크 접근에 실패했습니다.");
+      }
+    },
+    [checkState, stream, monitor],
+  );
 
   const handleConfirm = useCallback(() => {
     if (!stream) return;
@@ -158,10 +161,25 @@ export function SoundCheckPanel({
         <AudioSettingsPanel
           settings={audioSettings}
           onChange={(newSettings) => {
+            const prevSettings = audioSettings;
             handleSettingsChange(newSettings);
-            // 활성 테스트 중이면 장치/설정 변경 즉시 반영
-            if (checkState === "active") {
-              void restartWithNewSettings();
+            if (checkState !== "active") return;
+
+            // 출력 장치만 바뀐 경우: 마이크 스트림을 재요청할 필요 없이 출력 싱크만 즉시 전환
+            const onlyOutputChanged =
+              newSettings.outputDeviceId !== prevSettings.outputDeviceId &&
+              newSettings.inputDeviceId === prevSettings.inputDeviceId &&
+              newSettings.sampleRate === prevSettings.sampleRate &&
+              newSettings.bufferSize === prevSettings.bufferSize &&
+              newSettings.echoCancellation === prevSettings.echoCancellation &&
+              newSettings.noiseSuppression === prevSettings.noiseSuppression &&
+              newSettings.autoGainControl === prevSettings.autoGainControl &&
+              newSettings.channelCount === prevSettings.channelCount;
+
+            if (onlyOutputChanged) {
+              void monitor.setOutputDevice(newSettings.outputDeviceId);
+            } else {
+              void restartWithNewSettings(newSettings);
             }
           }}
           compact={checkState === "active"}

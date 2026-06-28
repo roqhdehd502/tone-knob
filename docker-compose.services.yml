@@ -44,10 +44,14 @@ services:
       JWT_SECRET: your-jwt-secret-key
       JWT_ACCESS_EXPIRATION: 15m
       JWT_REFRESH_EXPIRATION: 7d
+      MARKETPLACE_SVC_HOST: marketplace-svc
+      MARKETPLACE_SVC_PORT: 3006
       NODE_ENV: development
     depends_on:
       postgres:
         condition: service_healthy
+      marketplace-svc:
+        condition: service_started
 
   tab-svc:
     build:
@@ -59,10 +63,21 @@ services:
     environment:
       TAB_SVC_PORT: 3002
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      REDIS_URL: redis://redis:6379
+      COMMUNITY_SVC_HOST: community-svc
+      COMMUNITY_SVC_PORT: 3005
+      MARKETPLACE_SVC_HOST: marketplace-svc
+      MARKETPLACE_SVC_PORT: 3006
       NODE_ENV: development
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      community-svc:
+        condition: service_started
+      marketplace-svc:
+        condition: service_started
 
   jam-svc:
     build:
@@ -77,10 +92,14 @@ services:
       JAM_SVC_HTTP_PORT: 3004
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
       JWT_SECRET: your-jwt-secret-key
+      MARKETPLACE_SVC_HOST: marketplace-svc
+      MARKETPLACE_SVC_PORT: 3006
       NODE_ENV: development
     depends_on:
       postgres:
         condition: service_healthy
+      marketplace-svc:
+        condition: service_started
 
   community-svc:
     build:
@@ -107,10 +126,14 @@ services:
     environment:
       MARKETPLACE_SVC_PORT: 3006
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      COMMUNITY_SVC_HOST: community-svc
+      COMMUNITY_SVC_PORT: 3005
       NODE_ENV: development
     depends_on:
       postgres:
         condition: service_healthy
+      community-svc:
+        condition: service_started
 
   subscription-svc:
     build:
@@ -136,6 +159,9 @@ services:
       - "3008:3008"
     environment:
       MEDIA_SVC_PORT: 3008
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_STORAGE_BUCKET: media
       NODE_ENV: development
 
   ai-svc:
@@ -149,10 +175,16 @@ services:
       AI_SVC_PORT: 3009
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
       ML_SERVER_URL: http://localhost:8001
+      GATEWAY_PUBLIC_URL: http://gateway:3000
+      ML_WEBHOOK_SECRET: ${ML_WEBHOOK_SECRET:-}
+      COMMUNITY_SVC_HOST: community-svc
+      COMMUNITY_SVC_PORT: 3005
       NODE_ENV: development
     depends_on:
       postgres:
         condition: service_healthy
+      community-svc:
+        condition: service_started
 
   gateway:
     build:
@@ -180,6 +212,7 @@ services:
       AI_SVC_HOST: ai-svc
       AI_SVC_PORT: 3009
       JWT_SECRET: your-jwt-secret-key
+      ML_WEBHOOK_SECRET: ${ML_WEBHOOK_SECRET:-}
       FRONTEND_URL: http://localhost:5173
       NODE_ENV: development
     depends_on:

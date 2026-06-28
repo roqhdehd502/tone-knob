@@ -11,6 +11,8 @@ import {
   AI_EVENTS,
   SUBSCRIPTION_EVENTS,
   COMMUNITY_EVENTS,
+  BADGE_EVENTS,
+  KNOB_EVENTS,
   TabCreatedEvent,
   TabUpdatedEvent,
   TabDeletedEvent,
@@ -22,10 +24,15 @@ import {
   AiJobFailedEvent,
   SubscriptionActivatedEvent,
   SubscriptionCancelledEvent,
+  SubscriptionExpiredEvent,
   UserFollowedEvent,
   TabLikedEvent,
   CommentCreatedEvent,
   ReviewCreatedEvent,
+  BadgeAwardedEvent,
+  BadgeFeaturedChangedEvent,
+  KnobEarnedEvent,
+  KnobSpentEvent,
 } from "@tone-knob/shared";
 
 import { Follow } from "../entities/follow.entity";
@@ -231,6 +238,13 @@ export class EventHandlerController {
     );
   }
 
+  @EventPattern(SUBSCRIPTION_EVENTS.EXPIRED)
+  async handleSubscriptionExpired(@Payload() data: SubscriptionExpiredEvent) {
+    this.logger.log(
+      `Subscription expired: ${data.subscriptionId} (${data.plan}) for user ${data.userId}`,
+    );
+  }
+
   // ─── Community Events (내부) ───
 
   @EventPattern(COMMUNITY_EVENTS.USER_FOLLOWED)
@@ -294,5 +308,43 @@ export class EventHandlerController {
     if (reviewCount >= 5) {
       await this.tryAwardBadge(data.userId, "helpful_reviewer");
     }
+  }
+
+  // ─── Badge Events ───
+
+  @EventPattern(BADGE_EVENTS.AWARDED)
+  async handleBadgeAwarded(@Payload() data: BadgeAwardedEvent) {
+    this.logger.log(`Badge awarded: ${data.badgeCode} → user ${data.userId}`);
+
+    await this.notificationService.create({
+      recipientId: data.userId,
+      actorId: data.userId,
+      type: NotificationType.BADGE_AWARDED,
+      referenceId: data.userBadgeId,
+      message: `새로운 뱃지를 획득했습니다: "${data.badgeName}"`,
+    });
+  }
+
+  @EventPattern(BADGE_EVENTS.FEATURED_CHANGED)
+  async handleBadgeFeaturedChanged(@Payload() data: BadgeFeaturedChangedEvent) {
+    this.logger.log(
+      `Badge featured changed: ${data.userBadgeId} → ${data.isFeatured} (user ${data.userId})`,
+    );
+  }
+
+  // ─── Knob Events ───
+
+  @EventPattern(KNOB_EVENTS.EARNED)
+  async handleKnobEarned(@Payload() data: KnobEarnedEvent) {
+    this.logger.log(
+      `Knob earned: ${data.amount} (${data.type}) → user ${data.userId}, balance ${data.balanceAfter}`,
+    );
+  }
+
+  @EventPattern(KNOB_EVENTS.SPENT)
+  async handleKnobSpent(@Payload() data: KnobSpentEvent) {
+    this.logger.log(
+      `Knob spent: ${data.amount} (${data.type}) → user ${data.userId}, balance ${data.balanceAfter}`,
+    );
   }
 }

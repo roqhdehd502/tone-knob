@@ -1,0 +1,19 @@
+# Fly.io 배포 설정 — 기존 Dockerfile을 그대로 사용 (build context는 레포 루트)
+# 배포 명령 (레포 루트에서 실행):
+#   fly deploy --config services/media-svc/fly.toml --dockerfile services/media-svc/Dockerfile
+# TCP 전용 마이크로서비스(공개 HTTP 없음) — Fly 프라이빗 네트워킹(media-svc.internal:3008)으로 접근.
+# 실제 파일은 Supabase Storage에 저장되므로 media-svc 자체는 상태 없음(stateless).
+app = "tone-knob-media-svc"
+primary_region = "nrt"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  MEDIA_SVC_PORT = "3008"
+  SUPABASE_STORAGE_BUCKET = "media"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

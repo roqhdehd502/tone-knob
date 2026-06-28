@@ -1,7 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_FILTER, APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 
 import { AiProxyModule } from "./ai/ai-proxy.module";
 import { AuthProxyModule } from "./auth/auth-proxy.module";
@@ -16,6 +17,7 @@ import { UserProxyModule } from "./user/user-proxy.module";
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     ClientsRegisterModule,
@@ -29,6 +31,11 @@ import { UserProxyModule } from "./user/user-proxy.module";
     MediaProxyModule,
     AiProxyModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // 컨트롤러 레벨 @UseFilters(RpcToHttpExceptionFilter)가 없는 경로(예: 정적 404)를 위한 보조 필터.
+    // 주 에러 캡처는 RpcToHttpExceptionFilter 내부의 Sentry.captureException 호출이 담당한다.
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
+  ],
 })
 export class GatewayModule {}
