@@ -290,6 +290,45 @@ export const api = {
       );
     },
   },
+  payments: {
+    getConfig: () => request<{ storeId: string; channelKey: string }>("/api/payments/config"),
+    create: (data: {
+      type: "subscription" | "tab_purchase";
+      amount: number;
+      metadata?: Record<string, unknown>;
+    }) =>
+      request<{ id: string; externalOrderId: string; amount: number; status: string }>(
+        "/api/payments",
+        { method: "POST", body: data },
+      ),
+    confirm: (paymentId: string, externalPaymentId: string) =>
+      request<{ id: string; status: string; externalPaymentId: string }>(
+        `/api/payments/${paymentId}/confirm`,
+        { method: "POST", body: { externalPaymentId } },
+      ),
+    confirmBillingKey: (paymentId: string, externalPaymentId: string, billingKey: string) =>
+      request<{ id: string; status: string; billingKey: string }>(
+        `/api/payments/${paymentId}/confirm-billing-key`,
+        { method: "POST", body: { externalPaymentId, billingKey } },
+      ),
+    getById: (paymentId: string) =>
+      request<{ id: string; status: string; amount: number; type: string; createdAt: string }>(
+        `/api/payments/${paymentId}`,
+      ),
+    getMyPayments: (params?: { page?: number; limit?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.limit) qs.set("limit", String(params.limit));
+      const query = qs.toString();
+      return request<{ data: unknown[]; total: number }>(
+        `/api/payments/my${query ? `?${query}` : ""}`,
+      );
+    },
+    refund: (paymentId: string) =>
+      request<{ id: string; status: string }>(`/api/payments/${paymentId}/refund`, {
+        method: "POST",
+      }),
+  },
   marketplace: {
     listPaidTabs: (params?: {
       page?: number;

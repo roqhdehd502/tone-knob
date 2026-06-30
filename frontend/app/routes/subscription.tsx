@@ -8,6 +8,7 @@ import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
+import { requestSubscriptionPayment } from "~/lib/portone";
 
 export function meta() {
   return [{ title: "구독 관리 - Tone Knob" }, { name: "description", content: "구독 플랜 관리" }];
@@ -71,12 +72,29 @@ export default function SubscriptionPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const handleSubscribe = async (plan: string) => {
+  const handleSubscribe = async (plan: PlanInfo) => {
+    if (!user) return;
     setError(null);
-    setSubscribing(plan);
+    setSubscribing(plan.plan);
+
     try {
-      // 실제 결제 연동 시 externalPaymentId를 전달
-      await api.subscriptions.subscribe(plan);
+      if (plan.priceMonthly === 0) {
+        // 무료 플랜은 결제 없이 바로 구독
+        await api.subscriptions.subscribe(plan.plan);
+      } else {
+        // 유료 플랜: PortOne 빌링키 발급 + 최초 결제
+        const { paymentId } = await requestSubscriptionPayment({
+          orderName: `Tone Knob ${PLAN_LABELS[plan.plan] ?? plan.plan} 구독`,
+          amount: plan.priceMonthly,
+          customerId: user.id,
+          customerName: user.displayName ?? user.username,
+          customerEmail: user.email,
+        });
+
+        // 결제 완료 후 구독 레코드 생성
+        await api.subscriptions.subscribe(plan.plan, paymentId);
+      }
+
       const sub = await api.subscriptions.getCurrent().catch(() => null);
       setCurrentSub(sub);
     } catch (err: unknown) {
@@ -196,7 +214,7 @@ export default function SubscriptionPage() {
                 <Button
                   className={`w-full ${isHighlighted ? "bg-miami-600 hover:bg-miami-700" : ""}`}
                   disabled={isCurrent || subscribing !== null}
-                  onClick={() => handleSubscribe(plan.plan)}
+                  onClick={() => handleSubscribe(plan)}
                 >
                   {subscribing === plan.plan ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

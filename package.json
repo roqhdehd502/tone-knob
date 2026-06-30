@@ -15,10 +15,14 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "migrate": "node scripts/migrate.js all",
+    "migrate:file": "node scripts/migrate.js file"
   },
   "devDependencies": {
-    "turbo": "^2.5.4"
+    "turbo": "^2.5.4",
+    "dotenv": "^17.2.3",
+    "pg": "^8.20.0"
   },
   "engines": {
     "node": ">=20"

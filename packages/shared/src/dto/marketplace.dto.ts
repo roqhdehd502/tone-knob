@@ -33,10 +33,28 @@ export class CreatePaymentDto {
 
 export class ConfirmPaymentDto {
   @ApiProperty({
-    description: "PG사(토스페이먼츠 등)가 발급한 결제 승인 키",
-    example: "tviva20240101000000abcdef",
+    description: "PG사(토스페이먼츠 등)가 발급한 결제 승인 키 (PortOne V2 paymentId)",
+    example: "payment_abc123",
   })
   @IsString()
   @IsNotEmpty()
   externalPaymentId: string;
+}
+
+export class ConfirmBillingKeyPaymentDto {
+  @ApiProperty({
+    description: "PortOne V2 결제 ID (최초 빌링키 발급 + 결제 시 사용한 paymentId)",
+    example: "payment_sub_abc123",
+  })
+  @IsString()
+  @IsNotEmpty()
+  externalPaymentId: string;
+
+  @ApiProperty({
+    description: "PortOne V2 발급 빌링키 (정기결제에 사용)",
+    example: "billingkey_abc123",
+  })
+  @IsString()
+  @IsNotEmpty()
+  billingKey: string;
 }

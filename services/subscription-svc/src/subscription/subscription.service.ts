@@ -1,6 +1,13 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import { RpcException } from "@nestjs/microservices";
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { InjectRepository } from "@nestjs/typeorm";
+import { firstValueFrom, timeout } from "rxjs";
 import { LessThan, Repository } from "typeorm";
 
 import {
@@ -44,6 +51,8 @@ export class SubscriptionService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Tab)
     private readonly tabRepository: Repository<Tab>,
+    @Inject("MARKETPLACE_SERVICE")
+    private readonly marketplaceClient: ClientProxy,
   ) {}
 
   getPlans() {
@@ -75,6 +84,11 @@ export class SubscriptionService {
       throw new RpcException(new ConflictException("이미 동일한 플랜을 구독 중입니다"));
     }
 
+    if (!externalPaymentId) {
+      throw new RpcException(new BadRequestException("유료 플랜 구독에는 결제 확인이 필요합니다"));
+    }
+    await this.verifySubscriptionPayment(userId, plan, externalPaymentId);
+
     if (existing) {
       existing.status = SubscriptionStatus.CANCELLED;
       await this.subscriptionRepository.save(existing);
@@ -98,6 +112,45 @@ export class SubscriptionService {
     await this.userRepository.update(userId, { subscriptionTier: plan });
 
     return saved;
+  }
+
+  /**
+   * marketplace-svc에 결제 레코드를 조회해 상태/금액/소유권을 서버 측에서 재검증한다.
+   * (클라이언트가 보낸 externalPaymentId를 그대로 신뢰하면 결제 없이 구독을 위조할 수 있음 — CWE-862)
+   * marketplace-svc가 응답하지 않을 경우 무한 대기하지 않도록 타임아웃을 둔다.
+   */
+  private async verifySubscriptionPayment(
+    userId: string,
+    plan: SubscriptionPlan,
+    paymentId: string,
+  ): Promise<void> {
+    let payment: { userId: string; status: string; type: string; amount: number };
+    try {
+      payment = await firstValueFrom(
+        this.marketplaceClient.send("payment.getById", { paymentId, userId }).pipe(timeout(5000)),
+      );
+    } catch {
+      throw new RpcException(new BadRequestException("결제 내역을 확인할 수 없습니다"));
+    }
+
+    if (
+      payment.userId !== userId ||
+      payment.status !== "completed" ||
+      payment.type !== "subscription" ||
+      payment.amount !== PLAN_PRICES[plan]
+    ) {
+      throw new RpcException(
+        new BadRequestException("결제 검증에 실패했습니다 (상태 또는 금액 불일치)"),
+      );
+    }
+
+    // 동일 결제 건이 이미 다른 구독을 활성화하는 데 사용된 적이 있다면 재사용을 거부한다 (재생 공격 방지)
+    const alreadyUsed = await this.subscriptionRepository.findOne({
+      where: { externalPaymentId: paymentId },
+    });
+    if (alreadyUsed) {
+      throw new RpcException(new BadRequestException("이미 다른 구독에 사용된 결제 내역입니다"));
+    }
   }
 
   async cancel(userId: string): Promise<Subscription> {

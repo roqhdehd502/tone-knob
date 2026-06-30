@@ -2,6 +2,7 @@ import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
 import { MARKETPLACE_EVENTS, PAYMENT_EVENTS } from "@tone-knob/shared";
 
+import { PaymentType } from "./entities/payment.entity";
 import { KnobService } from "./knob/knob.service";
 import { MarketplaceService } from "./marketplace/marketplace.service";
 import { PaymentService } from "./payment/payment.service";
@@ -77,12 +78,12 @@ export class MarketplaceSvcController {
     @Payload()
     data: {
       userId: string;
-      type: string;
+      type: PaymentType;
       amount: number;
       metadata?: Record<string, unknown>;
     },
   ) {
-    return this.paymentService.createPayment(data.userId, data as any);
+    return this.paymentService.createPayment(data.userId, data);
   }
 
   @MessagePattern("payment.confirm")
@@ -102,6 +103,38 @@ export class MarketplaceSvcController {
       referenceId: payment.id,
     });
     return payment;
+  }
+
+  @MessagePattern("payment.confirmBillingKey")
+  async confirmBillingKeyPayment(
+    @Payload()
+    data: {
+      paymentId: string;
+      userId: string;
+      externalPaymentId: string;
+      billingKey: string;
+    },
+  ) {
+    const payment = await this.paymentService.confirmBillingKeyPayment(
+      data.paymentId,
+      data.userId,
+      data.externalPaymentId,
+      data.billingKey,
+    );
+    this.communityClient.emit(PAYMENT_EVENTS.COMPLETED, {
+      paymentId: payment.id,
+      userId: payment.userId,
+      amount: payment.amount,
+      type: payment.type,
+      referenceId: payment.id,
+    });
+    return payment;
+  }
+
+  @MessagePattern("payment.webhook")
+  async handleWebhook(@Payload() data: { portonePaymentId: string }) {
+    await this.paymentService.handleWebhook(data.portonePaymentId);
+    return { ok: true };
   }
 
   @MessagePattern("payment.refund")

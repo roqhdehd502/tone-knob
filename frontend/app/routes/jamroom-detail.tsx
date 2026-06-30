@@ -322,7 +322,7 @@ export default function JamroomDetail() {
       // localMonitor가 아직 연결 안 된 경우에만 attach (사운드체크에서 이미 연결한 경우 스킵)
       if (!localMonitor.monitoring) {
         const ctxOpts = buildAudioContextOptions(settings);
-        localMonitor.attach(stream, true, selfVolume / 100, ctxOpts);
+        localMonitor.attach(stream, true, selfVolume / 100, ctxOpts, settings.outputDeviceId);
       }
 
       // 악기별 오디오 엔진 초기화
@@ -355,7 +355,7 @@ export default function JamroomDetail() {
       const constraints = buildMediaConstraints(settings);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const ctxOpts = buildAudioContextOptions(settings);
-      localMonitor.attach(stream, true, selfVolume / 100, ctxOpts);
+      localMonitor.attach(stream, true, selfVolume / 100, ctxOpts, settings.outputDeviceId);
       await joinWithStream(stream, settings);
     } catch (error) {
       console.error("Failed to get microphone:", error);

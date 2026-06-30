@@ -26,6 +26,19 @@ import { SubscriptionExpiryScheduler } from "./subscription-expiry.scheduler";
           },
         }),
       },
+      // 구독 결제 검증 시 marketplace-svc의 결제 레코드를 서버 측에서 재조회하기 위한 클라이언트.
+      {
+        name: "MARKETPLACE_SERVICE",
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get("MARKETPLACE_SVC_HOST", "localhost"),
+            port: parseInt(configService.get("MARKETPLACE_SVC_PORT", "3006"), 10),
+          },
+        }),
+      },
     ]),
   ],
   providers: [SubscriptionService, SubscriptionExpiryScheduler],

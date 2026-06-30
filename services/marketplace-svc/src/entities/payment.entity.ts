@@ -60,6 +60,9 @@ export class Payment {
   @Column({ type: "varchar", length: 255, nullable: true })
   externalOrderId: string;
 
+  @Column({ type: "varchar", length: 255, nullable: true })
+  billingKey: string;
+
   @Column({ type: "jsonb", nullable: true })
   metadata: Record<string, unknown>;
 

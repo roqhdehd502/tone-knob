@@ -120,14 +120,23 @@ auth    tab-svc  jam-svc  community  marketplace  subscription  media  ai-svc
 - **뱃지 컬렉션**: 활동 기반 뱃지 획득, 대표 뱃지 설정 (최대 3개)
 - **소셜 로그인**: Google, GitHub OAuth2 (선택적 활성화)
 
-## Supabase 마이그레이션
+## DB 마이그레이션
+
+`supabase/migrations/*.sql`은 `scripts/migrate.js`로 실행한다. `services/marketplace-svc/.env`의 `DATABASE_URL`로 직접 접속하며,
+적용 이력은 DB의 `public.schema_migrations` 테이블에 기록되어 이미 적용된 파일은 재실행 시 자동으로 건너뛴다.
 
 ```bash
-supabase login
-supabase link --project-ref <PROJECT_REF>
-supabase db push
+# 전체 마이그레이션 일괄 실행 (파일명 순서대로, 이미 적용된 건 자동 건너뜀)
+npm run migrate
+
+# 특정 파일 1개만 선택 실행 (새 마이그레이션 파일 추가/수정 시)
+npm run migrate:file -- 20240107000000_add_payment_billing_key.sql
+
+# 시드 데이터 (선택)
 psql "<DATABASE_URL>" -f supabase/seed.sql
 ```
+
+실행 결과는 파일별로 ✅ 성공 / ⏭ 건너뜀(이미 적용) / ❌ 실패(에러 메시지)로 터미널에 표시되며, 실패 시 이후 순번 마이그레이션은 중단된다.
 
 ## Docker 배포
 
