@@ -3,11 +3,12 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { JamParticipant } from "../entities/jam-participant.entity";
 import { JamRoom } from "../entities/jam-room.entity";
+import { Tab } from "../entities/tab.entity";
 import { JamRoomGateway } from "./jam-room.gateway";
 import { JamRoomService } from "./jam-room.service";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([JamRoom, JamParticipant])],
+  imports: [TypeOrmModule.forFeature([JamRoom, JamParticipant, Tab])],
   providers: [JamRoomService, JamRoomGateway],
   exports: [JamRoomService],
 })

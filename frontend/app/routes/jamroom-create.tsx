@@ -45,6 +45,7 @@ export default function JamroomCreate() {
   const loadMyTabs = async () => {
     try {
       const response = await api.tabs.my({ limit: 50 });
+      console.log("[DEBUG] myTabs response:", JSON.stringify(response.data?.slice(0, 2)));
       setMyTabs(response.data);
     } catch (error) {
       console.error("Failed to load tabs:", error);
@@ -54,6 +55,8 @@ export default function JamroomCreate() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    console.log("[DEBUG] formData.tabId:", JSON.stringify(formData.tabId));
 
     setLoading(true);
     try {
@@ -66,10 +69,14 @@ export default function JamroomCreate() {
         password: formData.isPrivate ? formData.password : undefined,
         bpm: formData.bpm,
       });
+      if (!room?.id) {
+        throw new Error("합주방 생성 응답이 올바르지 않습니다");
+      }
       navigate(`/jamroom/${room.id}`);
     } catch (error) {
+      const message = error instanceof Error ? error.message : "알 수 없는 오류";
       console.error("Failed to create room:", error);
-      alert("합주방 생성에 실패했습니다.");
+      alert(`합주방 생성에 실패했습니다.\n${message}`);
     } finally {
       setLoading(false);
     }

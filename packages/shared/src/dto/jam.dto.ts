@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
   Max,
   MaxLength,
   Min,
@@ -30,7 +29,8 @@ export class CreateJamRoomDto {
 
   @ApiPropertyOptional({ description: "함께 연습할 타브 ID (선택)" })
   @IsOptional()
-  @IsUUID()
+  @IsString()
+  @MaxLength(100)
   tabId?: string;
 
   @ApiPropertyOptional({

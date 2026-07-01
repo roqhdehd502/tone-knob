@@ -5,6 +5,7 @@ import { Repository } from "typeorm";
 
 import { JamParticipant } from "../entities/jam-participant.entity";
 import { JamRoom } from "../entities/jam-room.entity";
+import { Tab } from "../entities/tab.entity";
 
 @Injectable()
 export class JamRoomService {
@@ -13,6 +14,8 @@ export class JamRoomService {
     private readonly jamRoomRepository: Repository<JamRoom>,
     @InjectRepository(JamParticipant)
     private readonly participantRepository: Repository<JamParticipant>,
+    @InjectRepository(Tab)
+    private readonly tabRepository: Repository<Tab>,
   ) {}
 
   async create(
@@ -27,6 +30,13 @@ export class JamRoomService {
       bpm?: number;
     },
   ): Promise<JamRoom> {
+    if (dto.tabId) {
+      const tabExists = await this.tabRepository.exists({ where: { id: dto.tabId } });
+      if (!tabExists) {
+        throw new RpcException({ statusCode: 404, message: "선택한 타브를 찾을 수 없습니다" });
+      }
+    }
+
     const room = this.jamRoomRepository.create({
       hostId,
       name: dto.name,
