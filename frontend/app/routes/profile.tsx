@@ -229,7 +229,7 @@ export default function Profile() {
       </Card>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { icon: FileMusic, value: tabTotal, label: "제작한 타브" },
           { icon: Radio, value: followerCount, label: "팔로워" },

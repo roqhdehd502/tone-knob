@@ -8,7 +8,8 @@ Turborepo 기반 모노레포 — 9개 마이크로서비스 + Gateway + Fronten
 
 ```
 tone-knob/
-├── frontend/              # React Router V7 (SSR) + React 19 + TailwindCSS v4
+├── frontend/              # React Router V7 (SSR) + React 19 + TailwindCSS v4 (유저 화면)
+├── admin/                 # React Router V7 (SSR) + TailwindCSS v4 (관리자 패널, :3100)
 ├── services/
 │   ├── gateway/           # HTTP API Gateway (:3000) → 각 서비스 TCP 프록시
 │   ├── auth-svc/          # 인증/사용자 (TCP :3001)
@@ -56,12 +57,13 @@ npx turbo run build --force     # shared → 전체 서비스 빌드
 ### 개발 서버
 
 ```bash
-# 전체 서비스 + 프론트엔드 동시 기동
+# 전체 서비스 + 프론트엔드 + 관리자 패널 동시 기동
 npm run dev:all
 
 # 또는 개별 실행
 npm run dev:services            # Gateway + 9개 마이크로서비스
-cd frontend && npm run dev      # http://localhost:5173
+npm run dev:admin               # 관리자 패널만 (http://localhost:3100)
+cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 ```
 
 ### 환경변수
@@ -119,6 +121,7 @@ auth    tab-svc  jam-svc  community  marketplace  subscription  media  ai-svc
 - **커뮤니티**: 좋아요, 댓글, 팔로우, 리뷰, 알림
 - **뱃지 컬렉션**: 활동 기반 뱃지 획득, 대표 뱃지 설정 (최대 3개)
 - **소셜 로그인**: Google, GitHub OAuth2 (선택적 활성화)
+- **관리자 패널** (`/admin`, :3100): 회원·타브·합주방·구독·녹음 관리, 대시보드 통계 (Supabase service_role 직접 연결, 쿠키 세션 인증)
 
 ## DB 마이그레이션
 

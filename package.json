@@ -3,13 +3,15 @@
   "private": true,
   "workspaces": [
     "frontend",
+    "admin",
     "services/*",
     "packages/*"
   ],
   "scripts": {
     "dev": "turbo run dev --concurrency 15",
+    "dev:admin": "turbo run dev --concurrency 2 --filter=@tone-knob/admin",
     "dev:services": "turbo run dev --concurrency 15 --filter=@tone-knob/gateway --filter=@tone-knob/auth-svc --filter=@tone-knob/tab-svc --filter=@tone-knob/jam-svc --filter=@tone-knob/community-svc --filter=@tone-knob/marketplace-svc --filter=@tone-knob/subscription-svc --filter=@tone-knob/media-svc --filter=@tone-knob/ai-svc",
-    "dev:all": "turbo run dev --concurrency 15 --filter=@tone-knob/frontend --filter=@tone-knob/gateway --filter=@tone-knob/auth-svc --filter=@tone-knob/tab-svc --filter=@tone-knob/jam-svc --filter=@tone-knob/community-svc --filter=@tone-knob/marketplace-svc --filter=@tone-knob/subscription-svc --filter=@tone-knob/media-svc --filter=@tone-knob/ai-svc",
+    "dev:all": "turbo run dev --concurrency 15 --filter=@tone-knob/frontend --filter=@tone-knob/admin --filter=@tone-knob/gateway --filter=@tone-knob/auth-svc --filter=@tone-knob/tab-svc --filter=@tone-knob/jam-svc --filter=@tone-knob/community-svc --filter=@tone-knob/marketplace-svc --filter=@tone-knob/subscription-svc --filter=@tone-knob/media-svc --filter=@tone-knob/ai-svc",
     "build": "turbo run build",
     "build:services": "turbo run build --filter=@tone-knob/gateway --filter=@tone-knob/auth-svc --filter=@tone-knob/tab-svc --filter=@tone-knob/jam-svc --filter=@tone-knob/community-svc --filter=@tone-knob/marketplace-svc --filter=@tone-knob/subscription-svc --filter=@tone-knob/media-svc --filter=@tone-knob/ai-svc",
     "test": "turbo run test",
