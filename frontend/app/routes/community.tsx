@@ -5,17 +5,19 @@ import { ChevronLeft, ChevronRight, Eye, Heart, Music, Rss, Users } from "lucide
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import { cn } from "~/lib/utils";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
-  return [{ title: "커뮤니티 - Tone Knob" }, { name: "description", content: "커뮤니티 피드" }];
+  return [{ title: "Community - Tone Knob" }, { name: "description", content: "Community feed" }];
 }
 
 export default function Community() {
   const { user } = useAuth();
+  const { t, dateLocale } = useI18n();
   const [feedTabs, setFeedTabs] = useState<TabListItem[]>([]);
   const [exploreTabs, setExploreTabs] = useState<TabListItem[]>([]);
   const [feedTotal, setFeedTotal] = useState(0);
@@ -68,12 +70,14 @@ export default function Community() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <Users className="h-16 w-16 text-gray-300 dark:text-gray-700" />
-        <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white">커뮤니티</h1>
+        <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white">
+          {t("community.heading")}
+        </h1>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          로그인하면 팔로우한 뮤지션들의 타브를 확인할 수 있습니다.
+          {t("community.loginPrompt")}
         </p>
         <Link to="/login">
-          <Button className="mt-4">로그인</Button>
+          <Button className="mt-4">{t("community.loginBtn")}</Button>
         </Link>
       </div>
     );
@@ -83,28 +87,28 @@ export default function Community() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">커뮤니티</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            뮤지션들의 타브를 탐색하세요
-          </p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t("community.heading")}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("community.subtitle")}</p>
         </div>
         <div className="flex gap-0.5 rounded-lg border border-gray-200 p-0.5 dark:border-gray-700">
           {[
-            { key: "feed" as const, icon: Rss, label: "피드" },
-            { key: "explore" as const, icon: Music, label: "탐색" },
-          ].map((t) => (
+            { key: "feed" as const, icon: Rss, label: t("community.feed") },
+            { key: "explore" as const, icon: Music, label: t("community.explore") },
+          ].map((tabItem) => (
             <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
+              key={tabItem.key}
+              onClick={() => setActiveTab(tabItem.key)}
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                activeTab === t.key
+                activeTab === tabItem.key
                   ? "bg-miami-100 text-miami-700 dark:bg-miami-900/40 dark:text-miami-300"
                   : "text-gray-500 hover:text-gray-700 dark:text-gray-400",
               )}
             >
-              <t.icon className="h-3.5 w-3.5" />
-              {t.label}
+              <tabItem.icon className="h-3.5 w-3.5" />
+              {tabItem.label}
             </button>
           ))}
         </div>
@@ -113,7 +117,7 @@ export default function Community() {
       {loading ? (
         <Card>
           <CardContent className="flex items-center justify-center py-16">
-            <p className="text-sm text-gray-400">로딩 중...</p>
+            <p className="text-sm text-gray-400">{t("community.loading")}</p>
           </CardContent>
         </Card>
       ) : tabs.length === 0 ? (
@@ -123,7 +127,7 @@ export default function Community() {
               <>
                 <Rss className="h-10 w-10 text-gray-300 dark:text-gray-700" />
                 <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  팔로우한 뮤지션의 타브가 여기에 표시됩니다.
+                  {t("community.feedEmpty")}
                 </p>
                 <Button
                   variant="outline"
@@ -131,14 +135,14 @@ export default function Community() {
                   className="mt-4"
                   onClick={() => setActiveTab("explore")}
                 >
-                  타브 탐색하기
+                  {t("community.exploreBtn")}
                 </Button>
               </>
             ) : (
               <>
                 <Music className="h-10 w-10 text-gray-300 dark:text-gray-700" />
                 <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  아직 공개된 타브가 없습니다.
+                  {t("community.exploreEmpty")}
                 </p>
               </>
             )}
@@ -175,7 +179,7 @@ export default function Community() {
                     {tab.likeCount}
                   </span>
                   <span className="ml-auto">
-                    {new Date(tab.updatedAt).toLocaleDateString("ko-KR")}
+                    {new Date(tab.updatedAt).toLocaleDateString(dateLocale)}
                   </span>
                 </div>
               </Link>

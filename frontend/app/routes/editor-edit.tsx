@@ -5,6 +5,7 @@ import { InspectorPanel } from "~/components/editor/InspectorPanel";
 import { PlaybackBar } from "~/components/editor/PlaybackBar";
 import { TabCanvas } from "~/components/editor/TabCanvas";
 import { Toolbar } from "~/components/editor/Toolbar";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { getAudioEngine } from "~/lib/audio/audio-engine";
 import { useAudioPlayer } from "~/lib/audio/use-audio-player";
@@ -14,13 +15,14 @@ import type { Duration } from "~/types/tab";
 import { TECHNIQUE_META } from "~/types/tab";
 
 export function meta() {
-  return [{ title: "타브 편집 - Tone Knob" }, { name: "description", content: "타브 편집" }];
+  return [{ title: "Edit Tab - Tone Knob" }, { name: "description", content: "Edit guitar tab" }];
 }
 
 export default function EditorEdit() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [isSaving, setIsSaving] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -157,8 +159,8 @@ export default function EditorEdit() {
 
   const handleAddSection = useCallback(() => {
     const num = editor.tab.sections.length + 1;
-    editor.addSection(`섹션 ${num}`);
-  }, [editor]);
+    editor.addSection(t("editor.defaultSection", { n: num }));
+  }, [editor, t]);
 
   const handleTogglePublish = useCallback(() => {
     setIsPublic((prev) => !prev);
@@ -261,7 +263,7 @@ export default function EditorEdit() {
         type="button"
         className="fixed bottom-4 right-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-miami-600 text-white shadow-lg lg:hidden"
         onClick={() => setShowInspector((v) => !v)}
-        title="타브 정보"
+        title={t("editor.mobileInspector")}
       >
         <svg
           viewBox="0 0 24 24"

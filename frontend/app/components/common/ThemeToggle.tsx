@@ -1,16 +1,18 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 
+import { useI18n } from "~/context/i18n";
 import { type Theme, useTheme } from "~/lib/theme";
 import { cn } from "~/lib/utils";
 
-const options: { value: Theme; icon: typeof Sun; label: string }[] = [
-  { value: "light", icon: Sun, label: "라이트" },
-  { value: "dark", icon: Moon, label: "다크" },
-  { value: "system", icon: Monitor, label: "시스템" },
-];
-
 export function ThemeToggle() {
+  const { t } = useI18n();
   const { theme, setTheme } = useTheme();
+
+  const options: { value: Theme; icon: typeof Sun; label: string }[] = [
+    { value: "light", icon: Sun, label: t("theme.light") },
+    { value: "dark", icon: Moon, label: t("theme.dark") },
+    { value: "system", icon: Monitor, label: t("theme.system") },
+  ];
 
   return (
     <div className="flex items-center rounded-lg border border-gray-200 p-0.5 dark:border-gray-700">

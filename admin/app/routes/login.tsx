@@ -1,12 +1,14 @@
 import { data, redirect } from "react-router";
 
-import type { Route } from "./+types/login";
-
+import { useI18n } from "~/context/i18n";
+import { createT, getLocale } from "~/i18n";
 import { verifyAdminCredentials } from "~/service/auth.server";
 import { commitSession, getSession } from "~/service/session.server";
 
+import type { Route } from "./+types/login";
+
 export function meta() {
-  return [{ title: "관리자 로그인 - Tone Knob Admin" }];
+  return [{ title: "Admin Login - Tone Knob Admin" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -17,16 +19,17 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
+  const t = createT(getLocale(request.headers.get("Cookie") ?? ""));
   const email = String(form.get("email") ?? "");
   const password = String(form.get("password") ?? "");
 
   if (!email || !password) {
-    return data({ error: "이메일과 비밀번호를 입력해주세요." }, { status: 400 });
+    return data({ error: t("login.error.required") }, { status: 400 });
   }
 
   const admin = await verifyAdminCredentials(email, password);
   if (!admin) {
-    return data({ error: "이메일 또는 비밀번호가 올바르지 않거나 관리자 권한이 없습니다." }, { status: 401 });
+    return data({ error: t("login.error.invalid") }, { status: 401 });
   }
 
   const session = await getSession(request.headers.get("Cookie"));
@@ -40,17 +43,46 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function LoginPage({ actionData }: Route.ComponentProps) {
+  const { t, locale } = useI18n();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
-            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            <svg
+              className="h-6 w-6 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white">Tone Knob Admin</h1>
-          <p className="mt-1 text-sm text-slate-400">관리자 계정으로 로그인하세요</p>
+          <p className="mt-1 text-sm text-slate-400">{t("login.subtitle")}</p>
+
+          {/* Language switcher */}
+          <div className="mt-3 flex justify-center gap-1">
+            {(["ko", "en"] as const).map((lng) => (
+              <form key={lng} method="post" action="/set-locale">
+                <input type="hidden" name="locale" value={lng} />
+                <button
+                  type="submit"
+                  className={`rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
+                    locale === lng ? "text-blue-400" : "text-slate-500 hover:text-slate-300"
+                  }`}
+                >
+                  {lng === "ko" ? "한국어" : "English"}
+                </button>
+              </form>
+            ))}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
@@ -63,7 +95,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-300">
-                이메일
+                {t("login.email")}
               </label>
               <input
                 id="email"
@@ -78,7 +110,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
 
             <div>
               <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-300">
-                비밀번호
+                {t("login.password")}
               </label>
               <input
                 id="password"
@@ -95,7 +127,7 @@ export default function LoginPage({ actionData }: Route.ComponentProps) {
               type="submit"
               className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
-              로그인
+              {t("login.submit")}
             </button>
           </form>
         </div>

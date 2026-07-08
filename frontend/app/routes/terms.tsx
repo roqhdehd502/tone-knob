@@ -1,24 +1,36 @@
 import { Link } from "react-router";
 
+import { useI18n } from "~/context/i18n";
+
 export function meta() {
   return [
-    { title: "이용약관 - Tone Knob" },
-    { name: "description", content: "Tone Knob 서비스 이용약관" },
+    { title: "Terms of Service - Tone Knob" },
+    { name: "description", content: "Tone Knob Terms of Service" },
   ];
 }
 
 export default function Terms() {
+  const { t, locale } = useI18n();
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
       <Link
         to="/"
         className="mb-8 inline-flex items-center gap-2 text-sm text-miami-600 hover:underline dark:text-miami-400"
       >
-        ← 홈으로 돌아가기
+        {t("terms.backHome")}
       </Link>
 
-      <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">이용약관</h1>
-      <p className="mb-10 text-sm text-gray-500 dark:text-gray-400">시행일: 2026년 3월 19일</p>
+      <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
+        {t("terms.heading")}
+      </h1>
+      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">{t("terms.effectiveDate")}</p>
+
+      {locale === "en" && (
+        <p className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+          {t("terms.onlyKorean")}
+        </p>
+      )}
 
       <div className="prose prose-gray max-w-none dark:prose-invert prose-headings:font-semibold prose-h2:mt-10 prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed">
         <h2>제1조 (목적)</h2>

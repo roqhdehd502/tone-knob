@@ -24,4 +24,4 @@ async function bootstrap() {
   await app.listen();
   logger.log(`Community microservice listening on TCP :${port}`);
 }
-bootstrap();
+void bootstrap();

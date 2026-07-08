@@ -1,5 +1,6 @@
 import { AlertCircle, Loader2, Users, Wifi, WifiOff } from "lucide-react";
 
+import { useI18n } from "~/context/i18n";
 import type { CollabStatus as Status } from "~/hooks/useCollabEditor";
 
 interface CollabStatusProps {
@@ -9,35 +10,37 @@ interface CollabStatusProps {
   className?: string;
 }
 
-const STATUS_CONFIG: Record<Status, { icon: React.ReactNode; label: string; color: string }> = {
-  connected: {
-    icon: <Wifi className="h-3.5 w-3.5" />,
-    label: "연결됨",
-    color: "text-green-500",
-  },
-  connecting: {
-    icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
-    label: "연결 중...",
-    color: "text-amber-500",
-  },
-  disconnected: {
-    icon: <WifiOff className="h-3.5 w-3.5" />,
-    label: "오프라인",
-    color: "text-gray-400",
-  },
-  error: {
-    icon: <AlertCircle className="h-3.5 w-3.5" />,
-    label: "연결 오류",
-    color: "text-red-500",
-  },
-};
-
 export function CollabStatus({
   status,
   revision,
   activeUserIds,
   className = "",
 }: CollabStatusProps) {
+  const { t } = useI18n();
+
+  const STATUS_CONFIG: Record<Status, { icon: React.ReactNode; label: string; color: string }> = {
+    connected: {
+      icon: <Wifi className="h-3.5 w-3.5" />,
+      label: t("collab.connected"),
+      color: "text-green-500",
+    },
+    connecting: {
+      icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
+      label: t("collab.connecting"),
+      color: "text-amber-500",
+    },
+    disconnected: {
+      icon: <WifiOff className="h-3.5 w-3.5" />,
+      label: t("collab.offline"),
+      color: "text-gray-400",
+    },
+    error: {
+      icon: <AlertCircle className="h-3.5 w-3.5" />,
+      label: t("collab.error"),
+      color: "text-red-500",
+    },
+  };
+
   const cfg = STATUS_CONFIG[status];
 
   return (
@@ -59,7 +62,7 @@ export function CollabStatus({
           {activeUserIds.length > 0 && (
             <span className="flex items-center gap-1 text-miami-600 dark:text-miami-400">
               <Users className="h-3.5 w-3.5" />
-              {activeUserIds.length}명 편집 중
+              {t("collab.editingCount", { n: activeUserIds.length })}
             </span>
           )}
 

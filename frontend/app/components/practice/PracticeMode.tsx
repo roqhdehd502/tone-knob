@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Gauge, Minus, Pause, Play, Plus, Repeat, RotateCcw, Timer } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { useI18n } from "~/context/i18n";
 
 interface PracticeModeProps {
   totalMeasures: number;
@@ -27,6 +28,7 @@ const PracticeMode = memo(function PracticeMode({
   onPlayStateChange,
   defaultBpm = 120,
 }: PracticeModeProps) {
+  const { t } = useI18n();
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(defaultBpm);
   const [speedMultiplier, setSpeedMultiplier] = useState(1.0);
@@ -120,7 +122,7 @@ const PracticeMode = memo(function PracticeMode({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
           <Gauge className="h-5 w-5 text-miami-500" />
-          연습 모드
+          {t("practice.title")}
         </h3>
         <div className="flex items-center gap-1 text-sm text-gray-500">
           <Timer className="h-4 w-4" />
@@ -151,14 +153,14 @@ const PracticeMode = memo(function PracticeMode({
           </Button>
         )}
         <span className="min-w-[3rem] text-center text-sm font-medium text-gray-700 dark:text-gray-300">
-          마디 {currentMeasure}
+          {t("practice.measure", { n: currentMeasure })}
         </span>
       </div>
 
       {/* BPM 조절 */}
       <div className="mb-4">
         <label className="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">
-          템포 (BPM)
+          {t("practice.tempo")}
         </label>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => adjustBpm(-5)}>
@@ -186,7 +188,7 @@ const PracticeMode = memo(function PracticeMode({
       {/* 속도 배율 프리셋 */}
       <div className="mb-4">
         <label className="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">
-          속도 배율 (실제 BPM: {effectiveBpm})
+          {t("practice.speedRatio", { bpm: effectiveBpm })}
         </label>
         <div className="flex gap-1">
           {SPEED_PRESETS.map((preset) => (
@@ -208,7 +210,9 @@ const PracticeMode = memo(function PracticeMode({
       {/* 루프 설정 */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">루프 구간</label>
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            {t("practice.loop")}
+          </label>
           <button
             onClick={() => setLoopEnabled(!loopEnabled)}
             className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
@@ -224,7 +228,9 @@ const PracticeMode = memo(function PracticeMode({
         {loopEnabled && (
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <label className="mb-1 block text-[10px] text-gray-400">시작 마디</label>
+              <label className="mb-1 block text-[10px] text-gray-400">
+                {t("practice.loopStart")}
+              </label>
               <input
                 type="number"
                 min={1}
@@ -238,7 +244,9 @@ const PracticeMode = memo(function PracticeMode({
             </div>
             <span className="mt-4 text-gray-400">~</span>
             <div className="flex-1">
-              <label className="mb-1 block text-[10px] text-gray-400">끝 마디</label>
+              <label className="mb-1 block text-[10px] text-gray-400">
+                {t("practice.loopEnd")}
+              </label>
               <input
                 type="number"
                 min={loopStart}

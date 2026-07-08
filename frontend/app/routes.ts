@@ -1,6 +1,9 @@
 import { index, layout, route, type RouteConfig } from "@react-router/dev/routes";
 
 export default [
+  // 유틸리티 라우트
+  route("set-locale", "routes/set-locale.tsx"),
+
   // 인증 페이지 (레이아웃 없음)
   route("login", "routes/login.tsx"),
   route("register", "routes/register.tsx"),

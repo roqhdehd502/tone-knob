@@ -24,17 +24,19 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
-  return [{ title: "프로필 - Tone Knob" }, { name: "description", content: "사용자 프로필" }];
+  return [{ title: "Profile - Tone Knob" }, { name: "description", content: "User profile" }];
 }
 
 export default function Profile() {
   const { user, isLoading, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const { t, dateLocale } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState({ displayName: "", bio: "" });
@@ -129,9 +131,19 @@ export default function Profile() {
     return <PageLoader />;
   }
 
+  const statsGrid = [
+    { icon: FileMusic, value: tabTotal, label: t("profile.tabsCreated") },
+    { icon: Radio, value: followerCount, label: t("profile.followersLabel") },
+    { icon: Coins, value: knobBalance.toLocaleString(), label: t("profile.knobBalance") },
+    {
+      icon: Music,
+      value: user.subscriptionTier === "free" ? "Free" : user.subscriptionTier,
+      label: t("profile.subscriptionPlan"),
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Profile header card */}
       <Card className="overflow-hidden">
         <div className="h-24 bg-linear-to-r from-miami-600 via-miami-600 to-rosewood-600" />
         <div className="px-6 pb-6">
@@ -161,7 +173,7 @@ export default function Profile() {
                   onClick={() => setIsEditing(true)}
                 >
                   <Edit3 className="h-3.5 w-3.5" />
-                  수정
+                  {t("profile.edit")}
                 </Button>
               ) : (
                 <div className="flex gap-2">
@@ -174,7 +186,7 @@ export default function Profile() {
                     ) : (
                       <Save className="h-3.5 w-3.5" />
                     )}
-                    저장
+                    {t("profile.save")}
                   </Button>
                 </div>
               )}
@@ -184,7 +196,7 @@ export default function Profile() {
           {isEditing ? (
             <div className="mt-4 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="displayName">표시 이름</Label>
+                <Label htmlFor="displayName">{t("profile.displayNameLabel")}</Label>
                 <Input
                   id="displayName"
                   value={editData.displayName}
@@ -192,7 +204,7 @@ export default function Profile() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bio">소개</Label>
+                <Label htmlFor="bio">{t("profile.bioLabel")}</Label>
                 <textarea
                   id="bio"
                   value={editData.bio}
@@ -200,7 +212,7 @@ export default function Profile() {
                   maxLength={500}
                   rows={3}
                   className="w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm transition-colors focus:border-miami-500 focus:outline-none dark:border-gray-700"
-                  placeholder="자기소개를 입력하세요..."
+                  placeholder={t("profile.bioPlaceholder")}
                 />
                 <p className="text-right text-xs text-gray-400">{editData.bio.length}/500</p>
               </div>
@@ -213,14 +225,16 @@ export default function Profile() {
               <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />
-                  {new Date(user.createdAt).toLocaleDateString("ko-KR")} 가입
+                  {t("profile.joinDate", {
+                    date: new Date(user.createdAt).toLocaleDateString(dateLocale),
+                  })}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" />
-                  <strong className="text-gray-900 dark:text-white">{followerCount}</strong> 팔로워
+                  {t("profile.followers", { n: followerCount })}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <strong className="text-gray-900 dark:text-white">{followingCount}</strong> 팔로잉
+                  {t("profile.following", { n: followingCount })}
                 </span>
               </div>
             </>
@@ -228,22 +242,8 @@ export default function Profile() {
         </div>
       </Card>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { icon: FileMusic, value: tabTotal, label: "제작한 타브" },
-          { icon: Radio, value: followerCount, label: "팔로워" },
-          {
-            icon: Coins,
-            value: knobBalance.toLocaleString(),
-            label: "Knob 잔액",
-          },
-          {
-            icon: Music,
-            value: user.subscriptionTier === "free" ? "Free" : user.subscriptionTier,
-            label: "구독 플랜",
-          },
-        ].map((stat) => (
+        {statsGrid.map((stat) => (
           <Card key={stat.label} className="p-4 text-center">
             <stat.icon className="mx-auto h-5 w-5 text-miami-600 dark:text-miami-400" />
             <p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
@@ -252,15 +252,14 @@ export default function Profile() {
         ))}
       </div>
 
-      {/* Badge collection */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Award className="h-4 w-4 text-miami-600" />
-            뱃지 컬렉션
+            {t("profile.badgeCollection")}
             {badges.length > 0 && (
               <span className="ml-auto text-xs font-normal text-gray-400">
-                {badges.filter((b) => b.isFeatured).length}/3 대표 뱃지
+                {t("profile.featuredBadges", { n: badges.filter((b) => b.isFeatured).length })}
               </span>
             )}
           </CardTitle>
@@ -269,10 +268,8 @@ export default function Profile() {
           {badges.length === 0 ? (
             <div className="space-y-3 rounded-lg border border-dashed border-gray-200 p-6 text-center dark:border-gray-800">
               <Award className="mx-auto h-8 w-8 text-gray-300 dark:text-gray-700" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                아직 획득한 뱃지가 없습니다
-              </p>
-              <p className="text-xs text-gray-400">활동을 통해 뱃지를 획득해보세요!</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t("profile.noBadges")}</p>
+              <p className="text-xs text-gray-400">{t("profile.noBadgesHint")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -299,7 +296,7 @@ export default function Profile() {
                     </span>
                   )}
                   <span className="text-[10px] text-gray-400">
-                    {new Date(ub.earnedAt).toLocaleDateString("ko-KR")}
+                    {new Date(ub.earnedAt).toLocaleDateString(dateLocale)}
                   </span>
                 </button>
               ))}
@@ -308,20 +305,17 @@ export default function Profile() {
         </CardContent>
       </Card>
 
-      {/* My tabs */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">내 타브</CardTitle>
+          <CardTitle className="text-base">{t("profile.myTabs")}</CardTitle>
         </CardHeader>
         <CardContent>
           {myTabs.length === 0 ? (
             <div className="space-y-3 rounded-lg border border-dashed border-gray-200 p-6 text-center dark:border-gray-800">
               <FileMusic className="mx-auto h-8 w-8 text-gray-300 dark:text-gray-700" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                아직 제작한 타브가 없습니다
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t("profile.noTabs")}</p>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/editor/new">첫 타브 만들기</Link>
+                <Link to="/editor/new">{t("profile.createFirstTab")}</Link>
               </Button>
             </div>
           ) : (
@@ -354,13 +348,15 @@ export default function Profile() {
                           : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
                       }`}
                     >
-                      {tab.isPublic ? "공개" : "비공개"}
+                      {tab.isPublic ? t("profile.publicLabel") : t("profile.privateLabel")}
                     </span>
                   </div>
                 </Link>
               ))}
               {tabTotal > 10 && (
-                <p className="pt-2 text-center text-xs text-gray-400">외 {tabTotal - 10}개 더</p>
+                <p className="pt-2 text-center text-xs text-gray-400">
+                  {t("profile.moreItems", { n: tabTotal - 10 })}
+                </p>
               )}
             </div>
           )}

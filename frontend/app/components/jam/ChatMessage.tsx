@@ -1,5 +1,6 @@
 import { memo } from "react";
 
+import { useI18n } from "~/context/i18n";
 import type { ChatMessage as ChatMessageType } from "~/lib/jam/use-jam-socket";
 
 interface ChatMessageProps {
@@ -13,16 +14,18 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   isMe,
   senderName,
 }: ChatMessageProps) {
+  const { t, dateLocale } = useI18n();
+
   return (
     <div className="mb-2">
       <div className="flex items-baseline gap-1.5">
         <span
           className={`text-xs font-semibold ${isMe ? "text-miami-600 dark:text-miami-400" : "text-gray-700 dark:text-gray-300"}`}
         >
-          {isMe ? "나" : senderName}
+          {isMe ? t("chat.me") : senderName}
         </span>
         <span className="text-[10px] text-gray-400">
-          {new Date(msg.timestamp).toLocaleTimeString("ko-KR", {
+          {new Date(msg.timestamp).toLocaleTimeString(dateLocale, {
             hour: "2-digit",
             minute: "2-digit",
           })}

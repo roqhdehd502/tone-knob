@@ -7,20 +7,22 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabListResponse } from "~/types/tab";
 
 export function meta() {
   return [
-    { title: "합주방 만들기 - Tone Knob" },
-    { name: "description", content: "새로운 합주방 만들기" },
+    { title: "Create Jam Room - Tone Knob" },
+    { name: "description", content: "Create a new jam room" },
   ];
 }
 
 export default function JamroomCreate() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [myTabs, setMyTabs] = useState<TabListResponse["data"]>([]);
   const [formData, setFormData] = useState({
@@ -70,13 +72,13 @@ export default function JamroomCreate() {
         bpm: formData.bpm,
       });
       if (!room?.id) {
-        throw new Error("합주방 생성 응답이 올바르지 않습니다");
+        throw new Error(t("jamroomCreate.errorInvalidResponse"));
       }
       navigate(`/jamroom/${room.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "알 수 없는 오류";
+      const message = error instanceof Error ? error.message : t("jamroomCreate.errorGeneric");
       console.error("Failed to create room:", error);
-      alert(`합주방 생성에 실패했습니다.\n${message}`);
+      alert(t("jamroomCreate.errorAlert", { message }));
     } finally {
       setLoading(false);
     }
@@ -90,17 +92,17 @@ export default function JamroomCreate() {
         className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-miami-500 dark:text-gray-500"
       >
         <ArrowLeft className="h-3 w-3" />
-        합주방 목록으로
+        {t("jamroomCreate.backToList")}
       </button>
 
       <Card>
         <CardHeader>
-          <CardTitle>합주방 만들기</CardTitle>
+          <CardTitle>{t("jamroomCreate.cardTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="name">합주방 이름 *</Label>
+              <Label htmlFor="name">{t("jamroomCreate.nameLabel")}</Label>
               <Input
                 id="name"
                 type="text"
@@ -108,30 +110,30 @@ export default function JamroomCreate() {
                 maxLength={100}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="예: 주말 밴드 연습"
+                placeholder={t("jamroomCreate.namePlaceholder")}
               />
             </div>
 
             <div>
-              <Label htmlFor="description">설명</Label>
+              <Label htmlFor="description">{t("jamroomCreate.descriptionLabel")}</Label>
               <textarea
                 id="description"
                 className="h-20 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-miami-500 focus:ring-2 focus:ring-miami-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="합주방에 대한 간단한 설명을 입력하세요"
+                placeholder={t("jamroomCreate.descriptionPlaceholder")}
               />
             </div>
 
             <div>
-              <Label htmlFor="tabId">연주할 타브 (선택)</Label>
+              <Label htmlFor="tabId">{t("jamroomCreate.tabLabel")}</Label>
               <select
                 id="tabId"
                 className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm outline-none focus:border-miami-500 focus:ring-2 focus:ring-miami-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 value={formData.tabId}
                 onChange={(e) => setFormData({ ...formData, tabId: e.target.value })}
               >
-                <option value="">타브 선택 안 함</option>
+                <option value="">{t("jamroomCreate.tabNone")}</option>
                 {myTabs.map((tab) => (
                   <option key={tab.id} value={tab.id}>
                     {tab.title}
@@ -143,7 +145,7 @@ export default function JamroomCreate() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="maxParticipants">최대 인원</Label>
+                <Label htmlFor="maxParticipants">{t("jamroomCreate.maxParticipantsLabel")}</Label>
                 <Input
                   id="maxParticipants"
                   type="number"
@@ -188,21 +190,21 @@ export default function JamroomCreate() {
                   className="h-4 w-4 rounded border-gray-300 text-miami-600 focus:ring-miami-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                  비공개 합주방 (비밀번호 필요)
+                  {t("jamroomCreate.isPrivateLabel")}
                 </span>
               </label>
             </div>
 
             {formData.isPrivate && (
               <div>
-                <Label htmlFor="password">비밀번호</Label>
+                <Label htmlFor="password">{t("jamroomCreate.passwordLabel")}</Label>
                 <Input
                   id="password"
                   type="password"
                   maxLength={50}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="비밀번호를 입력하세요"
+                  placeholder={t("jamroomCreate.passwordPlaceholder")}
                 />
               </div>
             )}
@@ -214,10 +216,10 @@ export default function JamroomCreate() {
                 onClick={() => navigate("/jamroom")}
                 className="flex-1"
               >
-                취소
+                {t("jamroomCreate.cancel")}
               </Button>
               <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? "생성 중..." : "합주방 만들기"}
+                {loading ? t("jamroomCreate.creating") : t("jamroomCreate.create")}
               </Button>
             </div>
           </form>

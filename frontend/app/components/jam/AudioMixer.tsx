@@ -9,19 +9,21 @@ import { memo } from "react";
 
 import { Crown, Guitar, Mic, MicOff, Volume2, VolumeX, Wifi } from "lucide-react";
 
+import { useI18n } from "~/context/i18n";
+import type { MessageKey } from "~/i18n";
 import { getLatencyColor } from "~/lib/jam/latency";
 import type { JamParticipant } from "~/types/jam-room";
 
 import { AudioLevelMeter } from "./AudioLevelMeter";
 
-const INSTRUMENT_LABELS: Record<string, string> = {
-  "electric-guitar": "일렉 기타",
-  "acoustic-guitar": "어쿠스틱 기타",
-  bass: "베이스",
-  keyboard: "키보드",
-  drums: "드럼",
-  vocals: "보컬",
-  other: "기타",
+const INSTRUMENT_KEY_MAP: Record<string, MessageKey> = {
+  "electric-guitar": "audioMixer.instruments.electricGuitar",
+  "acoustic-guitar": "audioMixer.instruments.acousticGuitar",
+  bass: "audioMixer.instruments.bass",
+  keyboard: "audioMixer.instruments.keyboard",
+  drums: "audioMixer.instruments.drums",
+  vocals: "audioMixer.instruments.vocals",
+  other: "audioMixer.instruments.other",
 };
 
 interface MixerChannelProps {
@@ -47,7 +49,9 @@ const MixerChannel = memo(function MixerChannel({
   onVolumeChange,
   onMonitoringToggle,
 }: MixerChannelProps) {
-  const displayName = participant.user?.displayName || participant.user?.username || "Unknown";
+  const { t } = useI18n();
+  const displayName =
+    participant.user?.displayName || participant.user?.username || t("common.unknown");
   const isMuted = participant.isMuted;
 
   return (
@@ -67,19 +71,23 @@ const MixerChannel = memo(function MixerChannel({
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
               {displayName}
-              {isSelf && <span className="ml-1 text-xs text-miami-500">(나)</span>}
+              {isSelf && (
+                <span className="ml-1 text-xs text-miami-500">{t("audioMixer.self")}</span>
+              )}
             </p>
             <div className="flex items-center gap-1.5">
               {isHost && (
                 <span className="flex items-center gap-0.5 text-xs text-miami-600 dark:text-miami-400">
                   <Crown className="h-2.5 w-2.5" />
-                  호스트
+                  {t("audioMixer.host")}
                 </span>
               )}
               {participant.instrument && (
                 <span className="flex items-center gap-0.5 text-xs text-gray-400 dark:text-gray-500">
                   <Guitar className="h-2.5 w-2.5" />
-                  {INSTRUMENT_LABELS[participant.instrument] || participant.instrument}
+                  {INSTRUMENT_KEY_MAP[participant.instrument]
+                    ? t(INSTRUMENT_KEY_MAP[participant.instrument])
+                    : participant.instrument}
                 </span>
               )}
             </div>
@@ -133,12 +141,12 @@ const MixerChannel = memo(function MixerChannel({
           {monitoring ? (
             <>
               <Mic className="h-3 w-3" />
-              모니터링 ON
+              {t("audioMixer.monitorOn")}
             </>
           ) : (
             <>
               <MicOff className="h-3 w-3" />
-              모니터링 OFF
+              {t("audioMixer.monitorOff")}
             </>
           )}
         </button>
@@ -176,9 +184,10 @@ export const AudioMixer = memo(function AudioMixer({
   onVolumeChange,
   onSelfMonitoringToggle,
 }: AudioMixerProps) {
+  const { t } = useI18n();
+
   if (!hasJoined) return null;
 
-  // 본인을 맨 위에 정렬
   const sorted = [...participants].sort((a, b) => {
     if (a.userId === selfUserId) return -1;
     if (b.userId === selfUserId) return 1;
@@ -188,7 +197,7 @@ export const AudioMixer = memo(function AudioMixer({
   return (
     <div className="space-y-2">
       <h4 className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-400">
-        🎚️ 오디오 믹서
+        {t("audioMixer.title")}
       </h4>
       {sorted.map((p) => {
         const isSelf = p.userId === selfUserId;

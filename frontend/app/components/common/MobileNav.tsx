@@ -2,17 +2,20 @@ import { NavLink } from "react-router";
 
 import { FileMusic, Home, Radio, Search, Users } from "lucide-react";
 
+import { useI18n } from "~/context/i18n";
 import { cn } from "~/lib/utils";
 
-const navItems = [
-  { to: "/", icon: Home, label: "홈" },
-  { to: "/tabs", icon: Search, label: "탐색" },
-  { to: "/editor", icon: FileMusic, label: "에디터" },
-  { to: "/jamroom", icon: Radio, label: "합주" },
-  { to: "/community", icon: Users, label: "커뮤니티" },
-];
-
 export function MobileNav() {
+  const { t } = useI18n();
+
+  const navItems = [
+    { to: "/", icon: Home, label: t("mobileNav.home") },
+    { to: "/tabs", icon: Search, label: t("mobileNav.explore") },
+    { to: "/editor", icon: FileMusic, label: t("mobileNav.editor") },
+    { to: "/jamroom", icon: Radio, label: t("mobileNav.jam") },
+    { to: "/community", icon: Users, label: t("mobileNav.community") },
+  ];
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200/60 bg-white/90 backdrop-blur-xl dark:border-gray-800/60 dark:bg-gray-950/90 lg:hidden">
       <div className="flex items-center justify-around">

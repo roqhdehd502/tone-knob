@@ -1,3 +1,5 @@
+import { NavLink } from "react-router";
+
 import {
   Award,
   Bot,
@@ -12,29 +14,30 @@ import {
   Video,
   Wallet,
 } from "lucide-react";
-import { NavLink } from "react-router";
 
+import { useI18n } from "~/context/i18n";
 import { useSidebar } from "~/context/sidebar";
 
 import { cn } from "../ui/cn";
 
-const navItems = [
-  { to: "/", label: "대시보드", icon: LayoutDashboard, end: true },
-  { to: "/users", label: "유저 관리", icon: Users },
-  { to: "/tabs", label: "타브 관리", icon: Music },
-  { to: "/jam-rooms", label: "합주방 관리", icon: Headphones },
-  { to: "/subscriptions", label: "구독 관리", icon: CreditCard },
-  { to: "/recordings", label: "녹음 관리", icon: Video },
-  { to: "/payments", label: "결제 관리", icon: Wallet },
-  { to: "/settlements", label: "정산 관리", icon: Receipt },
-  { to: "/ai-jobs", label: "AI 작업", icon: Bot },
-  { to: "/badges", label: "뱃지 관리", icon: Award },
-  { to: "/knob", label: "Knob 재화", icon: Coins },
-  { to: "/purchases", label: "구매 내역", icon: ShoppingCart },
-];
-
 export function Sidebar() {
   const { isOpen, close } = useSidebar();
+  const { t } = useI18n();
+
+  const navItems = [
+    { to: "/", label: t("nav.dashboard"), icon: LayoutDashboard, end: true },
+    { to: "/users", label: t("nav.users"), icon: Users },
+    { to: "/tabs", label: t("nav.tabs"), icon: Music },
+    { to: "/jam-rooms", label: t("nav.jamRooms"), icon: Headphones },
+    { to: "/subscriptions", label: t("nav.subscriptions"), icon: CreditCard },
+    { to: "/recordings", label: t("nav.recordings"), icon: Video },
+    { to: "/payments", label: t("nav.payments"), icon: Wallet },
+    { to: "/settlements", label: t("nav.settlements"), icon: Receipt },
+    { to: "/ai-jobs", label: t("nav.aiJobs"), icon: Bot },
+    { to: "/badges", label: t("nav.badges"), icon: Award },
+    { to: "/knob", label: t("nav.knob"), icon: Coins },
+    { to: "/purchases", label: t("nav.purchases"), icon: ShoppingCart },
+  ];
 
   return (
     <>
@@ -97,7 +100,7 @@ export function Sidebar() {
               type="submit"
               className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
             >
-              로그아웃
+              {t("nav.logout")}
             </button>
           </form>
         </div>

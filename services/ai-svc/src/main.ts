@@ -21,4 +21,4 @@ async function bootstrap() {
   await app.listen();
   logger.log(`AI microservice listening on TCP :${port}`);
 }
-bootstrap();
+void bootstrap();

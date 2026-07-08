@@ -58,7 +58,7 @@ export class CollabGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const conn = this.connections.get(client.id);
     if (conn) {
       await this.collabService.leaveSession(conn.tabId, conn.userId);
-      client.leave(`tab:${conn.tabId}`);
+      await client.leave(`tab:${conn.tabId}`);
       this.server.to(`tab:${conn.tabId}`).emit("user:left", { userId: conn.userId });
       this.connections.delete(client.id);
     }

@@ -19,6 +19,7 @@ import {
 
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import { cn } from "~/lib/utils";
@@ -29,31 +30,32 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const mainNavItems = [
-  { to: "/", icon: Home, label: "홈" },
-  { to: "/tabs", icon: Search, label: "타브 탐색" },
-  { to: "/tabs/my", icon: FolderOpen, label: "내 타브" },
-  { to: "/editor", icon: FileMusic, label: "타브 에디터" },
-  { to: "/jamroom", icon: Radio, label: "합주방" },
-  { to: "/community", icon: Users, label: "커뮤니티" },
-];
-
-const toolNavItems = [
-  { to: "/ai-generate", icon: Wand2, label: "AI 타브 생성" },
-  { to: "/audio-extract", icon: AudioLines, label: "오디오 추출" },
-  { to: "/recordings", icon: Mic, label: "녹음" },
-];
-
-const moreNavItems = [
-  { to: "/marketplace", icon: ShoppingBag, label: "마켓플레이스" },
-  { to: "/subscription", icon: Sparkles, label: "구독" },
-];
-
-const bottomNavItems = [{ to: "/settings", icon: Settings, label: "설정" }];
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [recentTabs, setRecentTabs] = useState<TabListItem[]>([]);
+
+  const mainNavItems = [
+    { to: "/", icon: Home, label: t("nav.home") },
+    { to: "/tabs", icon: Search, label: t("nav.tabs") },
+    { to: "/tabs/my", icon: FolderOpen, label: t("nav.myTabs") },
+    { to: "/editor", icon: FileMusic, label: t("nav.editor") },
+    { to: "/jamroom", icon: Radio, label: t("nav.jamroom") },
+    { to: "/community", icon: Users, label: t("nav.community") },
+  ];
+
+  const toolNavItems = [
+    { to: "/ai-generate", icon: Wand2, label: t("nav.aiGenerate") },
+    { to: "/audio-extract", icon: AudioLines, label: t("nav.audioExtract") },
+    { to: "/recordings", icon: Mic, label: t("nav.recordings") },
+  ];
+
+  const moreNavItems = [
+    { to: "/marketplace", icon: ShoppingBag, label: t("nav.marketplace") },
+    { to: "/subscription", icon: Sparkles, label: t("nav.subscription") },
+  ];
+
+  const bottomNavItems = [{ to: "/settings", icon: Settings, label: t("nav.settings") }];
 
   useEffect(() => {
     if (user) {
@@ -86,7 +88,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       <aside
-        aria-label="사이드바 내비게이션"
+        aria-label={t("nav.sidebarLabel")}
         className={cn(
           "fixed left-0 top-14 z-40 flex h-[calc(100vh-3.5rem)] w-60 flex-col border-r border-gray-200/60 bg-white/95 backdrop-blur-sm transition-transform duration-200 dark:border-gray-800/60 dark:bg-gray-950/95",
           "lg:translate-x-0",
@@ -96,7 +98,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex-1 overflow-y-auto p-4">
           <Button className="mb-4 w-full gap-2" asChild>
             <NavLink to="/editor/new">
-              <Plus className="h-4 w-4" />새 타브 만들기
+              <Plus className="h-4 w-4" />
+              {t("nav.newTab")}
             </NavLink>
           </Button>
 
@@ -126,7 +129,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <div className="space-y-1">
             <p className="px-3 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
-              도구
+              {t("nav.tools")}
             </p>
             {toolNavItems.map((item) => (
               <NavLink
@@ -152,7 +155,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <div className="space-y-1">
             <p className="px-3 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
-              더 보기
+              {t("nav.more")}
             </p>
             {moreNavItems.map((item) => (
               <NavLink
@@ -178,11 +181,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <div className="space-y-1">
             <p className="px-3 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
-              최근 타브
+              {t("nav.recentTabs")}
             </p>
             {recentTabs.length === 0 ? (
               <p className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                {user ? "아직 타브가 없습니다" : "로그인해주세요"}
+                {user ? t("nav.recentTabsEmpty") : t("nav.loginPrompt")}
               </p>
             ) : (
               recentTabs.map((tab) => (

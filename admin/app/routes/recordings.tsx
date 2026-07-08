@@ -1,15 +1,16 @@
-import type { Route } from "./+types/recordings";
-
 import { Topbar } from "~/components/layout/Topbar";
 import { Badge } from "~/components/ui/Badge";
+import { useI18n } from "~/context/i18n";
 import { requireAdmin } from "~/service/session.server";
 import { getSupabase } from "~/service/supabase.server";
 import type { RecordingRow } from "~/types/db";
 
+import type { Route } from "./+types/recordings";
+
 const PAGE_SIZE = 20;
 
 export function meta() {
-  return [{ title: "녹음 관리 - Tone Knob Admin" }];
+  return [{ title: "Recordings - Tone Knob Admin" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -44,6 +45,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
   const { admin, recordings, total, page, visibility, totalPages } = loaderData;
+  const { t, dateLocale } = useI18n();
 
   const buildHref = (overrides: Record<string, string | number>) => {
     const params = new URLSearchParams();
@@ -55,6 +57,12 @@ export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
 
   const visibilityVariant = (v: string) =>
     v === "public" ? "success" : v === "unlisted" ? "warning" : "default";
+
+  const visibilityLabel = (v: string) => {
+    if (v === "public") return t("common.public");
+    if (v === "unlisted") return t("common.unlisted");
+    return t("common.private");
+  };
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return "—";
@@ -71,13 +79,16 @@ export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Topbar adminName={admin.adminName} adminEmail={admin.adminEmail} title="녹음 관리" />
+      <Topbar
+        adminName={admin.adminName}
+        adminEmail={admin.adminEmail}
+        title={t("recordings.pageTitle")}
+      />
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-
           <div className="flex items-center gap-3">
             <p className="text-sm text-slate-500">
-              총 <span className="font-semibold text-slate-900">{total.toLocaleString()}</span>개
+              {t("recordings.total", { n: total.toLocaleString() })}
             </p>
             <div className="flex rounded-lg border border-slate-200 bg-white text-sm">
               {(["all", "public", "unlisted", "private"] as const).map((v, i, arr) => (
@@ -88,7 +99,7 @@ export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
                     visibility === v ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-50"
                   } ${i === 0 ? "rounded-l-lg" : i === arr.length - 1 ? "rounded-r-lg" : ""}`}
                 >
-                  {v === "all" ? "전체" : v === "public" ? "공개" : v === "unlisted" ? "미등록" : "비공개"}
+                  {v === "all" ? t("common.all") : visibilityLabel(v)}
                 </a>
               ))}
             </div>
@@ -98,27 +109,41 @@ export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
             <table className="w-full min-w-[520px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">제목</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">공개 설정</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">재생 시간</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">파일 크기</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">업로드일</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("recordings.colTitle")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("recordings.colVisibility")}
+                  </th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("recordings.colDuration")}
+                  </th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("recordings.colSize")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("recordings.colDate")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {recordings.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-slate-400">녹음이 없습니다.</td>
+                    <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
+                      {t("recordings.noRecordings")}
+                    </td>
                   </tr>
                 ) : (
                   recordings.map((rec) => (
                     <tr key={rec.id} className="hover:bg-slate-50">
                       <td className="max-w-[200px] truncate px-4 py-3 font-medium text-slate-900 sm:max-w-[240px] sm:px-5">
-                        {rec.title ?? <span className="text-slate-300">제목 없음</span>}
+                        {rec.title ?? (
+                          <span className="text-slate-300">{t("recordings.noTitle")}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 sm:px-5">
                         <Badge variant={visibilityVariant(rec.visibility)}>
-                          {rec.visibility === "public" ? "공개" : rec.visibility === "unlisted" ? "미등록" : "비공개"}
+                          {visibilityLabel(rec.visibility)}
                         </Badge>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right text-slate-600 sm:px-5">
@@ -128,7 +153,7 @@ export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
                         {formatSize(rec.fileSize)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-400 sm:px-5">
-                        {new Date(rec.createdAt).toLocaleDateString("ko-KR")}
+                        {new Date(rec.createdAt).toLocaleDateString(dateLocale)}
                       </td>
                     </tr>
                   ))
@@ -139,12 +164,27 @@ export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1">
-              {page > 1 && <a href={buildHref({ page: page - 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">이전</a>}
-              <span className="px-3 py-1.5 text-sm text-slate-500">{page} / {totalPages}</span>
-              {page < totalPages && <a href={buildHref({ page: page + 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">다음</a>}
+              {page > 1 && (
+                <a
+                  href={buildHref({ page: page - 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.prev")}
+                </a>
+              )}
+              <span className="px-3 py-1.5 text-sm text-slate-500">
+                {page} / {totalPages}
+              </span>
+              {page < totalPages && (
+                <a
+                  href={buildHref({ page: page + 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.next")}
+                </a>
+              )}
             </div>
           )}
-
         </div>
       </main>
     </>

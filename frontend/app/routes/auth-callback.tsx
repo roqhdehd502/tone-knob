@@ -3,16 +3,18 @@ import { useNavigate, useSearchParams } from "react-router";
 
 import { Loader2 } from "lucide-react";
 
+import { useI18n } from "~/context/i18n";
 import { useAuth } from "~/lib/auth";
 
 export function meta() {
-  return [{ title: "로그인 중... - Tone Knob" }];
+  return [{ title: "Signing in... - Tone Knob" }];
 }
 
 export default function AuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setSocialTokens } = useAuth();
+  const { t } = useI18n();
 
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
@@ -30,7 +32,7 @@ export default function AuthCallback() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-miami-500" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">로그인 처리 중...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("auth.loading")}</p>
       </div>
     </div>
   );

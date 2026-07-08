@@ -16,34 +16,25 @@ import {
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
+import type { MessageKey } from "~/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
   return [
-    { title: "Tone Knob - 타브 제작 & 실시간 합주 플랫폼" },
+    { title: "Tone Knob - Tab Creator & Jam Platform" },
     {
       name: "description",
-      content: "음악을 사랑하는 사람들을 위한 타브 제작 및 실시간 온라인 합주 플랫폼",
+      content: "Tab creation and real-time online jam platform for music lovers",
     },
   ];
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "방금 전";
-  if (mins < 60) return `${mins}분 전`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}시간 전`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}일 전`;
-  return new Date(dateStr).toLocaleDateString("ko-KR");
-}
-
 export default function Home() {
   const { user } = useAuth();
+  const { t, dateLocale } = useI18n();
   const [publicTabs, setPublicTabs] = useState<TabListItem[]>([]);
   const [myTabs, setMyTabs] = useState<TabListItem[]>([]);
   const [publicTotal, setPublicTotal] = useState(0);
@@ -66,10 +57,31 @@ export default function Home() {
   }, [user]);
 
   const stats = [
-    { label: "공개 타브", value: String(publicTotal), icon: FileMusic },
-    { label: "활성 합주방", value: "0", icon: Radio },
-    { label: "커뮤니티 멤버", value: "0", icon: Users },
-    { label: "이번 주 활동", value: "0", icon: TrendingUp },
+    { label: t("home.statsPublicTabs"), value: String(publicTotal), icon: FileMusic },
+    { label: t("home.statsActiveJam"), value: "0", icon: Radio },
+    { label: t("home.statsMembers"), value: "0", icon: Users },
+    { label: t("home.statsWeeklyActivity"), value: "0", icon: TrendingUp },
+  ];
+
+  const quickLinks = [
+    {
+      to: "/editor/new",
+      icon: FileMusic,
+      title: t("home.quickTabCreate"),
+      desc: t("home.quickTabCreateDesc"),
+    },
+    {
+      to: "/jamroom",
+      icon: Radio,
+      title: t("home.quickJam"),
+      desc: t("home.quickJamDesc"),
+    },
+    {
+      to: "/community",
+      icon: Users,
+      title: t("home.quickCommunity"),
+      desc: t("home.quickCommunityDesc"),
+    },
   ];
 
   return (
@@ -82,17 +94,18 @@ export default function Home() {
           <div className="flex items-center gap-2 text-miami-200">
             <Sparkles className="h-4 w-4" />
             <span className="text-xs font-medium uppercase tracking-wider">
-              {user ? `${user.displayName || user.username}님, 환영합니다` : "Tone Knob"}
+              {user
+                ? t("home.welcomeUser", { name: user.displayName || user.username })
+                : t("home.brandName")}
             </span>
           </div>
-          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">음악을 만들고, 함께 연주하세요</h1>
-          <p className="mt-2 max-w-lg text-sm text-white/70">
-            타브 제작부터 실시간 합주까지 — 당신의 음악 여정이 여기서 시작됩니다.
-          </p>
+          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{t("home.tagline")}</h1>
+          <p className="mt-2 max-w-lg text-sm text-white/70">{t("home.subtitle")}</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Button asChild className="bg-white text-miami-700 hover:bg-white/90">
               <Link to="/editor/new" className="gap-2">
-                <Plus className="h-4 w-4" />새 타브 만들기
+                <Plus className="h-4 w-4" />
+                {t("home.newTab")}
               </Link>
             </Button>
             <Button
@@ -101,7 +114,7 @@ export default function Home() {
               className="border-white/30 text-white hover:bg-white/10"
             >
               <Link to="/tabs" className="gap-2">
-                타브 둘러보기
+                {t("home.exploreTabs")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -132,13 +145,13 @@ export default function Home() {
         {/* 내 타브 */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base">내 타브</CardTitle>
+            <CardTitle className="text-base">{t("home.myTabs")}</CardTitle>
             {user && myTabs.length > 0 && (
               <Link
                 to="/tabs/my"
                 className="flex items-center gap-1 text-xs text-miami-600 hover:underline dark:text-miami-400"
               >
-                전체 보기 <ArrowRight className="h-3 w-3" />
+                {t("home.viewAll")} <ArrowRight className="h-3 w-3" />
               </Link>
             )}
           </CardHeader>
@@ -146,25 +159,23 @@ export default function Home() {
             {!user ? (
               <div className="space-y-3 rounded-lg border border-dashed border-gray-200 p-4 text-center dark:border-gray-800">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  로그인하면 내 타브를 확인할 수 있습니다.
+                  {t("home.noMyTabsLogin")}
                 </p>
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/login">로그인</Link>
+                  <Link to="/login">{t("home.loginBtn")}</Link>
                 </Button>
               </div>
             ) : myTabs.length === 0 ? (
               <div className="space-y-3 rounded-lg border border-dashed border-gray-200 p-4 text-center dark:border-gray-800">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  아직 제작한 타브가 없습니다.
-                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t("home.noMyTabs")}</p>
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/editor/new">타브 만들기</Link>
+                  <Link to="/editor/new">{t("home.createTab")}</Link>
                 </Button>
               </div>
             ) : (
               <div className="space-y-1.5">
                 {myTabs.map((tab) => (
-                  <TabListCard key={tab.id} tab={tab} />
+                  <TabListCard key={tab.id} tab={tab} dateLocale={dateLocale} t={t} />
                 ))}
               </div>
             )}
@@ -174,16 +185,14 @@ export default function Home() {
         {/* 인기 합주방 */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">인기 합주방</CardTitle>
+            <CardTitle className="text-base">{t("home.popularJam")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 rounded-lg border border-dashed border-gray-200 p-4 text-center dark:border-gray-800">
               <Radio className="mx-auto h-8 w-8 text-gray-300 dark:text-gray-700" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                현재 활성화된 합주방이 없습니다.
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t("home.noJamRooms")}</p>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/jamroom">합주방 둘러보기</Link>
+                <Link to="/jamroom">{t("home.browseJams")}</Link>
               </Button>
             </div>
           </CardContent>
@@ -193,13 +202,13 @@ export default function Home() {
       {/* 공개 타브 */}
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="text-base">최근 공개 타브</CardTitle>
+          <CardTitle className="text-base">{t("home.recentPublicTabs")}</CardTitle>
           {publicTabs.length > 0 && (
             <Link
               to="/tabs"
               className="flex items-center gap-1 text-xs text-miami-600 hover:underline dark:text-miami-400"
             >
-              전체 보기 <ArrowRight className="h-3 w-3" />
+              {t("home.viewAll")} <ArrowRight className="h-3 w-3" />
             </Link>
           )}
         </CardHeader>
@@ -208,13 +217,13 @@ export default function Home() {
             <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center dark:border-gray-800">
               <FileMusic className="mx-auto h-8 w-8 text-gray-300 dark:text-gray-700" />
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                아직 공개된 타브가 없습니다. 타브를 만들어 공유해보세요!
+                {t("home.noPublicTabs")}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {publicTabs.map((tab) => (
-                <TabListCard key={tab.id} tab={tab} showAuthor />
+                <TabListCard key={tab.id} tab={tab} showAuthor dateLocale={dateLocale} t={t} />
               ))}
             </div>
           )}
@@ -223,26 +232,7 @@ export default function Home() {
 
       {/* 빠른 시작 */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {[
-          {
-            to: "/editor/new",
-            icon: FileMusic,
-            title: "타브 만들기",
-            desc: "직관적인 에디터로 쉽게 악보를 제작하세요",
-          },
-          {
-            to: "/jamroom",
-            icon: Radio,
-            title: "합주 시작",
-            desc: "친구들과 실시간으로 합주를 즐기세요",
-          },
-          {
-            to: "/community",
-            icon: Users,
-            title: "커뮤니티",
-            desc: "다른 뮤지션들의 타브를 탐색하세요",
-          },
-        ].map((item) => (
+        {quickLinks.map((item) => (
           <Link
             key={item.to}
             to={item.to}
@@ -262,7 +252,31 @@ export default function Home() {
   );
 }
 
-function TabListCard({ tab, showAuthor = false }: { tab: TabListItem; showAuthor?: boolean }) {
+type TFn = (key: MessageKey, params?: Record<string, string | number>) => string;
+
+function timeAgo(dateStr: string, t: TFn, dateLocale: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return t("time.justNow");
+  if (mins < 60) return t("time.minutesAgo", { n: mins });
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return t("time.hoursAgo", { n: hours });
+  const days = Math.floor(hours / 24);
+  if (days < 30) return t("time.daysAgo", { n: days });
+  return new Date(dateStr).toLocaleDateString(dateLocale);
+}
+
+function TabListCard({
+  tab,
+  showAuthor = false,
+  dateLocale,
+  t,
+}: {
+  tab: TabListItem;
+  showAuthor?: boolean;
+  dateLocale: string;
+  t: TFn;
+}) {
   return (
     <Link
       to={`/tabs/${tab.id}`}
@@ -289,7 +303,7 @@ function TabListCard({ tab, showAuthor = false }: { tab: TabListItem; showAuthor
         </span>
         <span className="flex items-center gap-0.5">
           <Clock className="h-3 w-3" />
-          {timeAgo(tab.updatedAt)}
+          {timeAgo(tab.updatedAt, t, dateLocale)}
         </span>
       </div>
       {showAuthor && tab.user && (

@@ -7,15 +7,17 @@ import { ThemeToggle } from "~/components/common/ThemeToggle";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { useI18n } from "~/context/i18n";
 import { useAuth } from "~/lib/auth";
 
 export function meta() {
-  return [{ title: "로그인 - Tone Knob" }, { name: "description", content: "Tone Knob 로그인" }];
+  return [{ title: "Log in - Tone Knob" }, { name: "description", content: "Log in to Tone Knob" }];
 }
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +32,7 @@ export default function Login() {
       await login(email, password);
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "로그인에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("login.errorGeneric"));
     } finally {
       setIsSubmitting(false);
     }
@@ -49,29 +51,25 @@ export default function Login() {
 
           <div className="space-y-8">
             <div>
-              <h2 className="text-4xl font-bold leading-tight">
-                음악을 만들고,
-                <br />
-                함께 연주하세요
+              <h2 className="text-4xl font-bold leading-tight whitespace-pre-line">
+                {t("login.brandHeading")}
               </h2>
-              <p className="mt-4 text-lg text-white/80">
-                타브 제작부터 실시간 합주까지,
-                <br />
-                당신의 음악 여정을 시작하세요.
+              <p className="mt-4 text-lg text-white/80 whitespace-pre-line">
+                {t("login.brandSubtitle")}
               </p>
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
                 <Guitar className="h-5 w-5 text-miami-200" />
-                <span className="text-sm text-white/90">직관적인 타브 에디터로 쉽게 악보 제작</span>
+                <span className="text-sm text-white/90">{t("login.feature1")}</span>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
                 <Headphones className="h-5 w-5 text-miami-200" />
-                <span className="text-sm text-white/90">실시간 온라인 합주로 어디서든 함께</span>
+                <span className="text-sm text-white/90">{t("login.feature2")}</span>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
                 <Mic2 className="h-5 w-5 text-miami-200" />
-                <span className="text-sm text-white/90">AI 기반 타브 자동 생성 및 분석</span>
+                <span className="text-sm text-white/90">{t("login.feature3")}</span>
               </div>
             </div>
           </div>
@@ -97,11 +95,9 @@ export default function Login() {
                 />
               </Link>
               <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white lg:mt-0">
-                로그인
+                {t("login.title")}
               </h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                계정에 로그인하여 음악의 세계로 돌아오세요
-              </p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("login.subtitle")}</p>
             </div>
 
             {/* 소셜 로그인 */}
@@ -128,7 +124,7 @@ export default function Login() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Google로 계속하기
+                {t("login.google")}
               </a>
               <a
                 href={`${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/auth/github`}
@@ -137,7 +133,7 @@ export default function Login() {
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                 </svg>
-                GitHub로 계속하기
+                {t("login.github")}
               </a>
             </div>
 
@@ -147,7 +143,7 @@ export default function Login() {
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="bg-gray-50 px-2 text-gray-500 dark:bg-gray-950 dark:text-gray-400">
-                  또는 이메일로 로그인
+                  {t("login.emailSeparator")}
                 </span>
               </div>
             </div>
@@ -159,7 +155,7 @@ export default function Login() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">{t("login.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -172,19 +168,19 @@ export default function Login() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">비밀번호</Label>
+                  <Label htmlFor="password">{t("login.password")}</Label>
                   <Link
                     to="/forgot-password"
                     className="text-xs text-miami-600 hover:underline dark:text-miami-400"
                   >
-                    비밀번호를 잊으셨나요?
+                    {t("login.forgotPassword")}
                   </Link>
                 </div>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder={t("login.passwordPlaceholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -200,33 +196,33 @@ export default function Login() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "로그인"}
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("login.submit")}
               </Button>
             </form>
 
             <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              아직 계정이 없으신가요?{" "}
+              {t("login.noAccount")}{" "}
               <Link
                 to="/register"
                 className="font-medium text-miami-600 hover:underline dark:text-miami-400"
               >
-                회원가입
+                {t("login.register")}
               </Link>
             </p>
 
             <p className="text-center text-[11px] text-gray-400 dark:text-gray-500">
-              계속 진행하면{" "}
+              {t("login.termsAgreement")}{" "}
               <Link to="/terms" className="underline hover:text-gray-600 dark:hover:text-gray-300">
-                이용약관
+                {t("login.terms")}
               </Link>{" "}
-              및{" "}
+              {t("login.and")}{" "}
               <Link
                 to="/privacy"
                 className="underline hover:text-gray-600 dark:hover:text-gray-300"
               >
-                개인정보처리방침
+                {t("login.privacy")}
               </Link>
-              에 동의하는 것으로 간주됩니다.
+              {t("login.termsAgreementEnd")}
             </p>
           </div>
         </div>

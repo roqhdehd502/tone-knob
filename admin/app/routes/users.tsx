@@ -1,17 +1,18 @@
 import { redirect } from "react-router";
 
-import type { Route } from "./+types/users";
-
 import { Topbar } from "~/components/layout/Topbar";
 import { Badge } from "~/components/ui/Badge";
+import { useI18n } from "~/context/i18n";
 import { requireAdmin } from "~/service/session.server";
 import { getSupabase } from "~/service/supabase.server";
 import type { UserDetailRow, UserRow } from "~/types/db";
 
+import type { Route } from "./+types/users";
+
 const PAGE_SIZE = 20;
 
 export function meta() {
-  return [{ title: "유저 관리 - Tone Knob Admin" }];
+  return [{ title: "Users - Tone Knob Admin" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -28,11 +29,7 @@ export async function action({ request }: Route.ActionArgs) {
   } else if (_action === "setPlan") {
     const plan = formData.get("plan") as string;
     await supabase.from("users").update({ subscriptionTier: plan }).eq("id", id);
-    await supabase
-      .from("subscriptions")
-      .update({ plan })
-      .eq("userId", id)
-      .eq("status", "active");
+    await supabase.from("subscriptions").update({ plan }).eq("userId", id).eq("status", "active");
   }
 
   return redirect(request.url);
@@ -50,7 +47,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   let query = supabase
     .from("users")
-    .select("id, email, username, displayName, role, subscriptionTier, createdAt", { count: "exact" })
+    .select("id, email, username, displayName, role, subscriptionTier, createdAt", {
+      count: "exact",
+    })
     .order("createdAt", { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
 
@@ -70,7 +69,10 @@ export async function loader({ request }: Route.LoaderArgs) {
         .eq("id", selectedId)
         .single(),
       supabase.from("tabs").select("*", { count: "exact", head: true }).eq("userId", selectedId),
-      supabase.from("user_badges").select("*", { count: "exact", head: true }).eq("userId", selectedId),
+      supabase
+        .from("user_badges")
+        .select("*", { count: "exact", head: true })
+        .eq("userId", selectedId),
     ]);
     if (userRes.data) {
       detail = {
@@ -103,13 +105,17 @@ function detailHref(search: string, page: number, id: string | null) {
 
 export default function UsersPage({ loaderData }: Route.ComponentProps) {
   const { admin, users, total, page, search, totalPages, selectedId, detail } = loaderData;
+  const { t, dateLocale } = useI18n();
 
   return (
     <>
-      <Topbar adminName={admin.adminName} adminEmail={admin.adminEmail} title="유저 관리" />
+      <Topbar
+        adminName={admin.adminName}
+        adminEmail={admin.adminEmail}
+        title={t("users.pageTitle")}
+      />
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-
           {/* Detail panel */}
           {detail && (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 sm:p-5">
@@ -119,7 +125,9 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                     {(detail.displayName || detail.username)[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900">{detail.displayName || detail.username}</p>
+                    <p className="font-semibold text-slate-900">
+                      {detail.displayName || detail.username}
+                    </p>
                     <p className="text-xs text-slate-500">{detail.email}</p>
                   </div>
                 </div>
@@ -127,36 +135,43 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                   href={detailHref(search, page, null)}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
                 >
-                  닫기 ×
+                  {t("common.close")} ×
                 </a>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                 <div className="rounded-lg bg-white p-3">
-                  <p className="text-xs text-slate-500">Knob 잔액</p>
-                  <p className="mt-0.5 font-bold text-slate-900">{((detail as UserDetailRow & { knobBalance?: number }).knobBalance ?? 0).toLocaleString()}</p>
+                  <p className="text-xs text-slate-500">{t("users.knobBalance")}</p>
+                  <p className="mt-0.5 font-bold text-slate-900">
+                    {(
+                      (detail as UserDetailRow & { knobBalance?: number }).knobBalance ?? 0
+                    ).toLocaleString()}
+                  </p>
                 </div>
                 <div className="rounded-lg bg-white p-3">
-                  <p className="text-xs text-slate-500">제작 타브</p>
+                  <p className="text-xs text-slate-500">{t("users.createdTabs")}</p>
                   <p className="mt-0.5 font-bold text-slate-900">{detail.tabCount}</p>
                 </div>
                 <div className="rounded-lg bg-white p-3">
-                  <p className="text-xs text-slate-500">보유 뱃지</p>
+                  <p className="text-xs text-slate-500">{t("users.ownedBadges")}</p>
                   <p className="mt-0.5 font-bold text-slate-900">{detail.badgeCount}</p>
                 </div>
                 <div className="rounded-lg bg-white p-3">
-                  <p className="text-xs text-slate-500">가입일</p>
+                  <p className="text-xs text-slate-500">{t("users.joinDate")}</p>
                   <p className="mt-0.5 font-bold text-slate-900">
-                    {new Date(detail.createdAt).toLocaleDateString("ko-KR")}
+                    {new Date(detail.createdAt).toLocaleDateString(dateLocale)}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {/* Ban / Unban */}
                 {detail.role !== "admin" && (
                   <form method="post">
-                    <input type="hidden" name="_action" value={detail.role === "banned" ? "unban" : "ban"} />
+                    <input
+                      type="hidden"
+                      name="_action"
+                      value={detail.role === "banned" ? "unban" : "ban"}
+                    />
                     <input type="hidden" name="id" value={detail.id} />
                     <button
                       type="submit"
@@ -166,18 +181,18 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                           : "bg-red-600 text-white hover:bg-red-700"
                       }`}
                       onClick={(e) => {
-                        const msg = detail.role === "banned"
-                          ? "계정을 활성화하시겠습니까?"
-                          : "계정을 정지하시겠습니까?";
+                        const msg =
+                          detail.role === "banned"
+                            ? t("users.confirmActivate")
+                            : t("users.confirmSuspend");
                         if (!confirm(msg)) e.preventDefault();
                       }}
                     >
-                      {detail.role === "banned" ? "계정 활성화" : "계정 정지"}
+                      {detail.role === "banned" ? t("users.activate") : t("users.suspend")}
                     </button>
                   </form>
                 )}
 
-                {/* Subscription plan change */}
                 <form method="post" className="flex items-center gap-2">
                   <input type="hidden" name="_action" value="setPlan" />
                   <input type="hidden" name="id" value={detail.id} />
@@ -194,7 +209,7 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                     type="submit"
                     className="rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
                   >
-                    구독 변경
+                    {t("users.changePlan")}
                   </button>
                 </form>
               </div>
@@ -204,28 +219,28 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
           {/* Search & Summary */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500">
-              총 <span className="font-semibold text-slate-900">{total.toLocaleString()}</span>명
+              {t("users.total", { n: total.toLocaleString() })}
             </p>
             <form method="get" className="flex gap-2">
               {selectedId && <input type="hidden" name="selected" value={selectedId} />}
               <input
                 name="q"
                 defaultValue={search}
-                placeholder="이메일 또는 유저명 검색"
+                placeholder={t("users.searchPlaceholder")}
                 className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:w-64 sm:flex-none"
               />
               <button
                 type="submit"
                 className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 sm:px-4"
               >
-                검색
+                {t("common.search")}
               </button>
               {search && (
                 <a
                   href="/users"
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
                 >
-                  초기화
+                  {t("common.reset")}
                 </a>
               )}
             </form>
@@ -236,19 +251,31 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
             <table className="w-full min-w-[620px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">유저</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">이메일</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">권한</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">구독</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">가입일</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">상세</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("users.colUser")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("users.colEmail")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("users.colRole")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("users.colSubscription")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("users.colJoined")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("users.colDetails")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {users.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
-                      유저가 없습니다.
+                      {t("users.noUsers")}
                     </td>
                   </tr>
                 ) : (
@@ -271,10 +298,14 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                       <td className="px-4 py-3 sm:px-5">
                         <Badge
                           variant={
-                            user.role === "admin" ? "danger" : user.role === "banned" ? "warning" : "default"
+                            user.role === "admin"
+                              ? "danger"
+                              : user.role === "banned"
+                                ? "warning"
+                                : "default"
                           }
                         >
-                          {user.role === "banned" ? "정지" : user.role}
+                          {user.role === "banned" ? t("users.suspended") : user.role}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 sm:px-5">
@@ -291,7 +322,7 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                         </Badge>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-400 sm:px-5">
-                        {new Date(user.createdAt).toLocaleDateString("ko-KR")}
+                        {new Date(user.createdAt).toLocaleDateString(dateLocale)}
                       </td>
                       <td className="px-4 py-3 sm:px-5">
                         {selectedId === user.id ? (
@@ -299,14 +330,14 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                             href={detailHref(search, page, null)}
                             className="text-xs font-medium text-blue-600 hover:underline"
                           >
-                            닫기
+                            {t("common.close")}
                           </a>
                         ) : (
                           <a
                             href={detailHref(search, page, user.id)}
                             className="text-xs font-medium text-blue-600 hover:underline"
                           >
-                            자세히
+                            {t("users.details")}
                           </a>
                         )}
                       </td>
@@ -325,21 +356,22 @@ export default function UsersPage({ loaderData }: Route.ComponentProps) {
                   href={`/users?page=${page - 1}${search ? `&q=${search}` : ""}${selectedId ? `&selected=${selectedId}` : ""}`}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
                 >
-                  이전
+                  {t("common.prev")}
                 </a>
               )}
-              <span className="px-3 py-1.5 text-sm text-slate-500">{page} / {totalPages}</span>
+              <span className="px-3 py-1.5 text-sm text-slate-500">
+                {page} / {totalPages}
+              </span>
               {page < totalPages && (
                 <a
                   href={`/users?page=${page + 1}${search ? `&q=${search}` : ""}${selectedId ? `&selected=${selectedId}` : ""}`}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
                 >
-                  다음
+                  {t("common.next")}
                 </a>
               )}
             </div>
           )}
-
         </div>
       </main>
     </>

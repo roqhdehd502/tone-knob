@@ -17,13 +17,14 @@ import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 
 export function meta() {
   return [
-    { title: "AI 타브 생성 - Tone Knob" },
-    { name: "description", content: "AI로 타브를 자동 생성하세요" },
+    { title: "AI Tab Generator - Tone Knob" },
+    { name: "description", content: "Generate guitar tabs automatically with AI" },
   ];
 }
 
@@ -45,34 +46,65 @@ interface AiJob {
   createdAt: string;
 }
 
-const STATUS_CONFIG: Record<AiJobStatus, { icon: React.ReactNode; label: string; color: string }> =
-  {
-    queued: { icon: <Clock className="h-4 w-4" />, label: "대기 중", color: "text-amber-500" },
+export default function AiGeneratePage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { t } = useI18n();
+
+  const STATUS_CONFIG: Record<
+    AiJobStatus,
+    { icon: React.ReactNode; label: string; color: string }
+  > = {
+    queued: {
+      icon: <Clock className="h-4 w-4" />,
+      label: t("aiGenerate.status.queued"),
+      color: "text-amber-500",
+    },
     processing: {
       icon: <Loader2 className="h-4 w-4 animate-spin" />,
-      label: "생성 중",
+      label: t("aiGenerate.status.processing"),
       color: "text-blue-500",
     },
     completed: {
       icon: <CheckCircle2 className="h-4 w-4" />,
-      label: "완료",
+      label: t("aiGenerate.status.completed"),
       color: "text-green-500",
     },
-    failed: { icon: <XCircle className="h-4 w-4" />, label: "실패", color: "text-red-500" },
+    failed: {
+      icon: <XCircle className="h-4 w-4" />,
+      label: t("aiGenerate.status.failed"),
+      color: "text-red-500",
+    },
   };
 
-const GENRES = ["록", "팝", "재즈", "블루스", "클래식", "메탈", "컨트리", "R&B"];
-const INSTRUMENTS = ["기타", "베이스", "우쿨렐레", "밴조"];
-const DIFFICULTIES = ["초급", "중급", "고급"];
+  const GENRES: { value: string; label: string }[] = [
+    { value: "rock", label: t("aiGenerate.genre.rock") },
+    { value: "pop", label: t("aiGenerate.genre.pop") },
+    { value: "jazz", label: t("aiGenerate.genre.jazz") },
+    { value: "blues", label: t("aiGenerate.genre.blues") },
+    { value: "classical", label: t("aiGenerate.genre.classical") },
+    { value: "metal", label: t("aiGenerate.genre.metal") },
+    { value: "country", label: t("aiGenerate.genre.country") },
+    { value: "rnb", label: t("aiGenerate.genre.rnb") },
+  ];
 
-export default function AiGeneratePage() {
-  const { user, isLoading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const INSTRUMENTS: { value: string; label: string }[] = [
+    { value: "guitar", label: t("aiGenerate.instrument.guitar") },
+    { value: "bass", label: t("aiGenerate.instrument.bass") },
+    { value: "ukulele", label: t("aiGenerate.instrument.ukulele") },
+    { value: "banjo", label: t("aiGenerate.instrument.banjo") },
+  ];
+
+  const DIFFICULTIES: { value: string; label: string }[] = [
+    { value: "beginner", label: t("aiGenerate.difficulty.beginner") },
+    { value: "intermediate", label: t("aiGenerate.difficulty.intermediate") },
+    { value: "advanced", label: t("aiGenerate.difficulty.advanced") },
+  ];
 
   const [prompt, setPrompt] = useState("");
   const [genre, setGenre] = useState("");
-  const [instrument, setInstrument] = useState("기타");
-  const [difficulty, setDifficulty] = useState("중급");
+  const [instrument, setInstrument] = useState("guitar");
+  const [difficulty, setDifficulty] = useState("intermediate");
   const [measures, setMeasures] = useState(16);
   const [submitting, setSubmitting] = useState(false);
 
@@ -99,7 +131,6 @@ export default function AiGeneratePage() {
     loadJobs();
   }, [loadJobs]);
 
-  // 진행 중인 작업 폴링
   useEffect(() => {
     const hasActive = jobs.some((j) => j.status === "queued" || j.status === "processing");
     if (!hasActive) return;
@@ -126,7 +157,7 @@ export default function AiGeneratePage() {
       setPrompt("");
       await loadJobs();
     } catch {
-      alert("생성 요청 중 오류가 발생했습니다");
+      alert(t("aiGenerate.errorSubmit"));
     } finally {
       setSubmitting(false);
     }
@@ -139,26 +170,28 @@ export default function AiGeneratePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">AI 타브 생성</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">AI로 타브를 자동 생성하세요</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          {t("aiGenerate.heading")}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("aiGenerate.subtitle")}</p>
       </div>
 
-      {/* 생성 폼 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-miami-500" />
-            생성 요청
+            {t("aiGenerate.formTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                프롬프트 <span className="text-red-500">*</span>
+                {t("aiGenerate.promptLabel")}{" "}
+                <span className="text-red-500">{t("aiGenerate.promptRequired")}</span>
               </label>
               <Input
-                placeholder="예: 쓸쓸한 느낌의 마이너 발라드, G 마이너 코드 진행으로..."
+                placeholder={t("aiGenerate.promptPlaceholder")}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 required
@@ -166,19 +199,20 @@ export default function AiGeneratePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {/* 장르 */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">장르</label>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  {t("aiGenerate.genreLabel")}
+                </label>
                 <div className="relative">
                   <select
                     value={genre}
                     onChange={(e) => setGenre(e.target.value)}
                     className="w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-8 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   >
-                    <option value="">선택 안함</option>
+                    <option value="">{t("aiGenerate.genreNone")}</option>
                     {GENRES.map((g) => (
-                      <option key={g} value={g}>
-                        {g}
+                      <option key={g.value} value={g.value}>
+                        {g.label}
                       </option>
                     ))}
                   </select>
@@ -186,9 +220,10 @@ export default function AiGeneratePage() {
                 </div>
               </div>
 
-              {/* 악기 */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">악기</label>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  {t("aiGenerate.instrumentLabel")}
+                </label>
                 <div className="relative">
                   <select
                     value={instrument}
@@ -196,8 +231,8 @@ export default function AiGeneratePage() {
                     className="w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-8 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   >
                     {INSTRUMENTS.map((i) => (
-                      <option key={i} value={i}>
-                        {i}
+                      <option key={i.value} value={i.value}>
+                        {i.label}
                       </option>
                     ))}
                   </select>
@@ -205,9 +240,10 @@ export default function AiGeneratePage() {
                 </div>
               </div>
 
-              {/* 난이도 */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">난이도</label>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  {t("aiGenerate.difficultyLabel")}
+                </label>
                 <div className="relative">
                   <select
                     value={difficulty}
@@ -215,8 +251,8 @@ export default function AiGeneratePage() {
                     className="w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-8 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   >
                     {DIFFICULTIES.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
+                      <option key={d.value} value={d.value}>
+                        {d.label}
                       </option>
                     ))}
                   </select>
@@ -224,9 +260,10 @@ export default function AiGeneratePage() {
                 </div>
               </div>
 
-              {/* 마디 수 */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">마디 수</label>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  {t("aiGenerate.barsLabel")}
+                </label>
                 <Input
                   type="number"
                   min={4}
@@ -247,15 +284,16 @@ export default function AiGeneratePage() {
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              생성 요청
+              {t("aiGenerate.submitBtn")}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* 작업 목록 */}
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">생성 내역</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          {t("aiGenerate.historyTitle")}
+        </h2>
         <Button size="sm" variant="ghost" onClick={loadJobs}>
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -271,7 +309,7 @@ export default function AiGeneratePage() {
         <Card>
           <CardContent className="flex flex-col items-center py-16 text-center">
             <Music className="h-10 w-10 text-gray-300 dark:text-gray-700" />
-            <p className="mt-2 text-sm text-gray-400">생성 내역이 없습니다</p>
+            <p className="mt-2 text-sm text-gray-400">{t("aiGenerate.noHistory")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -292,7 +330,9 @@ export default function AiGeneratePage() {
                       {job.inputData.instrument && <span>{job.inputData.instrument}</span>}
                       {job.inputData.genre && <span>{job.inputData.genre}</span>}
                       {job.inputData.difficulty && <span>{job.inputData.difficulty}</span>}
-                      {job.inputData.measures && <span>{job.inputData.measures}마디</span>}
+                      {job.inputData.measures && (
+                        <span>{t("aiGenerate.bars", { n: job.inputData.measures })}</span>
+                      )}
                     </div>
                   </div>
                   <span className={`flex items-center gap-1 text-xs font-medium ${cfg.color}`}>
@@ -301,7 +341,6 @@ export default function AiGeneratePage() {
                   </span>
                 </div>
 
-                {/* 진행바 */}
                 {(job.status === "queued" || job.status === "processing") && (
                   <div className="mt-3">
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
@@ -314,19 +353,17 @@ export default function AiGeneratePage() {
                   </div>
                 )}
 
-                {/* 완료 결과 */}
                 {job.status === "completed" && job.outputData?.title && (
                   <div className="mt-3 flex items-center justify-between rounded-md bg-green-50 px-3 py-2 dark:bg-green-900/20">
                     <span className="text-sm text-green-700 dark:text-green-400">
                       {job.outputData.title}
                     </span>
                     <Button size="sm" variant="ghost" onClick={() => navigate("/editor/new")}>
-                      에디터에서 열기
+                      {t("aiGenerate.openEditor")}
                     </Button>
                   </div>
                 )}
 
-                {/* 실패 메시지 */}
                 {job.status === "failed" && job.errorMessage && (
                   <p className="mt-2 text-xs text-red-500">{job.errorMessage}</p>
                 )}

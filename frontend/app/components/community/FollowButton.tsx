@@ -3,6 +3,7 @@ import { memo, useEffect, useState } from "react";
 import { UserCheck, UserPlus } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 
 interface FollowButtonProps {
@@ -14,6 +15,7 @@ export const FollowButton = memo(function FollowButton({
   targetUserId,
   currentUserId,
 }: FollowButtonProps) {
+  const { t } = useI18n();
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -53,12 +55,12 @@ export const FollowButton = memo(function FollowButton({
       {following ? (
         <>
           <UserCheck className="h-4 w-4" />
-          팔로잉
+          {t("community.following")}
         </>
       ) : (
         <>
           <UserPlus className="h-4 w-4" />
-          팔로우
+          {t("community.follow")}
         </>
       )}
     </Button>

@@ -23,6 +23,7 @@ import { SoundCheckPanel } from "~/components/jam/SoundCheckPanel";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { getAudioEngine } from "~/lib/audio/audio-engine";
 import { useAuth } from "~/lib/auth";
@@ -44,21 +45,25 @@ import { useWebRTC } from "~/lib/jam/use-webrtc";
 import type { JamParticipant, JamRoom } from "~/types/jam-room";
 import type { InstrumentType } from "~/types/tab";
 
-const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string; emoji: string }[] = [
-  { value: "electric-guitar", label: "일렉 기타", emoji: "🎸" },
-  { value: "acoustic-guitar", label: "어쿠스틱 기타", emoji: "🎶" },
-  { value: "bass", label: "베이스", emoji: "🎵" },
-  { value: "keyboard", label: "키보드", emoji: "🎹" },
-];
-
 export function meta() {
-  return [{ title: "합주방 - Tone Knob" }, { name: "description", content: "실시간 온라인 합주" }];
+  return [
+    { title: "Jam Room - Tone Knob" },
+    { name: "description", content: "Real-time online jam session" },
+  ];
 }
 
 export default function JamroomDetail() {
   const { id } = useParams();
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
+
+  const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string; emoji: string }[] = [
+    { value: "electric-guitar", label: t("jamroomDetail.electric"), emoji: "🎸" },
+    { value: "acoustic-guitar", label: t("jamroomDetail.acoustic"), emoji: "🎶" },
+    { value: "bass", label: t("jamroomDetail.bass"), emoji: "🎵" },
+    { value: "keyboard", label: t("jamroomDetail.keyboard"), emoji: "🎹" },
+  ];
   const [room, setRoom] = useState<JamRoom | null>(null);
   const [participants, setParticipants] = useState<JamParticipant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -294,7 +299,7 @@ export default function JamroomDetail() {
       await loadParticipants();
     } catch (error) {
       console.error("Failed to load room:", error);
-      alert("합주방을 불러올 수 없습니다.");
+      alert(t("jamroomDetail.alertNotFound"));
       navigate("/jamroom");
     } finally {
       setLoading(false);
@@ -338,7 +343,7 @@ export default function JamroomDetail() {
       await loadParticipants();
     } catch (error) {
       console.error("Failed to join room:", error);
-      alert("합주방 참가에 실패했습니다. 마이크 권한을 확인해주세요.");
+      alert(t("jamroomDetail.alertJoinFailed"));
     }
   };
 
@@ -359,7 +364,7 @@ export default function JamroomDetail() {
       await joinWithStream(stream, settings);
     } catch (error) {
       console.error("Failed to get microphone:", error);
-      alert("마이크 권한이 필요합니다. 브라우저 설정을 확인해주세요.");
+      alert(t("jamroomDetail.alertMicRequired"));
     }
   };
 
@@ -472,7 +477,7 @@ export default function JamroomDetail() {
   if (!room) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-gray-500 dark:text-gray-400">합주방을 찾을 수 없습니다.</p>
+        <p className="text-gray-500 dark:text-gray-400">{t("jamroomDetail.notFound")}</p>
       </div>
     );
   }
@@ -485,7 +490,7 @@ export default function JamroomDetail() {
         className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-miami-500 dark:text-gray-500"
       >
         <ArrowLeft className="h-3 w-3" />
-        합주방 목록으로
+        {t("jamroomDetail.backToList")}
       </button>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -517,7 +522,11 @@ export default function JamroomDetail() {
                   <div
                     className={`h-1.5 w-1.5 rounded-full ${socket.connected ? "bg-green-500" : "bg-gray-400"}`}
                   />
-                  <span>{socket.connected ? "연결됨" : "연결 중..."}</span>
+                  <span>
+                    {socket.connected
+                      ? t("jamroomDetail.connected")
+                      : t("jamroomDetail.connecting")}
+                  </span>
                 </div>
                 {socket.latency !== null && (
                   <div className="flex items-center gap-1">
@@ -539,7 +548,7 @@ export default function JamroomDetail() {
                   <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-12 dark:border-gray-700">
                     <Music className="h-12 w-12 text-gray-400" />
                     <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                      합주방에 참가하는 중...
+                      {t("jamroomDetail.joining")}
                     </p>
                     <div className="mt-3 h-5 w-5 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
                   </div>
@@ -552,26 +561,32 @@ export default function JamroomDetail() {
                       {isMuted ? (
                         <>
                           <MicOff className="mr-2 h-4 w-4" />
-                          음소거됨
+                          {t("jamroomDetail.muted")}
                         </>
                       ) : (
                         <>
                           <Mic className="mr-2 h-4 w-4" />
-                          마이크 켜짐
+                          {t("jamroomDetail.micOn")}
                         </>
                       )}
                     </Button>
 
                     {/* 내 입력 레벨 미터 (간소화) */}
                     <div className="flex flex-1 items-center gap-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">입력</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {t("jamroomDetail.inputLevel")}
+                      </span>
                       <AudioLevelMeter level={isMuted ? 0 : localMonitor.level} compact />
                     </div>
 
                     {/* 로컬 모니터링 토글 */}
                     <button
                       type="button"
-                      title={localMonitor.monitoring ? "모니터링 끄기" : "내 소리 듣기"}
+                      title={
+                        localMonitor.monitoring
+                          ? t("jamroomDetail.monitorOn")
+                          : t("jamroomDetail.monitorOff")
+                      }
                       onClick={() => localMonitor.setMonitoring(!localMonitor.monitoring)}
                       className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
                         localMonitor.monitoring
@@ -580,13 +595,15 @@ export default function JamroomDetail() {
                       }`}
                     >
                       <Volume2 className="h-3.5 w-3.5" />
-                      {localMonitor.monitoring ? "모니터" : "모니터"}
+                      {t("jamroomDetail.monitor")}
                     </button>
                   </div>
 
                   {/* 악기 선택 (간소) */}
                   <div className="flex items-center gap-2 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">악기</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {t("jamroomDetail.instrument")}
+                    </span>
                     <select
                       value={selectedInstrument}
                       onChange={(e) => handleInstrumentChange(e.target.value as InstrumentType)}
@@ -598,7 +615,9 @@ export default function JamroomDetail() {
                         </option>
                       ))}
                     </select>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">볼륨</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {t("jamroomDetail.volume")}
+                    </span>
                     <input
                       type="range"
                       min={0}
@@ -617,12 +636,12 @@ export default function JamroomDetail() {
                     <div className="flex items-center gap-2 text-sm">
                       <Radio className="h-4 w-4 text-miami-500" />
                       <span className="font-medium text-gray-700 dark:text-gray-300">
-                        오디오 연결 ({webrtc.remoteStreams.size}명과 연결됨)
+                        {t("jamroomDetail.audioPeerCount", { n: webrtc.remoteStreams.size })}
                       </span>
                     </div>
                     {webrtc.remoteStreams.size === 0 && participants.length > 1 && (
                       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        다른 참가자와 피어 연결을 설정하는 중...
+                        {t("jamroomDetail.peerConnecting")}
                       </p>
                     )}
                   </div>
@@ -637,7 +656,9 @@ export default function JamroomDetail() {
           {/* 참가자 & 오디오 믹서 */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">참가자 ({participants.length})</CardTitle>
+              <CardTitle className="text-sm">
+                {t("jamroomDetail.participants", { n: participants.length })}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {hasJoined ? (
@@ -669,7 +690,9 @@ export default function JamroomDetail() {
                           {p.user?.displayName || p.user?.username}
                         </p>
                         {p.userId === room.hostId && (
-                          <span className="text-xs text-miami-600 dark:text-miami-400">호스트</span>
+                          <span className="text-xs text-miami-600 dark:text-miami-400">
+                            {t("jamroomDetail.host")}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -685,7 +708,7 @@ export default function JamroomDetail() {
                   onClick={handleLeaveRoom}
                 >
                   <LogOut className="mr-1.5 h-4 w-4" />
-                  합주방 나가기
+                  {t("jamroomDetail.leave")}
                 </Button>
               )}
             </CardContent>
@@ -718,13 +741,15 @@ export default function JamroomDetail() {
               <CardHeader className="flex-none border-b border-gray-200 pb-2 dark:border-gray-800">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <MessageSquare className="h-3.5 w-3.5 text-gray-500" />
-                  채팅
+                  {t("jamroomDetail.chat")}
                 </CardTitle>
               </CardHeader>
 
               <div className="flex-1 overflow-y-auto px-4 py-2">
                 {socket.chatMessages.length === 0 ? (
-                  <p className="py-8 text-center text-xs text-gray-400">메시지가 없습니다</p>
+                  <p className="py-8 text-center text-xs text-gray-400">
+                    {t("jamroomDetail.noMessages")}
+                  </p>
                 ) : (
                   socket.chatMessages.map((msg) => {
                     const sender = participants.find((p) => p.userId === msg.userId);
@@ -734,7 +759,7 @@ export default function JamroomDetail() {
                         msg={msg}
                         isMe={msg.userId === user?.id}
                         senderName={
-                          sender?.user?.displayName || sender?.user?.username || "알 수 없음"
+                          sender?.user?.displayName || sender?.user?.username || t("common.unknown")
                         }
                       />
                     );
@@ -750,7 +775,7 @@ export default function JamroomDetail() {
                 <Input
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="메시지를 입력하세요..."
+                  placeholder={t("jamroomDetail.messagePlaceholder")}
                   maxLength={500}
                   className="h-8 text-sm"
                 />

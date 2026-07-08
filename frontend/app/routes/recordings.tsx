@@ -21,14 +21,15 @@ import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import { cn } from "~/lib/utils";
 
 export function meta() {
   return [
-    { title: "녹음 및 공유 - Tone Knob" },
-    { name: "description", content: "연주를 녹음하고 공유하세요" },
+    { title: "Recordings - Tone Knob" },
+    { name: "description", content: "Record and share your performances" },
   ];
 }
 
@@ -58,8 +59,8 @@ function formatDuration(seconds: number): string {
 export default function RecordingsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
-  // 녹음 상태
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
@@ -68,16 +69,13 @@ export default function RecordingsPage() {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // 재생 상태
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 업로드 상태
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private" | "unlisted">("public");
   const [uploading, setUploading] = useState(false);
 
-  // 목록
   const [tab, setTab] = useState<"my" | "public">("my");
   const [recordings, setRecordings] = useState<RecordingItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -111,7 +109,6 @@ export default function RecordingsPage() {
     loadRecordings();
   }, [user, loadRecordings]);
 
-  // 녹음 시작
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -127,7 +124,7 @@ export default function RecordingsPage() {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setRecordedBlob(blob);
         setRecordedUrl(URL.createObjectURL(blob));
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((trk) => trk.stop());
       };
 
       mediaRecorder.start();
@@ -135,11 +132,10 @@ export default function RecordingsPage() {
       setRecordingTime(0);
       timerRef.current = setInterval(() => setRecordingTime((prev) => prev + 1), 1000);
     } catch {
-      alert("마이크 접근 권한이 필요합니다");
+      alert(t("recordings.micError"));
     }
   };
 
-  // 녹음 중지
   const stopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
@@ -149,7 +145,6 @@ export default function RecordingsPage() {
     }
   };
 
-  // 녹음 삭제
   const discardRecording = () => {
     setRecordedBlob(null);
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
@@ -158,7 +153,6 @@ export default function RecordingsPage() {
     setTitle("");
   };
 
-  // 업로드
   const handleUpload = async () => {
     if (!recordedBlob || !title.trim()) return;
     setUploading(true);
@@ -176,13 +170,12 @@ export default function RecordingsPage() {
       discardRecording();
       loadRecordings();
     } catch {
-      alert("업로드 중 오류가 발생했습니다");
+      alert(t("recordings.uploadError"));
     } finally {
       setUploading(false);
     }
   };
 
-  // 재생/정지
   const togglePlay = (id: string, audioUrl: string) => {
     if (playingId === id) {
       audioRef.current?.pause();
@@ -199,12 +192,12 @@ export default function RecordingsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("녹음을 삭제하시겠습니까?")) return;
+    if (!confirm(t("recordings.confirmDelete"))) return;
     try {
       await api.recordings.delete(id);
       loadRecordings();
     } catch {
-      alert("삭제 중 오류가 발생했습니다");
+      alert(t("recordings.deleteError"));
     }
   };
 
@@ -212,9 +205,9 @@ export default function RecordingsPage() {
     try {
       const { url } = await api.recordings.getShareUrl(id);
       await navigator.clipboard.writeText(window.location.origin + url);
-      alert("공유 링크가 복사되었습니다!");
+      alert(t("recordings.shareSuccess"));
     } catch {
-      alert("공유 링크 생성에 실패했습니다");
+      alert(t("recordings.shareError"));
     }
   };
 
@@ -224,19 +217,26 @@ export default function RecordingsPage() {
 
   const totalPages = Math.ceil(total / 20);
 
+  const visibilityLabel: Record<"public" | "private" | "unlisted", string> = {
+    public: t("common.public"),
+    private: t("common.private"),
+    unlisted: t("common.linkedShare"),
+  };
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">녹음 및 공유</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">연주를 녹음하고 공유하세요</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          {t("recordings.heading")}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("recordings.subtitle")}</p>
       </div>
 
-      {/* 녹음 섹션 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Mic className="h-4 w-4 text-red-500" />
-            녹음
+            {t("recordings.sectionTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -261,18 +261,15 @@ export default function RecordingsPage() {
                 </Button>
               )}
               <p className="text-xs text-gray-400">
-                {isRecording
-                  ? "녹음 중... 중지하려면 버튼을 누르세요"
-                  : "버튼을 눌러 녹음을 시작하세요"}
+                {isRecording ? t("recordings.recording") : t("recordings.recordHint")}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {/* 미리듣기 */}
               {recordedUrl && <audio controls src={recordedUrl} className="w-full" />}
 
               <Input
-                placeholder="녹음 제목"
+                placeholder={t("recordings.titlePlaceholder")}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
@@ -289,7 +286,7 @@ export default function RecordingsPage() {
                     }`}
                   >
                     {VISIBILITY_ICONS[v]}
-                    {v === "public" ? "공개" : v === "private" ? "비공개" : "링크 공유"}
+                    {visibilityLabel[v]}
                   </button>
                 ))}
               </div>
@@ -304,7 +301,7 @@ export default function RecordingsPage() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      <Upload className="mr-1 h-4 w-4" /> 저장
+                      <Upload className="mr-1 h-4 w-4" /> {t("recordings.upload")}
                     </>
                   )}
                 </Button>
@@ -317,23 +314,22 @@ export default function RecordingsPage() {
         </CardContent>
       </Card>
 
-      {/* 녹음 목록 */}
       <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800/50">
-        {(["my", "public"] as const).map((t) => (
+        {(["my", "public"] as const).map((tabKey) => (
           <button
-            key={t}
+            key={tabKey}
             onClick={() => {
-              setTab(t);
+              setTab(tabKey);
               setPage(1);
             }}
             className={cn(
               "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
-              tab === t
+              tab === tabKey
                 ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
                 : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
             )}
           >
-            {t === "my" ? "내 녹음" : "공개 녹음"}
+            {tabKey === "my" ? t("recordings.myRecordings") : t("recordings.publicRecordings")}
           </button>
         ))}
       </div>
@@ -348,7 +344,7 @@ export default function RecordingsPage() {
         <Card>
           <CardContent className="flex flex-col items-center py-16 text-center">
             <Headphones className="h-10 w-10 text-gray-300 dark:text-gray-700" />
-            <p className="mt-2 text-sm text-gray-400">녹음이 없습니다</p>
+            <p className="mt-2 text-sm text-gray-400">{t("recordings.noRecordings")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -408,7 +404,7 @@ export default function RecordingsPage() {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                이전
+                {t("common.prev")}
               </Button>
               <span className="flex items-center text-xs text-gray-500">
                 {page} / {totalPages}
@@ -419,7 +415,7 @@ export default function RecordingsPage() {
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                다음
+                {t("common.next")}
               </Button>
             </div>
           )}

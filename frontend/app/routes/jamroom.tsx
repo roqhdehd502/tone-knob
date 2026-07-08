@@ -5,20 +5,22 @@ import { Lock, Music, Plus, Radio, Users } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { JamRoom } from "~/types/jam-room";
 
 export function meta() {
   return [
-    { title: "합주방 - Tone Knob" },
-    { name: "description", content: "실시간 온라인 합주방" },
+    { title: "Jam Room - Tone Knob" },
+    { name: "description", content: "Real-time online jam session" },
   ];
 }
 
 export default function Jamroom() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [rooms, setRooms] = useState<JamRoom[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,14 +59,14 @@ export default function Jamroom() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">합주방</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            실시간으로 함께 연주하세요
-          </p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t("jamroom.heading")}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("jamroom.subtitle")}</p>
         </div>
         <Button size="sm" onClick={handleCreateRoom}>
           <Plus className="mr-1.5 h-4 w-4" />
-          합주방 만들기
+          {t("jamroom.create")}
         </Button>
       </div>
 
@@ -73,14 +75,14 @@ export default function Jamroom() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Radio className="h-10 w-10 text-gray-300 dark:text-gray-700" />
             <h2 className="mt-3 text-base font-semibold text-gray-900 dark:text-white">
-              활성화된 합주방이 없습니다
+              {t("jamroom.noActive")}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              새로운 합주방을 만들어 친구들과 함께 연주해보세요
+              {t("jamroom.noActiveDesc")}
             </p>
             <Button className="mt-4" size="sm" onClick={handleCreateRoom}>
               <Plus className="mr-1.5 h-4 w-4" />
-              합주방 만들기
+              {t("jamroom.createNew")}
             </Button>
           </CardContent>
         </Card>

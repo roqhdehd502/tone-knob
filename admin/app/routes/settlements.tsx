@@ -1,17 +1,18 @@
 import { redirect } from "react-router";
 
-import type { Route } from "./+types/settlements";
-
 import { Topbar } from "~/components/layout/Topbar";
 import { Badge } from "~/components/ui/Badge";
+import { useI18n } from "~/context/i18n";
 import { requireAdmin } from "~/service/session.server";
 import { getSupabase } from "~/service/supabase.server";
 import type { SettlementRow } from "~/types/db";
 
+import type { Route } from "./+types/settlements";
+
 const PAGE_SIZE = 20;
 
 export function meta() {
-  return [{ title: "정산 관리 - Tone Knob Admin" }];
+  return [{ title: "Settlements - Tone Knob Admin" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -93,16 +94,17 @@ function statusVariant(s: string) {
   return "default" as const;
 }
 
-function statusLabel(s: string) {
-  if (s === "pending") return "대기";
-  if (s === "processing") return "처리 중";
-  if (s === "completed") return "완료";
-  if (s === "failed") return "거절";
-  return s;
-}
-
 export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
   const { admin, settlements, total, page, status, search, totalPages, pendingSum } = loaderData;
+  const { t } = useI18n();
+
+  const statusLabel = (s: string) => {
+    if (s === "pending") return t("settlements.statusPending");
+    if (s === "processing") return t("settlements.statusProcessing");
+    if (s === "completed") return t("settlements.statusCompleted");
+    if (s === "failed") return t("settlements.statusFailed");
+    return s;
+  };
 
   const buildHref = (overrides: Record<string, string | number>) => {
     const params = new URLSearchParams();
@@ -117,20 +119,27 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Topbar adminName={admin.adminName} adminEmail={admin.adminEmail} title="정산 관리" />
+      <Topbar
+        adminName={admin.adminName}
+        adminEmail={admin.adminEmail}
+        title={t("settlements.pageTitle")}
+      />
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-
           {/* Summary */}
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            대기 중 정산 합계 (netAmount): <span className="font-semibold">{pendingSum.toLocaleString()}원</span>
+            {t("settlements.pendingSummary")}{" "}
+            <span className="font-semibold">
+              {pendingSum.toLocaleString()}
+              {t("common.currencyUnit")}
+            </span>
           </div>
 
           {/* Filters */}
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-slate-500">
-                총 <span className="font-semibold text-slate-900">{total.toLocaleString()}</span>건
+                {t("settlements.total", { n: total.toLocaleString() })}
               </p>
               <div className="flex rounded-lg border border-slate-200 bg-white text-sm">
                 {statusOptions.map((v, i) => (
@@ -141,7 +150,7 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
                       status === v ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-50"
                     } ${i === 0 ? "rounded-l-lg" : i === statusOptions.length - 1 ? "rounded-r-lg" : ""}`}
                   >
-                    {v === "all" ? "전체" : statusLabel(v)}
+                    {v === "all" ? t("common.all") : statusLabel(v)}
                   </a>
                 ))}
               </div>
@@ -151,14 +160,14 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
               <input
                 name="q"
                 defaultValue={search}
-                placeholder="판매자 이메일/유저명 검색"
+                placeholder={t("settlements.searchPlaceholder")}
                 className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:w-60 sm:flex-none"
               />
               <button
                 type="submit"
                 className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
-                검색
+                {t("common.search")}
               </button>
             </form>
           </div>
@@ -167,19 +176,35 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">판매자</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">총액</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">수수료</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">지급액</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">기간</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">상태</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">액션</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("settlements.colSeller")}
+                  </th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("settlements.colTotal")}
+                  </th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("settlements.colFee")}
+                  </th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("settlements.colNet")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("settlements.colPeriod")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("settlements.colStatus")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("common.action")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {settlements.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-slate-400">정산 내역이 없습니다.</td>
+                    <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
+                      {t("settlements.noSettlements")}
+                    </td>
                   </tr>
                 ) : (
                   settlements.map((s) => (
@@ -190,9 +215,18 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
                         </p>
                         <p className="text-xs text-slate-400">{s.seller?.email ?? ""}</p>
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-700 sm:px-5">{s.totalAmount.toLocaleString()}원</td>
-                      <td className="px-4 py-3 text-right text-slate-500 sm:px-5">{s.platformFee.toLocaleString()}원</td>
-                      <td className="px-4 py-3 text-right font-semibold text-slate-900 sm:px-5">{s.netAmount.toLocaleString()}원</td>
+                      <td className="px-4 py-3 text-right text-slate-700 sm:px-5">
+                        {s.totalAmount.toLocaleString()}
+                        {t("common.currencyUnit")}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-500 sm:px-5">
+                        {s.platformFee.toLocaleString()}
+                        {t("common.currencyUnit")}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900 sm:px-5">
+                        {s.netAmount.toLocaleString()}
+                        {t("common.currencyUnit")}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-400 sm:px-5">
                         {s.periodStart} ~ {s.periodEnd}
                       </td>
@@ -209,12 +243,14 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
                                 type="submit"
                                 className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-200"
                               >
-                                승인
+                                {t("common.approve")}
                               </button>
                             </form>
                             <form
                               method="post"
-                              onSubmit={(e) => { if (!confirm("정산을 거절하시겠습니까?")) e.preventDefault(); }}
+                              onSubmit={(e) => {
+                                if (!confirm(t("settlements.confirmReject"))) e.preventDefault();
+                              }}
                             >
                               <input type="hidden" name="_action" value="reject" />
                               <input type="hidden" name="id" value={s.id} />
@@ -222,7 +258,7 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
                                 type="submit"
                                 className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
                               >
-                                거절
+                                {t("common.reject")}
                               </button>
                             </form>
                           </div>
@@ -238,15 +274,26 @@ export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1">
               {page > 1 && (
-                <a href={buildHref({ page: page - 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">이전</a>
+                <a
+                  href={buildHref({ page: page - 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.prev")}
+                </a>
               )}
-              <span className="px-3 py-1.5 text-sm text-slate-500">{page} / {totalPages}</span>
+              <span className="px-3 py-1.5 text-sm text-slate-500">
+                {page} / {totalPages}
+              </span>
               {page < totalPages && (
-                <a href={buildHref({ page: page + 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">다음</a>
+                <a
+                  href={buildHref({ page: page + 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.next")}
+                </a>
               )}
             </div>
           )}
-
         </div>
       </main>
     </>

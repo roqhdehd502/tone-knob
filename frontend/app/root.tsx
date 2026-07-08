@@ -9,6 +9,8 @@ import {
 } from "react-router";
 
 import { ErrorFallback } from "~/components/common/ErrorFallback";
+import { I18nProvider } from "~/context/i18n";
+import { getLocale } from "~/i18n";
 import { AuthProvider } from "~/lib/auth";
 import { captureException, initSentry } from "~/lib/sentry";
 import { ThemeProvider } from "~/lib/theme";
@@ -60,6 +62,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const locale = getLocale(document.cookie);
+
   // 개발 모드에서는 Vite HMR과 충돌할 수 있어 프로덕션 빌드에서만 등록한다.
   useEffect(() => {
     if (import.meta.env.PROD && "serviceWorker" in navigator) {
@@ -68,13 +72,15 @@ export default function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <TutorialProvider>
-          <Outlet />
-        </TutorialProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <I18nProvider locale={locale}>
+      <ThemeProvider>
+        <AuthProvider>
+          <TutorialProvider>
+            <Outlet />
+          </TutorialProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </I18nProvider>
   );
 }
 

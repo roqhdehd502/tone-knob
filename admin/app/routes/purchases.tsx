@@ -1,15 +1,16 @@
-import type { Route } from "./+types/purchases";
-
 import { Topbar } from "~/components/layout/Topbar";
 import { Badge } from "~/components/ui/Badge";
+import { useI18n } from "~/context/i18n";
 import { requireAdmin } from "~/service/session.server";
 import { getSupabase } from "~/service/supabase.server";
 import type { TabPurchaseRow } from "~/types/db";
 
+import type { Route } from "./+types/purchases";
+
 const PAGE_SIZE = 20;
 
 export function meta() {
-  return [{ title: "탭 구매 내역 - Tone Knob Admin" }];
+  return [{ title: "Purchases - Tone Knob Admin" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -52,6 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function PurchasesPage({ loaderData }: Route.ComponentProps) {
   const { admin, purchases, total, page, totalPages, totalKnob } = loaderData;
+  const { t, dateLocale } = useI18n();
 
   const buildHref = (overrides: Record<string, string | number>) => {
     const params = new URLSearchParams();
@@ -62,41 +64,56 @@ export default function PurchasesPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Topbar adminName={admin.adminName} adminEmail={admin.adminEmail} title="탭 구매 내역" />
+      <Topbar
+        adminName={admin.adminName}
+        adminEmail={admin.adminEmail}
+        title={t("purchases.pageTitle")}
+      />
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-
           {/* Summary */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-medium text-slate-500">총 구매 건수</p>
+              <p className="text-xs font-medium text-slate-500">{t("purchases.cardTotalCount")}</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{total.toLocaleString()}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-medium text-slate-500">총 거래 Knob</p>
+              <p className="text-xs font-medium text-slate-500">{t("purchases.cardTotalKnob")}</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{totalKnob.toLocaleString()}</p>
             </div>
           </div>
 
           <p className="text-sm text-slate-500">
-            총 <span className="font-semibold text-slate-900">{total.toLocaleString()}</span>건
+            {t("purchases.total", { n: total.toLocaleString() })}
           </p>
 
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">탭</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">구매자</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">Knob</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">상태</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">구매일</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("purchases.colTab")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("purchases.colBuyer")}
+                  </th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("purchases.colKnob")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("purchases.colStatus")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("purchases.colDate")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {purchases.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-slate-400">구매 내역이 없습니다.</td>
+                    <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
+                      {t("purchases.noPurchases")}
+                    </td>
                   </tr>
                 ) : (
                   purchases.map((p) => (
@@ -112,11 +129,13 @@ export default function PurchasesPage({ loaderData }: Route.ComponentProps) {
                       </td>
                       <td className="px-4 py-3 sm:px-5">
                         <Badge variant={p.status === "completed" ? "success" : "warning"}>
-                          {p.status === "completed" ? "완료" : "환불"}
+                          {p.status === "completed"
+                            ? t("purchases.completed")
+                            : t("purchases.refunded")}
                         </Badge>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-400 sm:px-5">
-                        {new Date(p.createdAt).toLocaleDateString("ko-KR")}
+                        {new Date(p.createdAt).toLocaleDateString(dateLocale)}
                       </td>
                     </tr>
                   ))
@@ -128,15 +147,26 @@ export default function PurchasesPage({ loaderData }: Route.ComponentProps) {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1">
               {page > 1 && (
-                <a href={buildHref({ page: page - 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">이전</a>
+                <a
+                  href={buildHref({ page: page - 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.prev")}
+                </a>
               )}
-              <span className="px-3 py-1.5 text-sm text-slate-500">{page} / {totalPages}</span>
+              <span className="px-3 py-1.5 text-sm text-slate-500">
+                {page} / {totalPages}
+              </span>
               {page < totalPages && (
-                <a href={buildHref({ page: page + 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">다음</a>
+                <a
+                  href={buildHref({ page: page + 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.next")}
+                </a>
               )}
             </div>
           )}
-
         </div>
       </main>
     </>

@@ -1,17 +1,18 @@
 import { redirect } from "react-router";
 
-import type { Route } from "./+types/payments";
-
 import { Topbar } from "~/components/layout/Topbar";
 import { Badge } from "~/components/ui/Badge";
+import { useI18n } from "~/context/i18n";
 import { requireAdmin } from "~/service/session.server";
 import { getSupabase } from "~/service/supabase.server";
 import type { PaymentRow } from "~/types/db";
 
+import type { Route } from "./+types/payments";
+
 const PAGE_SIZE = 20;
 
 export function meta() {
-  return [{ title: "결제 관리 - Tone Knob Admin" }];
+  return [{ title: "Payments - Tone Knob Admin" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -63,16 +64,17 @@ function statusVariant(s: string) {
   return "default" as const;
 }
 
-function statusLabel(s: string) {
-  if (s === "pending") return "대기";
-  if (s === "completed") return "완료";
-  if (s === "refunded") return "환불";
-  if (s === "failed") return "실패";
-  return s;
-}
-
 export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
   const { admin, payments, total, page, status, totalPages } = loaderData;
+  const { t, dateLocale } = useI18n();
+
+  const statusLabel = (s: string) => {
+    if (s === "pending") return t("status.pending");
+    if (s === "completed") return t("status.completed");
+    if (s === "refunded") return t("status.refunded");
+    if (s === "failed") return t("status.failed");
+    return s;
+  };
 
   const buildHref = (overrides: Record<string, string | number>) => {
     const params = new URLSearchParams();
@@ -86,14 +88,17 @@ export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Topbar adminName={admin.adminName} adminEmail={admin.adminEmail} title="결제 관리" />
+      <Topbar
+        adminName={admin.adminName}
+        adminEmail={admin.adminEmail}
+        title={t("payments.pageTitle")}
+      />
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-slate-500">
-                총 <span className="font-semibold text-slate-900">{total.toLocaleString()}</span>건
+                {t("payments.total", { n: total.toLocaleString() })}
               </p>
               <div className="flex rounded-lg border border-slate-200 bg-white text-sm">
                 {statusOptions.map((v, i) => (
@@ -104,7 +109,7 @@ export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
                       status === v ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-50"
                     } ${i === 0 ? "rounded-l-lg" : i === statusOptions.length - 1 ? "rounded-r-lg" : ""}`}
                   >
-                    {v === "all" ? "전체" : statusLabel(v)}
+                    {v === "all" ? t("common.all") : statusLabel(v)}
                   </a>
                 ))}
               </div>
@@ -115,29 +120,46 @@ export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
             <table className="w-full min-w-[700px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">타입</th>
-                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">금액</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">상태</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">결제 ID (PortOne)</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">일시</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">액션</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("payments.colType")}
+                  </th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("payments.colAmount")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("payments.colStatus")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("payments.colPaymentId")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("payments.colDate")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("common.action")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-slate-400">결제 내역이 없습니다.</td>
+                    <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                      {t("payments.noPayments")}
+                    </td>
                   </tr>
                 ) : (
                   payments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3 sm:px-5">
                         <Badge variant={payment.type === "subscription" ? "info" : "default"}>
-                          {payment.type === "subscription" ? "구독" : "탭 구매"}
+                          {payment.type === "subscription"
+                            ? t("payments.typeSubscription")
+                            : t("payments.typeTabPurchase")}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-slate-900 sm:px-5">
-                        {payment.amount.toLocaleString()}원
+                        {payment.amount.toLocaleString()}
+                        {t("common.currencyUnit")}
                       </td>
                       <td className="px-4 py-3 sm:px-5">
                         <Badge variant={statusVariant(payment.status)}>
@@ -148,14 +170,14 @@ export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
                         {payment.externalPaymentId ?? payment.externalOrderId ?? "—"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-400 sm:px-5">
-                        {new Date(payment.createdAt).toLocaleDateString("ko-KR")}
+                        {new Date(payment.createdAt).toLocaleDateString(dateLocale)}
                       </td>
                       <td className="px-4 py-3 sm:px-5">
                         {payment.status === "completed" && (
                           <form
                             method="post"
                             onSubmit={(e) => {
-                              if (!confirm("환불 처리하시겠습니까? DB 상태만 변경되며 PG사 실취소는 별도로 진행해야 합니다.")) {
+                              if (!confirm(t("payments.confirmRefund"))) {
                                 e.preventDefault();
                               }
                             }}
@@ -165,7 +187,7 @@ export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
                               type="submit"
                               className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-200"
                             >
-                              환불
+                              {t("payments.refund")}
                             </button>
                           </form>
                         )}
@@ -180,15 +202,26 @@ export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1">
               {page > 1 && (
-                <a href={buildHref({ page: page - 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">이전</a>
+                <a
+                  href={buildHref({ page: page - 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.prev")}
+                </a>
               )}
-              <span className="px-3 py-1.5 text-sm text-slate-500">{page} / {totalPages}</span>
+              <span className="px-3 py-1.5 text-sm text-slate-500">
+                {page} / {totalPages}
+              </span>
               {page < totalPages && (
-                <a href={buildHref({ page: page + 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">다음</a>
+                <a
+                  href={buildHref({ page: page + 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.next")}
+                </a>
               )}
             </div>
           )}
-
         </div>
       </main>
     </>

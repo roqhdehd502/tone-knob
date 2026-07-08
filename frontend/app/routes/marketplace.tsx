@@ -16,24 +16,19 @@ import {
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
   return [
-    { title: "마켓플레이스 - Tone Knob" },
-    { name: "description", content: "타브 마켓플레이스" },
+    { title: "Marketplace - Tone Knob" },
+    { name: "description", content: "Tab marketplace" },
   ];
 }
 
 type SortOption = "popular" | "oldest" | "newest";
-
-const SORT_OPTIONS: { value: SortOption; label: string; icon: typeof Flame }[] = [
-  { value: "popular", label: "인기순", icon: Flame },
-  { value: "newest", label: "최신순", icon: Clock },
-  { value: "oldest", label: "등록순", icon: ArrowUpDown },
-];
 
 type PaidTab = TabListItem & { price?: number };
 
@@ -43,6 +38,13 @@ function formatPrice(price: number): string {
 
 export default function Marketplace() {
   const { user } = useAuth();
+  const { t, dateLocale } = useI18n();
+
+  const SORT_OPTIONS: { value: SortOption; label: string; icon: typeof Flame }[] = [
+    { value: "popular", label: t("marketplace.sort.popular"), icon: Flame },
+    { value: "newest", label: t("marketplace.sort.newest"), icon: Clock },
+    { value: "oldest", label: t("marketplace.sort.oldest"), icon: ArrowUpDown },
+  ];
   const [tabs, setTabs] = useState<PaidTab[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -107,7 +109,7 @@ export default function Marketplace() {
       await api.marketplace.purchase(tab.id);
       setPurchasedTabs((prev) => new Set([...prev, tab.id]));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "구매 중 오류가 발생했습니다";
+      const msg = err instanceof Error ? err.message : t("marketplace.buyError");
       setPurchaseError(msg);
     } finally {
       setPurchasingTabId(null);
@@ -120,9 +122,11 @@ export default function Marketplace() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">마켓플레이스</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t("marketplace.heading")}
+          </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            프리미엄 타브를 구매하세요
+            {t("marketplace.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50/80 p-0.5 dark:border-gray-700/80 dark:bg-gray-900/50">
@@ -155,7 +159,7 @@ export default function Marketplace() {
       {loading ? (
         <Card>
           <CardContent className="flex items-center justify-center py-16">
-            <p className="text-sm text-gray-400">로딩 중...</p>
+            <p className="text-sm text-gray-400">{t("marketplace.loading")}</p>
           </CardContent>
         </Card>
       ) : tabs.length === 0 ? (
@@ -163,7 +167,7 @@ export default function Marketplace() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <ShoppingBag className="h-10 w-10 text-gray-300 dark:text-gray-700" />
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-              아직 판매 중인 타브가 없습니다.
+              {t("marketplace.empty")}
             </p>
           </CardContent>
         </Card>
@@ -211,7 +215,7 @@ export default function Marketplace() {
                         {tab.likeCount}
                       </span>
                       <span className="ml-auto">
-                        {new Date(tab.updatedAt).toLocaleDateString("ko-KR")}
+                        {new Date(tab.updatedAt).toLocaleDateString(dateLocale)}
                       </span>
                     </div>
                   </Link>
@@ -227,11 +231,11 @@ export default function Marketplace() {
                       }`}
                     >
                       {isPurchased ? (
-                        "구매 완료"
+                        t("marketplace.purchased")
                       ) : isPurchasing ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        "구매하기"
+                        t("marketplace.buy")
                       )}
                     </button>
                   )}

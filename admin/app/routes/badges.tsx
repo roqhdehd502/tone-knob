@@ -1,15 +1,16 @@
 import { redirect } from "react-router";
 
-import type { Route } from "./+types/badges";
-
 import { Topbar } from "~/components/layout/Topbar";
 import { Badge as BadgeUI } from "~/components/ui/Badge";
+import { useI18n } from "~/context/i18n";
 import { requireAdmin } from "~/service/session.server";
 import { getSupabase } from "~/service/supabase.server";
 import type { BadgeRow } from "~/types/db";
 
+import type { Route } from "./+types/badges";
+
 export function meta() {
-  return [{ title: "뱃지 관리 - Tone Knob Admin" }];
+  return [{ title: "Badges - Tone Knob Admin" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -22,13 +23,9 @@ export async function action({ request }: Route.ActionArgs) {
     const email = (formData.get("email") as string).trim();
     const badgeId = formData.get("badgeId") as string;
 
-    const { data: user } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", email)
-      .single();
+    const { data: user } = await supabase.from("users").select("id").eq("email", email).single();
 
-    if (!user) return { error: "해당 이메일의 유저를 찾을 수 없습니다." };
+    if (!user) return { error: "badges.errorUserNotFound" };
 
     await supabase
       .from("user_badges")
@@ -61,15 +58,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { admin, badges };
 }
 
-const categoryLabel: Record<string, string> = {
-  achievement: "업적",
-  contribution: "기여",
-  social: "소셜",
-  special: "스페셜",
-};
-
-export default function BadgesPage({ loaderData }: Route.ComponentProps) {
+export default function BadgesPage({ loaderData, actionData }: Route.ComponentProps) {
   const { admin, badges } = loaderData;
+  const { t } = useI18n();
+
+  const categoryLabel = (cat: string) => {
+    if (cat === "achievement") return t("badges.catAchievement");
+    if (cat === "contribution") return t("badges.catContribution");
+    if (cat === "social") return t("badges.catSocial");
+    if (cat === "special") return t("badges.catSpecial");
+    return cat;
+  };
 
   const grouped = badges.reduce<Record<string, BadgeRow[]>>((acc, b) => {
     if (!acc[b.category]) acc[b.category] = [];
@@ -77,22 +76,35 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
     return acc;
   }, {});
 
+  const errorKey = (actionData as { error?: string } | undefined)?.error;
+
   return (
     <>
-      <Topbar adminName={admin.adminName} adminEmail={admin.adminEmail} title="뱃지 관리" />
+      <Topbar
+        adminName={admin.adminName}
+        adminEmail={admin.adminEmail}
+        title={t("badges.pageTitle")}
+      />
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="mx-auto max-w-7xl space-y-6">
-
           {/* Actions */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-
             {/* Award badge */}
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-sm font-semibold text-slate-900">뱃지 수동 수여</h2>
+              <h2 className="mb-4 text-sm font-semibold text-slate-900">
+                {t("badges.awardTitle")}
+              </h2>
               <form method="post" className="space-y-3">
                 <input type="hidden" name="_action" value="award" />
+                {errorKey && (
+                  <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+                    {t(errorKey as any)}
+                  </p>
+                )}
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">유저 이메일</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">
+                    {t("badges.userEmail")}
+                  </label>
                   <input
                     name="email"
                     type="email"
@@ -102,13 +114,15 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">뱃지 선택</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">
+                    {t("badges.selectBadge")}
+                  </label>
                   <select
                     name="badgeId"
                     required
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   >
-                    <option value="">-- 뱃지 선택 --</option>
+                    <option value="">{t("badges.selectBadgePlaceholder")}</option>
                     {badges.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.icon} {b.name} ({b.code})
@@ -120,19 +134,23 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
                   type="submit"
                   className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
-                  수여
+                  {t("badges.award")}
                 </button>
               </form>
             </div>
 
             {/* Create badge */}
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-sm font-semibold text-slate-900">새 뱃지 생성</h2>
+              <h2 className="mb-4 text-sm font-semibold text-slate-900">
+                {t("badges.createTitle")}
+              </h2>
               <form method="post" className="space-y-3">
                 <input type="hidden" name="_action" value="create" />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">코드 (영문, 고유값)</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">
+                      {t("badges.code")}
+                    </label>
                     <input
                       name="code"
                       required
@@ -141,26 +159,32 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">이름</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">
+                      {t("common.name")}
+                    </label>
                     <input
                       name="name"
                       required
-                      placeholder="첫 타브"
+                      placeholder="First Tab"
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">설명</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">
+                    {t("common.description")}
+                  </label>
                   <input
                     name="description"
-                    placeholder="첫 번째 타브를 제작했습니다"
+                    placeholder="Created the first tab"
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">아이콘 (이모지)</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">
+                      {t("badges.icon")}
+                    </label>
                     <input
                       name="icon"
                       placeholder="🎸"
@@ -168,16 +192,18 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">카테고리</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">
+                      {t("common.category")}
+                    </label>
                     <select
                       name="category"
                       required
                       className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     >
-                      <option value="achievement">업적</option>
-                      <option value="contribution">기여</option>
-                      <option value="social">소셜</option>
-                      <option value="special">스페셜</option>
+                      <option value="achievement">{t("badges.catAchievement")}</option>
+                      <option value="contribution">{t("badges.catContribution")}</option>
+                      <option value="social">{t("badges.catSocial")}</option>
+                      <option value="special">{t("badges.catSpecial")}</option>
                     </select>
                   </div>
                 </div>
@@ -185,11 +211,10 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
                   type="submit"
                   className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
                 >
-                  생성
+                  {t("common.create")}
                 </button>
               </form>
             </div>
-
           </div>
 
           {/* Badge list by category */}
@@ -198,8 +223,10 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
               <div key={cat} className="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
                   <h2 className="text-sm font-semibold text-slate-900">
-                    {categoryLabel[cat] ?? cat}
-                    <span className="ml-2 text-xs font-normal text-slate-400">({items.length})</span>
+                    {categoryLabel(cat)}
+                    <span className="ml-2 text-xs font-normal text-slate-400">
+                      ({items.length})
+                    </span>
                   </h2>
                 </div>
                 <div className="divide-y divide-slate-50">
@@ -213,14 +240,13 @@ export default function BadgesPage({ loaderData }: Route.ComponentProps) {
                           <p className="mt-0.5 text-xs text-slate-400">{b.description}</p>
                         )}
                       </div>
-                      <BadgeUI variant="default">{categoryLabel[b.category] ?? b.category}</BadgeUI>
+                      <BadgeUI variant="default">{categoryLabel(b.category)}</BadgeUI>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-
         </div>
       </main>
     </>

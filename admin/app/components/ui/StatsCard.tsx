@@ -11,7 +11,14 @@ interface Props {
   trend?: { value: number; label: string };
 }
 
-export function StatsCard({ title, value, sub, icon: Icon, iconColor = "text-blue-600", trend }: Props) {
+export function StatsCard({
+  title,
+  value,
+  sub,
+  icon: Icon,
+  iconColor = "text-blue-600",
+  trend,
+}: Props) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 xl:p-6">
       <div className="flex items-start justify-between">
@@ -26,7 +33,9 @@ export function StatsCard({ title, value, sub, icon: Icon, iconColor = "text-blu
       </div>
       {trend && (
         <div className="mt-4 flex items-center gap-1 text-xs">
-          <span className={cn("font-semibold", trend.value >= 0 ? "text-emerald-600" : "text-red-500")}>
+          <span
+            className={cn("font-semibold", trend.value >= 0 ? "text-emerald-600" : "text-red-500")}
+          >
             {trend.value >= 0 ? "+" : ""}
             {trend.value}
           </span>

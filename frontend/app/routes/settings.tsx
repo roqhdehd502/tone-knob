@@ -2,38 +2,52 @@ import { Bell, BookOpen, Globe, Monitor, Moon, Shield, Sun } from "lucide-react"
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { type Theme, useTheme } from "~/lib/theme";
 import { useTutorial } from "~/lib/tutorial";
 import { cn } from "~/lib/utils";
 
 export function meta() {
-  return [{ title: "설정 - Tone Knob" }, { name: "description", content: "설정" }];
+  return [{ title: "Settings - Tone Knob" }, { name: "description", content: "App settings" }];
 }
-
-const themeOptions: { value: Theme; icon: typeof Sun; label: string; desc: string }[] = [
-  { value: "light", icon: Sun, label: "라이트", desc: "밝은 배경의 라이트 모드" },
-  { value: "dark", icon: Moon, label: "다크", desc: "어두운 배경의 다크 모드" },
-  { value: "system", icon: Monitor, label: "시스템", desc: "OS 설정을 따릅니다" },
-];
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { isCompleted, resetTutorial, startTutorial } = useTutorial();
+  const { t, locale, setLocale } = useI18n();
+
+  const themeOptions: { value: Theme; icon: typeof Sun; label: string; desc: string }[] = [
+    {
+      value: "light",
+      icon: Sun,
+      label: t("settings.theme.light"),
+      desc: t("settings.theme.lightDesc"),
+    },
+    {
+      value: "dark",
+      icon: Moon,
+      label: t("settings.theme.dark"),
+      desc: t("settings.theme.darkDesc"),
+    },
+    {
+      value: "system",
+      icon: Monitor,
+      label: t("settings.theme.system"),
+      desc: t("settings.theme.systemDesc"),
+    },
+  ];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">설정</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          앱 환경을 원하는 대로 설정하세요
-        </p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("settings.heading")}</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("settings.subtitle")}</p>
       </div>
 
-      {/* 테마 설정 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">화면 테마</CardTitle>
-          <CardDescription>앱의 외관을 선택하세요</CardDescription>
+          <CardTitle className="text-base">{t("settings.themeTitle")}</CardTitle>
+          <CardDescription>{t("settings.themeDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -77,38 +91,38 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* 알림 설정 (placeholder) */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">알림</CardTitle>
-          <CardDescription>알림 수신 방법을 설정하세요</CardDescription>
+          <CardTitle className="text-base">{t("settings.notificationTitle")}</CardTitle>
+          <CardDescription>{t("settings.notificationDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3 rounded-lg border border-dashed border-gray-200 p-4 dark:border-gray-800">
             <Bell className="h-5 w-5 text-gray-400" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              알림 설정 기능이 곧 제공됩니다.
+              {t("settings.notificationComingSoon")}
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* 튜토리얼 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">튜토리얼</CardTitle>
-          <CardDescription>플랫폼 사용법을 다시 확인하세요</CardDescription>
+          <CardTitle className="text-base">{t("settings.tutorialTitle")}</CardTitle>
+          <CardDescription>{t("settings.tutorialDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <BookOpen className="h-5 w-5 text-miami-500" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">온보딩 튜토리얼</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t("settings.onboardingLabel")}
+                </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {isCompleted
-                    ? "튜토리얼을 이미 완료했습니다"
-                    : "튜토리얼을 아직 완료하지 않았습니다"}
+                    ? t("settings.tutorialCompleted")
+                    : t("settings.tutorialNotCompleted")}
                 </p>
               </div>
             </div>
@@ -120,33 +134,59 @@ export default function Settings() {
                 startTutorial();
               }}
             >
-              {isCompleted ? "다시 보기" : "시작하기"}
+              {isCompleted ? t("settings.tutorialRestart") : t("settings.tutorialStart")}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* 언어/개인정보 (placeholder) */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">언어</CardTitle>
+            <CardTitle className="text-base">{t("settings.languageTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3 rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-800">
+            <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
               <Globe className="h-4 w-4 text-gray-400" />
-              <p className="text-xs text-gray-500 dark:text-gray-400">한국어 (곧 다국어 지원)</p>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setLocale("ko")}
+                  className={cn(
+                    "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                    locale === "ko"
+                      ? "bg-miami-100 text-miami-700 dark:bg-miami-900/40 dark:text-miami-300"
+                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+                  )}
+                >
+                  {t("settings.langKo")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale("en")}
+                  className={cn(
+                    "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                    locale === "en"
+                      ? "bg-miami-100 text-miami-700 dark:bg-miami-900/40 dark:text-miami-300"
+                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+                  )}
+                >
+                  {t("settings.langEn")}
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">개인정보</CardTitle>
+            <CardTitle className="text-base">{t("settings.privacyTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3 rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-800">
               <Shield className="h-4 w-4 text-gray-400" />
-              <p className="text-xs text-gray-500 dark:text-gray-400">개인정보 설정 준비 중</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t("settings.privacyComingSoon")}
+              </p>
             </div>
           </CardContent>
         </Card>

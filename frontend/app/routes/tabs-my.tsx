@@ -5,32 +5,19 @@ import { Clock, Eye, FileMusic, Globe, GlobeLock, Heart, Plus, Trash2 } from "lu
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
-  return [
-    { title: "내 타브 - Tone Knob" },
-    { name: "description", content: "내가 만든 타브 목록" },
-  ];
-}
-
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "방금 전";
-  if (mins < 60) return `${mins}분 전`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}시간 전`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}일 전`;
-  return new Date(dateStr).toLocaleDateString("ko-KR");
+  return [{ title: "My Tabs - Tone Knob" }, { name: "description", content: "Your created tabs" }];
 }
 
 export default function TabsMy() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t, dateLocale } = useI18n();
   const [tabs, setTabs] = useState<TabListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -56,14 +43,26 @@ export default function TabsMy() {
 
   const totalPages = Math.ceil(total / limit);
 
+  function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return t("time.justNow");
+    if (mins < 60) return t("time.minutesAgo", { n: mins });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t("time.hoursAgo", { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 30) return t("time.daysAgo", { n: days });
+    return new Date(dateStr).toLocaleDateString(dateLocale);
+  }
+
   const handleDelete = async (tabId: string) => {
-    if (!confirm("정말 이 타브를 삭제하시겠습니까?")) return;
+    if (!confirm(t("tabsMy.confirmDelete"))) return;
     try {
       await api.tabs.delete(tabId);
-      setTabs((prev) => prev.filter((t) => t.id !== tabId));
+      setTabs((prev) => prev.filter((tab) => tab.id !== tabId));
       setTotal((prev) => prev - 1);
     } catch {
-      alert("삭제에 실패했습니다.");
+      alert(t("tabsMy.deleteError"));
     }
   };
 
@@ -71,10 +70,10 @@ export default function TabsMy() {
     try {
       const updated = await api.tabs.togglePublish(tabId);
       setTabs((prev) =>
-        prev.map((t) => (t.id === tabId ? { ...t, isPublic: updated.isPublic } : t)),
+        prev.map((tab) => (tab.id === tabId ? { ...tab, isPublic: updated.isPublic } : tab)),
       );
     } catch {
-      alert("공개 설정 변경에 실패했습니다.");
+      alert(t("tabsMy.visibilityError"));
     }
   };
 
@@ -82,12 +81,15 @@ export default function TabsMy() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">내 타브</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{total}개의 타브</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("tabsMy.heading")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t("tabsMy.subtitle", { n: total })}
+          </p>
         </div>
         <Button asChild size="sm">
           <Link to="/editor/new" className="gap-1.5">
-            <Plus className="h-4 w-4" />새 타브
+            <Plus className="h-4 w-4" />
+            {t("tabsMy.newTab")}
           </Link>
         </Button>
       </div>
@@ -102,11 +104,9 @@ export default function TabsMy() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <FileMusic className="h-10 w-10 text-gray-300 dark:text-gray-700" />
-            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-              아직 제작한 타브가 없습니다.
-            </p>
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{t("tabsMy.noTabs")}</p>
             <Button className="mt-4" size="sm" asChild>
-              <Link to="/editor/new">첨 타브 만들기</Link>
+              <Link to="/editor/new">{t("tabsMy.createFirst")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -148,7 +148,7 @@ export default function TabsMy() {
                     type="button"
                     onClick={() => handleTogglePublish(tab.id)}
                     className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                    title={tab.isPublic ? "비공개로 전환" : "공개로 전환"}
+                    title={tab.isPublic ? t("tabsMy.makePrivate") : t("tabsMy.makePublic")}
                   >
                     {tab.isPublic ? (
                       <Globe className="h-4 w-4 text-green-500" />
@@ -160,7 +160,7 @@ export default function TabsMy() {
                     type="button"
                     onClick={() => handleDelete(tab.id)}
                     className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950 dark:hover:text-red-400"
-                    title="삭제"
+                    title={t("common.delete")}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -177,7 +177,7 @@ export default function TabsMy() {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                이전
+                {t("common.prev")}
               </Button>
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {page} / {totalPages}
@@ -188,7 +188,7 @@ export default function TabsMy() {
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                다음
+                {t("common.next")}
               </Button>
             </div>
           )}

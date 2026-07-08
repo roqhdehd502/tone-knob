@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
+import { useI18n } from "~/context/i18n";
+
 interface BpmDialProps {
   value: number;
   min?: number;
@@ -8,6 +10,7 @@ interface BpmDialProps {
 }
 
 export function BpmDial({ value, min = 20, max = 300, onChange }: BpmDialProps) {
+  const { t } = useI18n();
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ y: number; startValue: number } | null>(null);
   const dialRef = useRef<HTMLDivElement>(null);
@@ -56,7 +59,7 @@ export function BpmDial({ value, min = 20, max = 300, onChange }: BpmDialProps) 
   );
 
   const handleDoubleClick = useCallback(() => {
-    const input = prompt("BPM 입력 (20-300):", String(value));
+    const input = prompt(t("bpm.prompt"), String(value));
     if (input !== null) {
       const parsed = parseInt(input);
       if (!isNaN(parsed)) onChange(clamp(parsed));
@@ -112,7 +115,7 @@ export function BpmDial({ value, min = 20, max = 300, onChange }: BpmDialProps) 
         onMouseDown={handleMouseDown}
         onWheel={handleWheel}
         onDoubleClick={handleDoubleClick}
-        title="드래그: BPM 조절 | Shift+드래그: 미세 조절 | 더블클릭: 직접 입력 | 스크롤: ±1"
+        title={t("bpm.title")}
       >
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           {/* 배경 원 */}

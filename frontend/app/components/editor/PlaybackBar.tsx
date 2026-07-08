@@ -1,15 +1,9 @@
 import { Guitar, Pause, Play, SkipBack, Square, Volume2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { useI18n } from "~/context/i18n";
 import type { PlaybackPosition, PlaybackState } from "~/lib/audio/audio-engine";
 import type { InstrumentType } from "~/types/tab";
-
-const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string }[] = [
-  { value: "electric-guitar", label: "일렉 기타" },
-  { value: "acoustic-guitar", label: "어쿠스틱 기타" },
-  { value: "bass", label: "베이스" },
-  { value: "keyboard", label: "키보드" },
-];
 
 interface PlaybackBarProps {
   state: PlaybackState;
@@ -40,6 +34,15 @@ export function PlaybackBar({
   onInstrumentChange,
   onVolumeChange,
 }: PlaybackBarProps) {
+  const { t } = useI18n();
+
+  const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string }[] = [
+    { value: "electric-guitar", label: t("playbar.instrument.electricGuitar") },
+    { value: "acoustic-guitar", label: t("playbar.instrument.acousticGuitar") },
+    { value: "bass", label: t("playbar.instrument.bass") },
+    { value: "keyboard", label: t("playbar.instrument.keyboard") },
+  ];
+
   return (
     <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
       {/* 재생 컨트롤 */}
@@ -50,7 +53,7 @@ export function PlaybackBar({
           className="h-8 w-8 p-0"
           onClick={onStop}
           disabled={state === "stopped"}
-          title="처음으로 (Stop)"
+          title={t("playbar.goToStart")}
         >
           <SkipBack className="h-4 w-4" />
         </Button>
@@ -61,7 +64,7 @@ export function PlaybackBar({
             size="sm"
             className="h-8 w-8 p-0 text-miami-600 dark:text-miami-400"
             onClick={onPause}
-            title="일시정지 (Space)"
+            title={t("playbar.pause")}
           >
             <Pause className="h-4 w-4" />
           </Button>
@@ -71,7 +74,7 @@ export function PlaybackBar({
             size="sm"
             className="h-8 w-8 p-0"
             onClick={onPlay}
-            title="재생 (Space)"
+            title={t("playbar.play")}
           >
             <Play className="h-4 w-4" />
           </Button>
@@ -83,7 +86,7 @@ export function PlaybackBar({
           className="h-8 w-8 p-0"
           onClick={onStop}
           disabled={state === "stopped"}
-          title="정지"
+          title={t("playbar.stop")}
         >
           <Square className="h-3.5 w-3.5" />
         </Button>
@@ -118,7 +121,7 @@ export function PlaybackBar({
           metronome ? "text-miami-600 dark:text-miami-400" : "text-gray-400 dark:text-gray-500"
         }`}
         onClick={onToggleMetronome}
-        title="메트로놈 (M)"
+        title={t("playbar.metronomeTitle")}
       >
         <svg
           viewBox="0 0 24 24"
@@ -132,7 +135,7 @@ export function PlaybackBar({
           <path d="M12 2 L7 22 L17 22 Z" />
           <line x1="12" y1="8" x2="18" y2="4" />
         </svg>
-        메트로놈
+        {t("playbar.metronome")}
       </Button>
 
       {/* 악기 선택 */}
@@ -160,7 +163,7 @@ export function PlaybackBar({
       {onVolumeChange && volume !== undefined && (
         <>
           <div className="h-5 w-px bg-gray-200 dark:bg-gray-700" />
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" title={t("playbar.volume")}>
             <Volume2 className="h-3.5 w-3.5 text-gray-400" />
             <input
               type="range"
@@ -179,13 +182,13 @@ export function PlaybackBar({
         {state === "playing" && (
           <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-            재생 중
+            {t("playbar.playing")}
           </span>
         )}
         {state === "paused" && (
           <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            일시정지
+            {t("playbar.paused")}
           </span>
         )}
       </div>

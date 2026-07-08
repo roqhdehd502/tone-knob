@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { RefreshCw, Settings2 } from "lucide-react";
 
+import { useI18n } from "~/context/i18n";
 import type { AudioDevice, AudioSettings } from "~/lib/jam/audio-settings";
 import {
   BUFFER_SIZE_OPTIONS,
@@ -65,6 +66,7 @@ export function AudioSettingsPanel({
   onChange,
   compact = false,
 }: AudioSettingsPanelProps) {
+  const { t } = useI18n();
   const [devices, setDevices] = useState<AudioDevice[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -82,11 +84,9 @@ export function AudioSettingsPanel({
     }
   }, []);
 
-  // 초기 로드
   useEffect(() => {
     void refreshDevices();
 
-    // 장치 변경 이벤트 리스너 (USB 오디오 인터페이스 연결/해제 감지)
     const handler = () => void refreshDevices();
     navigator.mediaDevices?.addEventListener("devicechange", handler);
     return () => navigator.mediaDevices?.removeEventListener("devicechange", handler);
@@ -104,7 +104,7 @@ export function AudioSettingsPanel({
         className="flex w-full cursor-pointer items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
       >
         <Settings2 className="h-3.5 w-3.5" />
-        오디오 설정
+        {t("audioSettings.title")}
       </button>
     );
   }
@@ -114,7 +114,7 @@ export function AudioSettingsPanel({
       <div className="flex items-center justify-between">
         <h4 className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
           <Settings2 className="h-3.5 w-3.5" />
-          오디오 설정
+          {t("audioSettings.title")}
         </h4>
         <div className="flex items-center gap-2">
           <button
@@ -122,7 +122,7 @@ export function AudioSettingsPanel({
             onClick={refreshDevices}
             disabled={loading}
             className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            title="장치 목록 새로고침"
+            title={t("audioSettings.refresh")}
           >
             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -131,7 +131,7 @@ export function AudioSettingsPanel({
             onClick={() => onChange(getDefaultSettings())}
             className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            기본값
+            {t("audioSettings.reset")}
           </button>
           {compact && (
             <button
@@ -139,7 +139,7 @@ export function AudioSettingsPanel({
               onClick={() => setExpanded(false)}
               className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              접기
+              {t("audioSettings.collapse")}
             </button>
           )}
         </div>
@@ -148,14 +148,14 @@ export function AudioSettingsPanel({
       {/* 입력 장치 */}
       <div>
         <label className="mb-1 block text-[11px] font-medium text-gray-500 dark:text-gray-400">
-          🎤 입력 장치 (마이크 / 오디오 인터페이스)
+          {t("audioSettings.inputDevice")}
         </label>
         <select
           value={settings.inputDeviceId}
           onChange={(e) => update({ inputDeviceId: e.target.value })}
           className="h-8 w-full cursor-pointer rounded border border-gray-200 bg-white px-2 text-sm text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
         >
-          <option value="default">시스템 기본값</option>
+          <option value="default">{t("audioSettings.systemDefault")}</option>
           {inputDevices.map((d) => (
             <option key={d.deviceId} value={d.deviceId}>
               {d.label}
@@ -163,22 +163,21 @@ export function AudioSettingsPanel({
           ))}
         </select>
         <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">
-          VST 플러그인을 거친 소리도 입력할 수 있습니다 — DAW/VST 호스트의 출력을 가상 오디오
-          케이블(BlackHole, VB-Audio 등)로 라우팅하면 여기 목록에 입력 장치로 표시됩니다.
+          {t("audioSettings.vstHint")}
         </p>
       </div>
 
       {/* 출력 장치 */}
       <div>
         <label className="mb-1 block text-[11px] font-medium text-gray-500 dark:text-gray-400">
-          🔊 출력 장치 (스피커 / 헤드폰)
+          {t("audioSettings.outputDevice")}
         </label>
         <select
           value={settings.outputDeviceId}
           onChange={(e) => update({ outputDeviceId: e.target.value })}
           className="h-8 w-full cursor-pointer rounded border border-gray-200 bg-white px-2 text-sm text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
         >
-          <option value="default">시스템 기본값</option>
+          <option value="default">{t("audioSettings.systemDefault")}</option>
           {outputDevices.map((d) => (
             <option key={d.deviceId} value={d.deviceId}>
               {d.label}
@@ -186,16 +185,14 @@ export function AudioSettingsPanel({
           ))}
         </select>
         {outputDevices.length === 0 && (
-          <p className="mt-1 text-[10px] text-gray-400">
-            출력 장치 선택은 Chrome/Edge에서 지원됩니다
-          </p>
+          <p className="mt-1 text-[10px] text-gray-400">{t("audioSettings.outputNote")}</p>
         )}
       </div>
 
       {/* 샘플레이트 */}
       <div>
         <label className="mb-1 block text-[11px] font-medium text-gray-500 dark:text-gray-400">
-          샘플레이트
+          {t("audioSettings.sampleRate")}
         </label>
         <div className="grid grid-cols-3 gap-1.5">
           {SAMPLE_RATE_OPTIONS.map((opt) => (
@@ -218,7 +215,7 @@ export function AudioSettingsPanel({
       {/* 버퍼 크기 / 레이턴시 모드 */}
       <div>
         <label className="mb-1 block text-[11px] font-medium text-gray-500 dark:text-gray-400">
-          레이턴시 모드 (버퍼 크기)
+          {t("audioSettings.latencyMode")}
         </label>
         <div className="space-y-1.5">
           {BUFFER_SIZE_OPTIONS.map((opt) => (
@@ -259,7 +256,7 @@ export function AudioSettingsPanel({
       {/* 채널 수 */}
       <div>
         <label className="mb-1 block text-[11px] font-medium text-gray-500 dark:text-gray-400">
-          채널
+          {t("audioSettings.channels")}
         </label>
         <div className="grid grid-cols-2 gap-1.5">
           <button
@@ -271,7 +268,7 @@ export function AudioSettingsPanel({
                 : "border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400"
             }`}
           >
-            모노 (1ch)
+            {t("audioSettings.mono")}
           </button>
           <button
             type="button"
@@ -282,7 +279,7 @@ export function AudioSettingsPanel({
                 : "border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400"
             }`}
           >
-            스테레오 (2ch)
+            {t("audioSettings.stereo")}
           </button>
         </div>
       </div>
@@ -290,33 +287,32 @@ export function AudioSettingsPanel({
       {/* 오디오 프로세싱 옵션 */}
       <div className="space-y-3">
         <label className="block text-[11px] font-medium text-gray-500 dark:text-gray-400">
-          오디오 프로세싱
+          {t("audioSettings.processing")}
         </label>
         <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
           <div className="space-y-3">
             <Toggle
               checked={settings.echoCancellation}
               onChange={(v) => update({ echoCancellation: v })}
-              label="에코 캔슬레이션"
-              description="일반 마이크 사용 시 ON, 오디오 인터페이스 시 OFF 권장"
+              label={t("audioSettings.echoCancellation")}
+              description={t("audioSettings.echoCancellationDesc")}
             />
             <Toggle
               checked={settings.noiseSuppression}
               onChange={(v) => update({ noiseSuppression: v })}
-              label="노이즈 서프레션"
-              description="배경 소음 제거. 악기 연주 시 OFF 권장"
+              label={t("audioSettings.noiseSuppression")}
+              description={t("audioSettings.noiseSuppressionDesc")}
             />
             <Toggle
               checked={settings.autoGainControl}
               onChange={(v) => update({ autoGainControl: v })}
-              label="자동 게인 컨트롤"
-              description="자동 음량 조절. 악기 다이나믹 보존 시 OFF 권장"
+              label={t("audioSettings.autoGain")}
+              description={t("audioSettings.autoGainDesc")}
             />
           </div>
         </div>
         <p className="text-[10px] text-gray-400 dark:text-gray-500">
-          💡 오디오 인터페이스 사용 시 모든 프로세싱을 OFF로 설정하면 원음에 가까운 깨끗한 사운드를
-          얻을 수 있습니다.
+          {t("audioSettings.audioTip")}
         </p>
       </div>
     </div>

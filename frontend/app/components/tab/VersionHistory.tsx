@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Clock, GitCompare, History, RotateCcw } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import type { TabDocument, TabVersion } from "~/types/tab";
 
@@ -13,6 +14,7 @@ interface VersionHistoryProps {
 }
 
 export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProps) {
+  const { t, dateLocale } = useI18n();
   const [versions, setVersions] = useState<TabVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState<TabVersion | null>(null);
@@ -57,7 +59,6 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
       if (!newSections.has(id)) removed++;
     });
 
-    // 공통 섹션에서 노트 수 변경 체크
     oldDoc.sections.forEach((oldSection) => {
       const newSection = newDoc.sections.find((s) => s.id === oldSection.id);
       if (newSection) {
@@ -73,7 +74,7 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-sm text-gray-400">버전 기록 로딩 중...</p>
+        <p className="text-sm text-gray-400">{t("versionHistory.loading")}</p>
       </div>
     );
   }
@@ -84,7 +85,7 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
         <div className="flex items-center gap-2">
           <History className="h-5 w-5 text-gray-600 dark:text-gray-400" />
           <h3 className="font-semibold text-gray-900 dark:text-white">
-            버전 기록 ({versions.length})
+            {t("versionHistory.title", { n: versions.length })}
           </h3>
         </div>
         {versions.length > 1 && (
@@ -97,13 +98,13 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
             }}
           >
             <GitCompare className="mr-1 h-4 w-4" />
-            비교
+            {t("versionHistory.compare")}
           </Button>
         )}
       </div>
 
       {versions.length === 0 ? (
-        <p className="py-4 text-center text-sm text-gray-400">버전 기록이 없습니다</p>
+        <p className="py-4 text-center text-sm text-gray-400">{t("versionHistory.noVersions")}</p>
       ) : (
         <div className="space-y-2">
           {versions.map((version, index) => {
@@ -112,6 +113,15 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
               prevVersion && compareMode
                 ? getSectionDiff(prevVersion.content, version.content)
                 : null;
+
+            const noteCount = version.content.sections.reduce(
+              (sum, s) => sum + s.measures.reduce((ms, m) => ms + m.notes.length, 0),
+              0,
+            );
+            const barCount = version.content.sections.reduce(
+              (sum, s) => sum + s.measures.length,
+              0,
+            );
 
             return (
               <div
@@ -129,11 +139,12 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
                     </span>
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {version.changeDescription || `버전 ${version.versionNumber}`}
+                        {version.changeDescription ||
+                          t("versionHistory.default", { n: version.versionNumber })}
                       </p>
                       <div className="flex items-center gap-1.5 text-xs text-gray-500">
                         <Clock className="h-3 w-3" />
-                        {new Date(version.createdAt).toLocaleString("ko-KR", {
+                        {new Date(version.createdAt).toLocaleString(dateLocale, {
                           year: "numeric",
                           month: "short",
                           day: "numeric",
@@ -158,7 +169,7 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
                           setSelectedVersion(selectedVersion?.id === version.id ? null : version)
                         }
                       >
-                        선택
+                        {t("versionHistory.select")}
                       </Button>
                     )}
                     {isOwner && index > 0 && (
@@ -166,7 +177,7 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRestore(version)}
-                        title="이 버전으로 복원"
+                        title={t("versionHistory.restore")}
                       >
                         <RotateCcw className="h-3.5 w-3.5" />
                       </Button>
@@ -176,35 +187,39 @@ export function VersionHistory({ tabId, isOwner, onRestore }: VersionHistoryProp
 
                 {compareMode && diff && (
                   <div className="mt-2 flex gap-3 text-xs">
-                    {diff.added > 0 && <span className="text-green-600">+{diff.added} 섹션</span>}
-                    {diff.removed > 0 && <span className="text-red-500">-{diff.removed} 섹션</span>}
+                    {diff.added > 0 && (
+                      <span className="text-green-600">
+                        {t("versionHistory.diffAdded", { n: diff.added })}
+                      </span>
+                    )}
+                    {diff.removed > 0 && (
+                      <span className="text-red-500">
+                        {t("versionHistory.diffRemoved", { n: diff.removed })}
+                      </span>
+                    )}
                     {diff.modified > 0 && (
-                      <span className="text-amber-500">~{diff.modified} 수정</span>
+                      <span className="text-amber-500">
+                        {t("versionHistory.diffModified", { n: diff.modified })}
+                      </span>
                     )}
                     {diff.added === 0 && diff.removed === 0 && diff.modified === 0 && (
-                      <span className="text-gray-400">변경 없음</span>
+                      <span className="text-gray-400">{t("versionHistory.noChange")}</span>
                     )}
                   </div>
                 )}
 
                 {compareMode && selectedVersion?.id === version.id && (
                   <div className="mt-3 rounded border border-gray-200 bg-gray-50 p-2 dark:border-gray-600 dark:bg-gray-700">
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300">요약</p>
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                      {t("versionHistory.summary")}
+                    </p>
                     <div className="mt-1 grid grid-cols-2 gap-2 text-xs text-gray-500">
-                      <div>섹션: {version.content.sections.length}개</div>
+                      <div>
+                        {t("versionHistory.sections", { n: version.content.sections.length })}
+                      </div>
                       <div>BPM: {version.content.bpm}</div>
-                      <div>
-                        노트:{" "}
-                        {version.content.sections.reduce(
-                          (sum, s) => sum + s.measures.reduce((ms, m) => ms + m.notes.length, 0),
-                          0,
-                        )}
-                        개
-                      </div>
-                      <div>
-                        마디:{" "}
-                        {version.content.sections.reduce((sum, s) => sum + s.measures.length, 0)}개
-                      </div>
+                      <div>{t("versionHistory.noteCount", { n: noteCount })}</div>
+                      <div>{t("versionHistory.barCount", { n: barCount })}</div>
                     </div>
                   </div>
                 )}

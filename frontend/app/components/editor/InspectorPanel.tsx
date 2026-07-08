@@ -20,6 +20,7 @@ import { BpmDial } from "~/components/editor/BpmDial";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
+import { useI18n } from "~/context/i18n";
 import type { Section, TabDocument } from "~/types/tab";
 
 interface InspectorPanelProps {
@@ -31,6 +32,7 @@ interface InspectorPanelProps {
 }
 
 export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: InspectorPanelProps) {
+  const { t } = useI18n();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
@@ -50,12 +52,14 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
 
   return (
     <div className="w-64 shrink-0 space-y-4 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">타브 정보</h3>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+        {t("inspector.tabInfo")}
+      </h3>
 
       <div className="space-y-3">
         <div className="space-y-1">
           <Label htmlFor="tab-title" className="text-xs">
-            제목
+            {t("inspector.titleLabel")}
           </Label>
           <Input
             id="tab-title"
@@ -67,14 +71,14 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
 
         <div className="space-y-1">
           <Label htmlFor="tab-artist" className="text-xs">
-            아티스트
+            {t("inspector.artist")}
           </Label>
           <Input
             id="tab-artist"
             value={tab.artist}
             onChange={(e) => onUpdateMeta({ artist: e.target.value })}
             className="h-8 text-sm"
-            placeholder="아티스트명"
+            placeholder={t("inspector.artistPlaceholder")}
           />
         </div>
 
@@ -84,7 +88,7 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">박자</Label>
+          <Label className="text-xs">{t("inspector.timeSignature")}</Label>
           <div className="flex items-center gap-1">
             <Input
               type="number"
@@ -118,11 +122,15 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
       <Separator />
 
       <div className="space-y-2">
-        <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">튜닝</h4>
+        <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+          {t("inspector.tuning")}
+        </h4>
         <div className="grid grid-cols-6 gap-1">
           {tab.tuning.map((note, idx) => (
             <div key={idx} className="text-center">
-              <span className="text-[10px] text-gray-400">{idx + 1}번</span>
+              <span className="text-[10px] text-gray-400">
+                {t("inspector.stringLabel", { n: idx + 1 })}
+              </span>
               <Input
                 value={note}
                 onChange={(e) => {
@@ -142,7 +150,8 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
 
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-          섹션 <span className="font-normal text-gray-400">(드래그로 순서 변경)</span>
+          {t("inspector.sections")}{" "}
+          <span className="font-normal text-gray-400">{t("inspector.sectionsDragHint")}</span>
         </h4>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
@@ -151,7 +160,11 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
           >
             <div className="space-y-1">
               {tab.sections.map((section) => (
-                <SortableSectionItem key={section.id} section={section} />
+                <SortableSectionItem
+                  key={section.id}
+                  section={section}
+                  measureLabel={t("inspector.sectionMeasures", { n: section.measures.length })}
+                />
               ))}
             </div>
           </SortableContext>
@@ -161,28 +174,36 @@ export function InspectorPanel({ tab, onUpdateMeta, onReorderSections }: Inspect
       <Separator />
 
       <div className="text-[10px] text-gray-400">
-        <p className="font-semibold">단축키:</p>
-        <p>V - 선택 도구</p>
-        <p>N - 음표 도구</p>
-        <p>E - 지우개</p>
-        <p>Ctrl+Z - 실행 취소</p>
-        <p>Ctrl+Shift+Z - 다시 실행</p>
-        <p>Delete - 선택 삭제</p>
-        <p className="mt-1.5 font-semibold">기법 (음표 선택 후):</p>
-        <p>H - 해머온 / P - 풀오프</p>
-        <p>B - 벤딩 / ~ - 비브라토</p>
-        <p>/ - 슬라이드↑ / \ - 슬라이드↓</p>
-        <p>X - 뮤트 / O - 하모닉스</p>
-        <p>T - 탭핑 / R - 트릴</p>
-        <p>M - 팜뮤트 / G - 고스트노트</p>
-        <p>L - 렛링 / W - 트레몰로</p>
-        <p>D - 글리산도</p>
+        <p className="font-semibold">{t("inspector.shortcuts")}</p>
+        <p>{t("inspector.vShortcut")}</p>
+        <p>{t("inspector.nShortcut")}</p>
+        <p>{t("inspector.eShortcut")}</p>
+        <p>{t("inspector.undoShortcut")}</p>
+        <p>{t("inspector.redoShortcut")}</p>
+        <p>{t("inspector.deleteShortcut")}</p>
+        <p className="mt-1.5 font-semibold">{t("inspector.techniques")}</p>
+        <p>{t("inspector.hammerPull")}</p>
+        <p>{t("inspector.bendVibrato")}</p>
+        <p>
+          {t("inspector.slideUp")} / {t("inspector.slideDown")}
+        </p>
+        <p>{t("inspector.mute")}</p>
+        <p>{t("inspector.tapping")}</p>
+        <p>{t("inspector.palmMute")}</p>
+        <p>{t("inspector.letRing")}</p>
+        <p>{t("inspector.glissando")}</p>
       </div>
     </div>
   );
 }
 
-function SortableSectionItem({ section }: { section: Section }) {
+function SortableSectionItem({
+  section,
+  measureLabel,
+}: {
+  section: Section;
+  measureLabel: string;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
   });
@@ -208,7 +229,7 @@ function SortableSectionItem({ section }: { section: Section }) {
         <GripVertical className="h-3 w-3" />
       </button>
       <span className="flex-1 text-gray-700 dark:text-gray-300">{section.name}</span>
-      <span className="text-gray-400">{section.measures.length}마디</span>
+      <span className="text-gray-400">{measureLabel}</span>
     </div>
   );
 }

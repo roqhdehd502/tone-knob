@@ -6,12 +6,16 @@ import { AlertCircle, Calendar, Check, Crown, Loader2, Zap } from "lucide-react"
 import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import { requestSubscriptionPayment } from "~/lib/portone";
 
 export function meta() {
-  return [{ title: "구독 관리 - Tone Knob" }, { name: "description", content: "구독 플랜 관리" }];
+  return [
+    { title: "Subscription - Tone Knob" },
+    { name: "description", content: "Manage subscription plan" },
+  ];
 }
 
 interface PlanInfo {
@@ -41,20 +45,21 @@ const PLAN_LABELS: Record<string, string> = {
   pro: "Pro",
 };
 
-function formatPrice(price: number): string {
-  if (price === 0) return "무료";
-  return price.toLocaleString("ko-KR") + "원/월";
-}
-
 export default function SubscriptionPage() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t, dateLocale } = useI18n();
   const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [currentSub, setCurrentSub] = useState<CurrentSub | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function formatPrice(price: number): string {
+    if (price === 0) return t("subscription.priceFree");
+    return t("subscription.priceMonthly", { price: price.toLocaleString("ko-KR") });
+  }
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -79,10 +84,8 @@ export default function SubscriptionPage() {
 
     try {
       if (plan.priceMonthly === 0) {
-        // 무료 플랜은 결제 없이 바로 구독
         await api.subscriptions.subscribe(plan.plan);
       } else {
-        // 유료 플랜: PortOne 빌링키 발급 + 최초 결제
         const { paymentId } = await requestSubscriptionPayment({
           orderName: `Tone Knob ${PLAN_LABELS[plan.plan] ?? plan.plan} 구독`,
           amount: plan.priceMonthly,
@@ -91,14 +94,13 @@ export default function SubscriptionPage() {
           customerEmail: user.email,
         });
 
-        // 결제 완료 후 구독 레코드 생성
         await api.subscriptions.subscribe(plan.plan, paymentId);
       }
 
       const sub = await api.subscriptions.getCurrent().catch(() => null);
       setCurrentSub(sub);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "구독 처리 중 오류가 발생했습니다";
+      const msg = err instanceof Error ? err.message : t("subscription.errorSubscribe");
       setError(msg);
     } finally {
       setSubscribing(null);
@@ -112,7 +114,7 @@ export default function SubscriptionPage() {
       await api.subscriptions.cancel();
       setCurrentSub(null);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "취소 처리 중 오류가 발생했습니다";
+      const msg = err instanceof Error ? err.message : t("subscription.errorCancel");
       setError(msg);
     } finally {
       setCancelling(false);
@@ -128,15 +130,17 @@ export default function SubscriptionPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">구독 관리</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          {t("subscription.heading")}
+        </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          플랜을 선택하여 더 많은 기능을 이용하세요
+          {t("subscription.subtitle")}
         </p>
       </div>
 
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-900/20 dark:text-red-400">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
@@ -148,16 +152,20 @@ export default function SubscriptionPage() {
               {PLAN_ICONS[currentSub.plan]}
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">
-                  현재 플랜: {PLAN_LABELS[currentSub.plan] || currentSub.plan}
+                  {t("subscription.currentPlan", {
+                    plan: PLAN_LABELS[currentSub.plan] || currentSub.plan,
+                  })}
                 </p>
                 <p className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                   <Calendar className="h-3 w-3" />
-                  {new Date(currentSub.currentPeriodEnd).toLocaleDateString("ko-KR")} 까지
+                  {t("subscription.currentUntil", {
+                    date: new Date(currentSub.currentPeriodEnd).toLocaleDateString(dateLocale),
+                  })}
                 </p>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={handleCancel} disabled={cancelling}>
-              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : "구독 취소"}
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : t("subscription.cancel")}
             </Button>
           </div>
         </Card>
@@ -179,7 +187,7 @@ export default function SubscriptionPage() {
             >
               {isHighlighted && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-miami-600 px-3 py-0.5 text-xs font-medium text-white">
-                  인기
+                  {t("subscription.popular")}
                 </span>
               )}
 
@@ -208,7 +216,7 @@ export default function SubscriptionPage() {
 
               {plan.plan === "free" ? (
                 <Button variant="outline" className="w-full" disabled={isCurrent}>
-                  {isCurrent ? "현재 플랜" : "무료"}
+                  {isCurrent ? t("subscription.currentPlanLabel") : t("subscription.free")}
                 </Button>
               ) : (
                 <Button
@@ -219,9 +227,9 @@ export default function SubscriptionPage() {
                   {subscribing === plan.plan ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : isCurrent ? (
-                    "현재 플랜"
+                    t("subscription.currentPlanLabel")
                   ) : (
-                    "구독하기"
+                    t("subscription.subscribe")
                   )}
                 </Button>
               )}

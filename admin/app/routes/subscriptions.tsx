@@ -1,15 +1,16 @@
-import type { Route } from "./+types/subscriptions";
-
 import { Topbar } from "~/components/layout/Topbar";
 import { Badge } from "~/components/ui/Badge";
+import { useI18n } from "~/context/i18n";
 import { requireAdmin } from "~/service/session.server";
 import { getSupabase } from "~/service/supabase.server";
 import type { SubscriptionRow } from "~/types/db";
 
+import type { Route } from "./+types/subscriptions";
+
 const PAGE_SIZE = 20;
 
 export function meta() {
-  return [{ title: "구독 관리 - Tone Knob Admin" }];
+  return [{ title: "Subscriptions - Tone Knob Admin" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -44,6 +45,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function SubscriptionsPage({ loaderData }: Route.ComponentProps) {
   const { admin, subs, total, page, status, totalPages } = loaderData;
+  const { t, dateLocale } = useI18n();
 
   const buildHref = (overrides: Record<string, string | number>) => {
     const params = new URLSearchParams();
@@ -59,15 +61,25 @@ export default function SubscriptionsPage({ loaderData }: Route.ComponentProps) 
   const planVariant = (p: string) =>
     p === "pro" ? "info" : p === "premium" ? "success" : "default";
 
+  const statusLabel = (v: string) => {
+    if (v === "active") return t("subscriptions.active");
+    if (v === "cancelled") return t("subscriptions.cancelled");
+    if (v === "expired") return t("subscriptions.expired");
+    return v;
+  };
+
   return (
     <>
-      <Topbar adminName={admin.adminName} adminEmail={admin.adminEmail} title="구독 관리" />
+      <Topbar
+        adminName={admin.adminName}
+        adminEmail={admin.adminEmail}
+        title={t("subscriptions.pageTitle")}
+      />
       <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-
           <div className="flex items-center gap-3">
             <p className="text-sm text-slate-500">
-              총 <span className="font-semibold text-slate-900">{total.toLocaleString()}</span>건
+              {t("subscriptions.total", { n: total.toLocaleString() })}
             </p>
             <div className="flex rounded-lg border border-slate-200 bg-white text-sm">
               {(["all", "active", "cancelled", "expired"] as const).map((v, i, arr) => (
@@ -78,7 +90,7 @@ export default function SubscriptionsPage({ loaderData }: Route.ComponentProps) 
                     status === v ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-50"
                   } ${i === 0 ? "rounded-l-lg" : i === arr.length - 1 ? "rounded-r-lg" : ""}`}
                 >
-                  {v === "all" ? "전체" : v === "active" ? "활성" : v === "cancelled" ? "취소" : "만료"}
+                  {v === "all" ? t("common.all") : statusLabel(v)}
                 </a>
               ))}
             </div>
@@ -88,17 +100,29 @@ export default function SubscriptionsPage({ loaderData }: Route.ComponentProps) 
             <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">구독 ID</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">플랜</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">상태</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">시작일</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">만료일</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("subscriptions.colId")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("subscriptions.colPlan")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("subscriptions.colStatus")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("subscriptions.colStart")}
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-5">
+                    {t("subscriptions.colEnd")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {subs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-slate-400">구독 내역이 없습니다.</td>
+                    <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
+                      {t("subscriptions.noSubs")}
+                    </td>
                   </tr>
                 ) : (
                   subs.map((sub) => (
@@ -113,10 +137,12 @@ export default function SubscriptionsPage({ loaderData }: Route.ComponentProps) 
                         <Badge variant={statusVariant(sub.status)}>{sub.status}</Badge>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-500 sm:px-5">
-                        {sub.startDate ? new Date(sub.startDate).toLocaleDateString("ko-KR") : "—"}
+                        {sub.startDate
+                          ? new Date(sub.startDate).toLocaleDateString(dateLocale)
+                          : "—"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-500 sm:px-5">
-                        {sub.endDate ? new Date(sub.endDate).toLocaleDateString("ko-KR") : "—"}
+                        {sub.endDate ? new Date(sub.endDate).toLocaleDateString(dateLocale) : "—"}
                       </td>
                     </tr>
                   ))
@@ -127,12 +153,27 @@ export default function SubscriptionsPage({ loaderData }: Route.ComponentProps) 
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1">
-              {page > 1 && <a href={buildHref({ page: page - 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">이전</a>}
-              <span className="px-3 py-1.5 text-sm text-slate-500">{page} / {totalPages}</span>
-              {page < totalPages && <a href={buildHref({ page: page + 1 })} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50">다음</a>}
+              {page > 1 && (
+                <a
+                  href={buildHref({ page: page - 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.prev")}
+                </a>
+              )}
+              <span className="px-3 py-1.5 text-sm text-slate-500">
+                {page} / {totalPages}
+              </span>
+              {page < totalPages && (
+                <a
+                  href={buildHref({ page: page + 1 })}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {t("common.next")}
+                </a>
+              )}
             </div>
           )}
-
         </div>
       </main>
     </>

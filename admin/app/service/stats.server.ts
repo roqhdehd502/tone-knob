@@ -36,7 +36,10 @@ export async function getDashboardStats(period: StatsPeriod = "7d") {
     supabase.from("users").select("*", { count: "exact", head: true }).gte("createdAt", newSince),
     supabase.from("tabs").select("*", { count: "exact", head: true }),
     supabase.from("tabs").select("*", { count: "exact", head: true }).gte("createdAt", newSince),
-    supabase.from("subscriptions").select("*", { count: "exact", head: true }).eq("status", "active"),
+    supabase
+      .from("subscriptions")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active"),
     supabase.from("jam_rooms").select("*", { count: "exact", head: true }).eq("isActive", true),
     supabase.from("recordings").select("*", { count: "exact", head: true }),
     supabase.from("payments").select("*", { count: "exact", head: true }).eq("status", "completed"),
@@ -45,9 +48,7 @@ export async function getDashboardStats(period: StatsPeriod = "7d") {
   ]);
 
   const periodLabel =
-    period === "today" ? "오늘" :
-    period === "7d" ? "7일" :
-    period === "30d" ? "30일" : "전체";
+    period === "today" ? "오늘" : period === "7d" ? "7일" : period === "30d" ? "30일" : "전체";
 
   return {
     users: { total: usersTotal.count ?? 0, newInPeriod: usersNew.count ?? 0 },

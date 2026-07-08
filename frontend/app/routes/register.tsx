@@ -7,18 +7,20 @@ import { ThemeToggle } from "~/components/common/ThemeToggle";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { useI18n } from "~/context/i18n";
 import { useAuth } from "~/lib/auth";
 
 export function meta() {
   return [
-    { title: "회원가입 - Tone Knob" },
-    { name: "description", content: "Tone Knob 회원가입" },
+    { title: "Sign up - Tone Knob" },
+    { name: "description", content: "Sign up for Tone Knob" },
   ];
 }
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +40,7 @@ export default function Register() {
     e.preventDefault();
     setError("");
     if (formData.password !== formData.confirmPassword) {
-      setError("비밀번호가 일치하지 않습니다.");
+      setError(t("register.errorPasswordMismatch"));
       return;
     }
     setIsSubmitting(true);
@@ -51,7 +53,7 @@ export default function Register() {
       });
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "회원가입에 실패했습니다");
+      setError(err instanceof Error ? err.message : t("register.errorGeneric"));
     } finally {
       setIsSubmitting(false);
     }
@@ -70,29 +72,25 @@ export default function Register() {
 
           <div className="space-y-8">
             <div>
-              <h2 className="text-4xl font-bold leading-tight">
-                당신의 음악,
-                <br />
-                여기서 시작됩니다
+              <h2 className="text-4xl font-bold leading-tight whitespace-pre-line">
+                {t("register.brandHeading")}
               </h2>
-              <p className="mt-4 text-lg text-white/80">
-                무료로 가입하고 타브 제작,
-                <br />
-                합주, 커뮤니티를 경험하세요.
+              <p className="mt-4 text-lg text-white/80 whitespace-pre-line">
+                {t("register.brandSubtitle")}
               </p>
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
                 <Guitar className="h-5 w-5 text-miami-200" />
-                <span className="text-sm text-white/90">직관적인 타브 에디터로 쉽게 악보 제작</span>
+                <span className="text-sm text-white/90">{t("register.feature1")}</span>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
                 <Headphones className="h-5 w-5 text-miami-200" />
-                <span className="text-sm text-white/90">실시간 온라인 합주로 어디서든 함께</span>
+                <span className="text-sm text-white/90">{t("register.feature2")}</span>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3 backdrop-blur-sm">
                 <Mic2 className="h-5 w-5 text-miami-200" />
-                <span className="text-sm text-white/90">AI 기반 타브 자동 생성 및 분석</span>
+                <span className="text-sm text-white/90">{t("register.feature3")}</span>
               </div>
             </div>
           </div>
@@ -118,10 +116,10 @@ export default function Register() {
                 />
               </Link>
               <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white lg:mt-0">
-                회원가입
+                {t("register.title")}
               </h1>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                음악의 새로운 세계에 참여하세요
+                {t("register.subtitle")}
               </p>
             </div>
 
@@ -132,7 +130,7 @@ export default function Register() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">{t("register.email")}</Label>
                 <Input
                   id="email"
                   name="email"
@@ -146,24 +144,24 @@ export default function Register() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="username">사용자 이름</Label>
+                  <Label htmlFor="username">{t("register.username")}</Label>
                   <Input
                     id="username"
                     name="username"
                     type="text"
-                    placeholder="영문, 숫자 (3-20자)"
+                    placeholder={t("register.usernamePlaceholder")}
                     value={formData.username}
                     onChange={handleChange}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">표시 이름</Label>
+                  <Label htmlFor="displayName">{t("register.displayName")}</Label>
                   <Input
                     id="displayName"
                     name="displayName"
                     type="text"
-                    placeholder="닉네임"
+                    placeholder={t("register.displayNamePlaceholder")}
                     value={formData.displayName}
                     onChange={handleChange}
                   />
@@ -171,13 +169,13 @@ export default function Register() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">비밀번호</Label>
+                <Label htmlFor="password">{t("register.password")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="8자 이상의 비밀번호"
+                    placeholder={t("register.passwordPlaceholder")}
                     value={formData.password}
                     onChange={handleChange}
                     required
@@ -194,12 +192,12 @@ export default function Register() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">비밀번호 확인</Label>
+                <Label htmlFor="confirmPassword">{t("register.confirmPassword")}</Label>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
-                  placeholder="비밀번호를 다시 입력하세요"
+                  placeholder={t("register.confirmPasswordPlaceholder")}
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
@@ -207,17 +205,17 @@ export default function Register() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "회원가입"}
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("register.submit")}
               </Button>
             </form>
 
             <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              이미 계정이 있으신가요?{" "}
+              {t("register.hasAccount")}{" "}
               <Link
                 to="/login"
                 className="font-medium text-miami-600 hover:underline dark:text-miami-400"
               >
-                로그인
+                {t("register.login")}
               </Link>
             </p>
           </div>

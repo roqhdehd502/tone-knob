@@ -6,29 +6,19 @@ import { Clock, Eye, FileMusic, Heart, Plus, Search } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
   return [
-    { title: "타브 탐색 - Tone Knob" },
-    { name: "description", content: "공개된 타브를 탐색하세요" },
+    { title: "Explore Tabs - Tone Knob" },
+    { name: "description", content: "Browse public guitar tabs" },
   ];
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "방금 전";
-  if (mins < 60) return `${mins}분 전`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}시간 전`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}일 전`;
-  return new Date(dateStr).toLocaleDateString("ko-KR");
-}
-
 export default function Tabs() {
+  const { t, dateLocale } = useI18n();
   const [tabs, setTabs] = useState<TabListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -57,16 +47,31 @@ export default function Tabs() {
     setPage(1);
   };
 
+  function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return t("time.justNow");
+    if (mins < 60) return t("time.minutesAgo", { n: mins });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t("time.hoursAgo", { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 30) return t("time.daysAgo", { n: days });
+    return new Date(dateStr).toLocaleDateString(dateLocale);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">타브 탐색</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{total}개의 공개 타브</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("tabs.heading")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t("tabs.subtitle", { n: total })}
+          </p>
         </div>
         <Button asChild size="sm">
           <Link to="/editor/new" className="gap-1.5">
-            <Plus className="h-4 w-4" />새 타브
+            <Plus className="h-4 w-4" />
+            {t("tabs.newTab")}
           </Link>
         </Button>
       </div>
@@ -75,14 +80,14 @@ export default function Tabs() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <Input
-            placeholder="타브 제목 또는 아티스트 검색..."
+            placeholder={t("tabs.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9"
           />
         </div>
         <Button type="submit" variant="outline">
-          검색
+          {t("common.search")}
         </Button>
       </form>
 
@@ -97,7 +102,7 @@ export default function Tabs() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <FileMusic className="h-10 w-10 text-gray-300 dark:text-gray-700" />
             <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-              {search ? `"${search}"에 대한 검색 결과가 없습니다.` : "아직 공개된 타브가 없습니다."}
+              {search ? t("tabs.noResults", { search }) : t("tabs.noPublicTabs")}
             </p>
           </CardContent>
         </Card>
@@ -149,7 +154,7 @@ export default function Tabs() {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                이전
+                {t("common.prev")}
               </Button>
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {page} / {totalPages}
@@ -160,7 +165,7 @@ export default function Tabs() {
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                다음
+                {t("common.next")}
               </Button>
             </div>
           )}

@@ -2,41 +2,45 @@ import { Link } from "react-router";
 
 import { FileMusic, Github, Radio, Users } from "lucide-react";
 
-const footerLinks = [
-  {
-    title: "서비스",
-    links: [
-      { to: "/tabs", label: "타브 탐색", icon: FileMusic },
-      { to: "/jamroom", label: "합주방", icon: Radio },
-      { to: "/community", label: "커뮤니티", icon: Users },
-    ],
-  },
-  {
-    title: "더 보기",
-    links: [
-      { to: "/ai-generate", label: "AI 타브 생성" },
-      { to: "/audio-extract", label: "오디오 추출" },
-      { to: "/marketplace", label: "마켓플레이스" },
-    ],
-  },
-  {
-    title: "계정",
-    links: [
-      { to: "/profile", label: "프로필" },
-      { to: "/settings", label: "설정" },
-      { to: "/subscription", label: "구독" },
-    ],
-  },
-  {
-    title: "법적 고지",
-    links: [
-      { to: "/terms", label: "이용약관" },
-      { to: "/privacy", label: "개인정보처리방침" },
-    ],
-  },
-];
+import { useI18n } from "~/context/i18n";
 
 export function Footer() {
+  const { t } = useI18n();
+
+  const footerLinks = [
+    {
+      title: t("footer.service"),
+      links: [
+        { to: "/tabs", label: t("nav.tabs"), icon: FileMusic },
+        { to: "/jamroom", label: t("nav.jamroom"), icon: Radio },
+        { to: "/community", label: t("nav.community"), icon: Users },
+      ],
+    },
+    {
+      title: t("footer.more"),
+      links: [
+        { to: "/ai-generate", label: t("nav.aiGenerate") },
+        { to: "/audio-extract", label: t("nav.audioExtract") },
+        { to: "/marketplace", label: t("nav.marketplace") },
+      ],
+    },
+    {
+      title: t("footer.account"),
+      links: [
+        { to: "/profile", label: t("nav.profile") },
+        { to: "/settings", label: t("nav.settings") },
+        { to: "/subscription", label: t("nav.subscription") },
+      ],
+    },
+    {
+      title: t("footer.legal"),
+      links: [
+        { to: "/terms", label: t("footer.terms") },
+        { to: "/privacy", label: t("footer.privacy") },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-gray-200/60 bg-white/50 backdrop-blur-sm dark:border-gray-800/60 dark:bg-gray-950/50 lg:pl-60">
       <div className="px-5 py-8 md:px-8 lg:px-10 xl:px-14">
@@ -51,7 +55,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-2 max-w-xs text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-              타브 제작부터 실시간 온라인 합주까지, 음악을 만들고 함께 연주하세요.
+              {t("footer.tagline")}
             </p>
             <div className="mt-3 flex items-center gap-3">
               <a
@@ -100,7 +104,7 @@ export function Footer() {
               © {new Date().getFullYear()} Tone Knob. All rights reserved.
             </p>
             <p className="text-[11px] text-gray-400 dark:text-gray-500">
-              대표자: 나민우 | 이메일:{" "}
+              {t("footer.representative")} |{" "}
               <a
                 href="mailto:mwna9409@gmail.com"
                 className="underline hover:text-gray-600 dark:hover:text-gray-300"
@@ -110,11 +114,11 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-3 text-[11px] text-gray-400 dark:text-gray-500">
               <Link to="/terms" className="hover:text-gray-600 dark:hover:text-gray-300">
-                이용약관
+                {t("footer.terms")}
               </Link>
               <span>|</span>
               <Link to="/privacy" className="hover:text-gray-600 dark:hover:text-gray-300">
-                개인정보처리방침
+                {t("footer.privacy")}
               </Link>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { CornerDownRight, Edit3, MessageCircle, Send, Trash2 } from "lucide-reac
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import type { CommentData } from "~/types/community";
 
@@ -13,6 +14,7 @@ interface CommentSectionProps {
 }
 
 export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
+  const { t, dateLocale } = useI18n();
   const [comments, setComments] = useState<CommentData[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -107,7 +109,9 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <MessageCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="font-semibold text-gray-900 dark:text-white">댓글 ({total})</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white">
+          {t("community.commentTotal", { n: total })}
+        </h3>
       </div>
 
       {currentUserId && (
@@ -116,7 +120,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
             ref={inputRef}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder="댓글을 입력하세요..."
+            placeholder={t("community.commentPlaceholder")}
             maxLength={2000}
             className="flex-1"
           />
@@ -127,9 +131,9 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
       )}
 
       {loading && comments.length === 0 ? (
-        <p className="py-4 text-center text-sm text-gray-400">로딩 중...</p>
+        <p className="py-4 text-center text-sm text-gray-400">{t("common.loading")}</p>
       ) : comments.length === 0 ? (
-        <p className="py-4 text-center text-sm text-gray-400">아직 댓글이 없습니다</p>
+        <p className="py-4 text-center text-sm text-gray-400">{t("community.noComments")}</p>
       ) : (
         <div className="space-y-3">
           {comments.map((comment) => (
@@ -137,10 +141,10 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
               <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {comment.user?.displayName || comment.user?.username || "알 수 없음"}
+                    {comment.user?.displayName || comment.user?.username || t("common.unknown")}
                   </span>
                   <span className="text-xs text-gray-400">
-                    {new Date(comment.createdAt).toLocaleDateString("ko-KR")}
+                    {new Date(comment.createdAt).toLocaleDateString(dateLocale)}
                   </span>
                 </div>
 
@@ -152,10 +156,10 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                       className="flex-1 text-sm"
                     />
                     <Button size="sm" onClick={() => handleEdit(comment.id)}>
-                      저장
+                      {t("community.commentSave")}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
-                      취소
+                      {t("community.commentCancel")}
                     </Button>
                   </div>
                 ) : (
@@ -171,14 +175,14 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                       }}
                       className="text-xs text-gray-500 hover:text-miami-500"
                     >
-                      답글
+                      {t("community.reply")}
                     </button>
                   )}
                   <button
                     onClick={() => loadReplies(comment.id)}
                     className="text-xs text-gray-500 hover:text-miami-500"
                   >
-                    답글 보기
+                    {t("community.showReplies")}
                   </button>
                   {currentUserId === comment.userId && (
                     <>
@@ -189,13 +193,13 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                         }}
                         className="text-xs text-gray-500 hover:text-blue-500"
                       >
-                        <Edit3 className="inline h-3 w-3" /> 수정
+                        <Edit3 className="inline h-3 w-3" /> {t("community.commentEdit")}
                       </button>
                       <button
                         onClick={() => handleDelete(comment.id)}
                         className="text-xs text-gray-500 hover:text-red-500"
                       >
-                        <Trash2 className="inline h-3 w-3" /> 삭제
+                        <Trash2 className="inline h-3 w-3" /> {t("community.commentDelete")}
                       </button>
                     </>
                   )}
@@ -208,7 +212,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                   <Input
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="답글을 입력하세요..."
+                    placeholder={t("community.replyPlaceholder")}
                     className="flex-1 text-sm"
                   />
                   <Button
@@ -225,10 +229,10 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                 <div key={reply.id} className="ml-6 rounded-lg bg-gray-100 p-2.5 dark:bg-gray-700">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-800 dark:text-gray-200">
-                      {reply.user?.displayName || reply.user?.username || "알 수 없음"}
+                      {reply.user?.displayName || reply.user?.username || t("common.unknown")}
                     </span>
                     <span className="text-[10px] text-gray-400">
-                      {new Date(reply.createdAt).toLocaleDateString("ko-KR")}
+                      {new Date(reply.createdAt).toLocaleDateString(dateLocale)}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">{reply.content}</p>
@@ -237,7 +241,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
                       onClick={() => handleDelete(reply.id)}
                       className="mt-1 text-[10px] text-gray-400 hover:text-red-500"
                     >
-                      <Trash2 className="inline h-2.5 w-2.5" /> 삭제
+                      <Trash2 className="inline h-2.5 w-2.5" /> {t("community.commentDelete")}
                     </button>
                   )}
                 </div>
@@ -255,7 +259,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
           >
-            이전
+            {t("common.prev")}
           </Button>
           <span className="flex items-center text-sm text-gray-500">
             {page} / {totalPages}
@@ -266,7 +270,7 @@ export function CommentSection({ tabId, currentUserId }: CommentSectionProps) {
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            다음
+            {t("common.next")}
           </Button>
         </div>
       )}

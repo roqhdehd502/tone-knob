@@ -11,6 +11,7 @@ import { useCallback } from "react";
 
 import { Power, RotateCcw } from "lucide-react";
 
+import { useI18n } from "~/context/i18n";
 import type { AmpPreset, AmpSettings } from "~/lib/jam/amp-simulator";
 import { AMP_PRESETS, DEFAULT_AMP_SETTINGS } from "~/lib/jam/amp-simulator";
 
@@ -118,6 +119,8 @@ function Toggle({
 }
 
 export function AmpSimulatorPanel({ settings, onChange }: AmpSimulatorPanelProps) {
+  const { t } = useI18n();
+
   const update = useCallback(
     (partial: Partial<AmpSettings>) => {
       onChange({ ...settings, ...partial });
@@ -170,23 +173,21 @@ export function AmpSimulatorPanel({ settings, onChange }: AmpSimulatorPanelProps
               settings.enabled ? "text-white" : "text-gray-700 dark:text-gray-300"
             }`}
           >
-            🎸 가상 앰프
+            {t("amp.title")}
           </h4>
         </div>
         <button
           type="button"
           onClick={() => onChange({ ...DEFAULT_AMP_SETTINGS, enabled: settings.enabled })}
           className="cursor-pointer text-xs text-gray-400 hover:text-gray-300"
-          title="초기화"
+          title={t("amp.reset")}
         >
           <RotateCcw className="h-3.5 w-3.5" />
         </button>
       </div>
 
       {!settings.enabled && (
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          앰프를 켜면 가상 앰프 이펙트가 적용됩니다
-        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">{t("amp.enableHint")}</p>
       )}
 
       {settings.enabled && (
@@ -194,7 +195,7 @@ export function AmpSimulatorPanel({ settings, onChange }: AmpSimulatorPanelProps
           {/* 프리셋 선택 */}
           <div>
             <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-400">
-              프리셋
+              {t("amp.preset")}
             </p>
             <div className="grid grid-cols-3 gap-1.5">
               {PRESET_KEYS.map((key) => {
@@ -222,7 +223,7 @@ export function AmpSimulatorPanel({ settings, onChange }: AmpSimulatorPanelProps
           {/* 게인 & 마스터 */}
           <div>
             <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-gray-400">
-              앰프
+              {t("amp.amp")}
             </p>
             <div className="flex justify-around">
               <Knob
@@ -247,7 +248,7 @@ export function AmpSimulatorPanel({ settings, onChange }: AmpSimulatorPanelProps
           {/* 3밴드 EQ */}
           <div>
             <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-gray-400">
-              EQ
+              {t("amp.eq")}
             </p>
             <div className="flex justify-around">
               <Knob
@@ -283,7 +284,7 @@ export function AmpSimulatorPanel({ settings, onChange }: AmpSimulatorPanelProps
           {/* 이펙트 */}
           <div>
             <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-gray-400">
-              이펙트
+              {t("amp.effects")}
             </p>
             <div className="flex justify-around">
               <Knob
@@ -319,12 +320,12 @@ export function AmpSimulatorPanel({ settings, onChange }: AmpSimulatorPanelProps
             <Toggle
               checked={settings.cabinet}
               onChange={(v) => update({ cabinet: v })}
-              label="캐비닛 시뮬"
+              label={t("amp.cabinetSim")}
             />
             <Toggle
               checked={settings.noiseGate > 0}
               onChange={(v) => update({ noiseGate: v ? 0.01 : 0 })}
-              label="노이즈 게이트"
+              label={t("amp.noiseGate")}
             />
           </div>
         </div>

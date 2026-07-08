@@ -16,6 +16,7 @@ import {
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { useAuth } from "~/lib/auth";
 import { TUTORIAL_STEPS, useTutorial } from "~/lib/tutorial";
 import { cn } from "~/lib/utils";
@@ -39,6 +40,7 @@ const STEP_COLORS: string[] = [
 ];
 
 export function TutorialOverlay() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const {
@@ -53,7 +55,6 @@ export function TutorialOverlay() {
     skipTutorial,
   } = useTutorial();
 
-  // Auto-open for first-time logged-in users
   useEffect(() => {
     if (user && !isCompleted && !isOpen) {
       startTutorial();
@@ -92,7 +93,7 @@ export function TutorialOverlay() {
             type="button"
             onClick={skipTutorial}
             className="absolute right-3 top-3 cursor-pointer rounded-full p-1.5 text-white/60 transition-colors hover:bg-white/20 hover:text-white"
-            aria-label="튜토리얼 닫기"
+            aria-label={t("tutorial.close")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -123,7 +124,7 @@ export function TutorialOverlay() {
             ))}
           </div>
 
-          {/* Content */}
+          {/* Content — step.title/description are defined in tutorial.tsx (not localized) */}
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">{step.title}</h2>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-gray-500 dark:text-gray-400">
             {step.description}
@@ -136,7 +137,7 @@ export function TutorialOverlay() {
               onClick={handleGoTo}
               className="mt-3 inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-miami-600 hover:underline dark:text-miami-400"
             >
-              바로 가기 →
+              {t("tutorial.shortcut")}
             </button>
           )}
 
@@ -150,7 +151,7 @@ export function TutorialOverlay() {
               className={cn("gap-1", isFirst && "invisible")}
             >
               <ChevronLeft className="h-4 w-4" />
-              이전
+              {t("tutorial.prev")}
             </Button>
 
             <span className="text-xs text-gray-400">
@@ -160,11 +161,11 @@ export function TutorialOverlay() {
             {isLast ? (
               <Button size="sm" onClick={handleNext} className="gap-1.5">
                 <Rocket className="h-3.5 w-3.5" />
-                시작하기
+                {t("tutorial.start")}
               </Button>
             ) : (
               <Button size="sm" onClick={handleNext} className="gap-1">
-                다음
+                {t("tutorial.next")}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             )}
@@ -177,7 +178,7 @@ export function TutorialOverlay() {
               onClick={skipTutorial}
               className="mt-3 cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
-              건너뛰기
+              {t("tutorial.skip")}
             </button>
           )}
         </CardContent>

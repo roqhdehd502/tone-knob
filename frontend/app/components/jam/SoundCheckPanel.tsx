@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, CheckCircle, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { useI18n } from "~/context/i18n";
 import type { AudioSettings } from "~/lib/jam/audio-settings";
 import {
   buildAudioContextOptions,
@@ -27,13 +28,6 @@ import type { InstrumentType } from "~/types/tab";
 
 import { AudioLevelMeter } from "./AudioLevelMeter";
 import { AudioSettingsPanel } from "./AudioSettingsPanel";
-
-const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string; emoji: string }[] = [
-  { value: "electric-guitar", label: "일렉 기타", emoji: "🎸" },
-  { value: "acoustic-guitar", label: "어쿠스틱 기타", emoji: "🎶" },
-  { value: "bass", label: "베이스", emoji: "🎵" },
-  { value: "keyboard", label: "키보드", emoji: "🎹" },
-];
 
 interface SoundCheckPanelProps {
   selectedInstrument: InstrumentType;
@@ -51,11 +45,19 @@ export function SoundCheckPanel({
   onReady,
   onCancel,
 }: SoundCheckPanelProps) {
+  const { t } = useI18n();
   const [checkState, setCheckState] = useState<CheckState>("idle");
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(loadAudioSettings);
   const monitor = useAudioMonitor();
+
+  const INSTRUMENT_OPTIONS: { value: InstrumentType; label: string; emoji: string }[] = [
+    { value: "electric-guitar", label: t("jamroomDetail.electric"), emoji: "🎸" },
+    { value: "acoustic-guitar", label: t("jamroomDetail.acoustic"), emoji: "🎶" },
+    { value: "bass", label: t("jamroomDetail.bass"), emoji: "🎵" },
+    { value: "keyboard", label: t("jamroomDetail.keyboard"), emoji: "🎹" },
+  ];
 
   const handleSettingsChange = useCallback((newSettings: AudioSettings) => {
     setAudioSettings(newSettings);
@@ -70,32 +72,30 @@ export function SoundCheckPanel({
       const s = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(s);
       setCheckState("active");
-      // 설정 기반 AudioContext 옵션으로 로컬 모니터링 연결 (출력 장치 포함)
       const ctxOpts = buildAudioContextOptions(audioSettings);
       monitor.attach(s, true, 1, ctxOpts, audioSettings.outputDeviceId);
     } catch (err) {
       console.error("Microphone access failed:", err);
       setCheckState("error");
-      setErrorMsg("마이크 접근에 실패했습니다. 장치 설정을 확인해주세요.");
+      setErrorMsg(t("soundCheck.micError"));
     }
-  }, [monitor, audioSettings]);
+  }, [monitor, audioSettings, t]);
 
   const stopCheck = useCallback(() => {
     monitor.detach();
     if (stream) {
-      stream.getTracks().forEach((t) => t.stop());
+      stream.getTracks().forEach((tk) => tk.stop());
       setStream(null);
     }
     setCheckState("idle");
   }, [stream, monitor]);
 
-  // 설정이 변경되면 활성 스트림 재시작 — nextSettings를 직접 받아 stale closure를 방지한다
   const restartWithNewSettings = useCallback(
     async (nextSettings: AudioSettings) => {
       if (checkState !== "active") return;
       monitor.detach();
       if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((tk) => tk.stop());
       }
       try {
         const constraints = buildMediaConstraints(nextSettings);
@@ -106,19 +106,17 @@ export function SoundCheckPanel({
       } catch (err) {
         console.error("Failed to restart with new settings:", err);
         setCheckState("error");
-        setErrorMsg("새 설정으로 마이크 접근에 실패했습니다.");
+        setErrorMsg(t("soundCheck.micRestartError"));
       }
     },
-    [checkState, stream, monitor],
+    [checkState, stream, monitor, t],
   );
 
   const handleConfirm = useCallback(() => {
     if (!stream) return;
-    // 모니터링은 유지하면서 스트림 + 설정 전달
     onReady(stream, audioSettings);
   }, [stream, audioSettings, onReady]);
 
-  // 언마운트 시 정리
   useEffect(() => {
     return () => {
       monitor.detach();
@@ -128,15 +126,17 @@ export function SoundCheckPanel({
   return (
     <div className="mx-auto w-full max-w-md space-y-5 rounded-xl border-2 border-dashed border-gray-300 p-6 dark:border-gray-700">
       <div className="text-center">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">🎧 사운드 체크</h3>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          참가 전 마이크와 악기 소리를 확인하세요
-        </p>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+          {t("soundCheck.title")}
+        </h3>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("soundCheck.subtitle")}</p>
       </div>
 
       {/* 악기 선택 */}
       <div>
-        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">악기 선택</p>
+        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+          {t("soundCheck.instrumentLabel")}
+        </p>
         <div className="grid grid-cols-2 gap-2">
           {INSTRUMENT_OPTIONS.map((opt) => (
             <button
@@ -156,7 +156,7 @@ export function SoundCheckPanel({
         </div>
       </div>
 
-      {/* 오디오 설정 (장치 선택 + 심화 옵션) */}
+      {/* 오디오 설정 */}
       <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
         <AudioSettingsPanel
           settings={audioSettings}
@@ -165,7 +165,6 @@ export function SoundCheckPanel({
             handleSettingsChange(newSettings);
             if (checkState !== "active") return;
 
-            // 출력 장치만 바뀐 경우: 마이크 스트림을 재요청할 필요 없이 출력 싱크만 즉시 전환
             const onlyOutputChanged =
               newSettings.outputDeviceId !== prevSettings.outputDeviceId &&
               newSettings.inputDeviceId === prevSettings.inputDeviceId &&
@@ -191,7 +190,7 @@ export function SoundCheckPanel({
         {checkState === "idle" && (
           <Button className="w-full" onClick={startCheck}>
             <Mic className="mr-2 h-4 w-4" />
-            마이크 테스트 시작
+            {t("soundCheck.micTestStart")}
           </Button>
         )}
 
@@ -199,7 +198,7 @@ export function SoundCheckPanel({
           <div className="flex items-center justify-center gap-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-miami-500 border-t-transparent" />
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              마이크 권한을 요청하는 중...
+              {t("soundCheck.micRequesting")}
             </span>
           </div>
         )}
@@ -211,7 +210,7 @@ export function SoundCheckPanel({
               <span className="text-sm text-red-600 dark:text-red-400">{errorMsg}</span>
             </div>
             <Button variant="outline" className="w-full" onClick={startCheck}>
-              다시 시도
+              {t("soundCheck.micRetry")}
             </Button>
           </div>
         )}
@@ -223,7 +222,7 @@ export function SoundCheckPanel({
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
                   <Mic className="h-3.5 w-3.5 text-green-500" />
-                  입력 레벨
+                  {t("soundCheck.inputLevel")}
                 </span>
                 <span className="text-xs tabular-nums text-gray-500">
                   {Math.round(monitor.level * 100)}%
@@ -232,8 +231,8 @@ export function SoundCheckPanel({
               <AudioLevelMeter level={monitor.level} size={8} />
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 {monitor.level > 0.05
-                  ? "✅ 소리가 감지되고 있습니다"
-                  : "⚠️ 소리가 감지되지 않습니다. 마이크를 확인하세요"}
+                  ? t("soundCheck.soundDetected")
+                  : t("soundCheck.noSoundDetected")}
               </p>
             </div>
 
@@ -245,7 +244,7 @@ export function SoundCheckPanel({
                 ) : (
                   <VolumeX className="h-3.5 w-3.5 text-gray-400" />
                 )}
-                내 소리 듣기 (모니터링)
+                {t("soundCheck.localMonitor")}
               </span>
               <button
                 type="button"
@@ -282,11 +281,11 @@ export function SoundCheckPanel({
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="flex-1" onClick={stopCheck}>
                 <MicOff className="mr-1.5 h-3.5 w-3.5" />
-                테스트 종료
+                {t("soundCheck.stopTest")}
               </Button>
               <Button size="sm" className="flex-1" onClick={handleConfirm}>
                 <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                확인 후 참가
+                {t("soundCheck.joinConfirm")}
               </Button>
             </div>
           </div>
@@ -300,7 +299,7 @@ export function SoundCheckPanel({
           onClick={onCancel}
           className="w-full cursor-pointer text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
-          사운드 체크 없이 참가
+          {t("soundCheck.skipJoin")}
         </button>
       )}
     </div>

@@ -8,6 +8,7 @@ import { TabCanvas } from "~/components/editor/TabCanvas";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAudioPlayer } from "~/lib/audio/use-audio-player";
 import { useAuth } from "~/lib/auth";
@@ -15,7 +16,7 @@ import type { TabDetail, TabDocument, TabVersion } from "~/types/tab";
 import { STANDARD_TUNING } from "~/types/tab";
 
 export function meta() {
-  return [{ title: "타브 상세 - Tone Knob" }];
+  return [{ title: "Tab Detail - Tone Knob" }];
 }
 
 const TUNING_PRESETS: Record<string, string[]> = {
@@ -26,10 +27,8 @@ const TUNING_PRESETS: Record<string, string[]> = {
 };
 
 function normalizeContent(raw: any): TabDocument {
-  // bpm: legacy uses "tempo"
   const bpm = (raw.bpm ?? raw.tempo ?? 120) as number;
 
-  // timeSignature: legacy uses "4/4" string
   let timeSignature: [number, number] = [4, 4];
   const ts = raw.timeSignature;
   if (Array.isArray(ts) && ts.length >= 2) {
@@ -41,7 +40,6 @@ function normalizeContent(raw: any): TabDocument {
     }
   }
 
-  // tuning: legacy uses preset string like "standard"
   let tuning: string[] = [...STANDARD_TUNING];
   if (Array.isArray(raw.tuning)) {
     tuning = raw.tuning as string[];
@@ -49,7 +47,6 @@ function normalizeContent(raw: any): TabDocument {
     tuning = TUNING_PRESETS[raw.tuning.toLowerCase()] ?? [...STANDARD_TUNING];
   }
 
-  // sections: legacy uses "tracks" array
   let sections = raw.sections as TabDocument["sections"] | undefined;
   if (!sections && Array.isArray(raw.tracks)) {
     sections = raw.tracks.map((track: any, i: number) => ({
@@ -69,27 +66,28 @@ function normalizeContent(raw: any): TabDocument {
   };
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "방금 전";
-  if (mins < 60) return `${mins}분 전`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}시간 전`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}일 전`;
-  return new Date(dateStr).toLocaleDateString("ko-KR");
-}
-
 export default function TabsDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t, dateLocale } = useI18n();
   const [tab, setTab] = useState<TabDetail | null>(null);
   const [versions, setVersions] = useState<TabVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showVersions, setShowVersions] = useState(false);
+
+  function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return t("time.justNow");
+    if (mins < 60) return t("time.minutesAgo", { n: mins });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t("time.hoursAgo", { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 30) return t("time.daysAgo", { n: days });
+    return new Date(dateStr).toLocaleDateString(dateLocale);
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -121,7 +119,7 @@ export default function TabsDetail() {
       const forked = await api.tabs.fork(id);
       navigate(`/tabs/${forked.id}`);
     } catch {
-      alert("포크에 실패했습니다.");
+      alert(t("tabDetail.forkError"));
     }
   };
 
@@ -136,9 +134,9 @@ export default function TabsDetail() {
   if (error || !tab) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-gray-500 dark:text-gray-400">{error || "타브를 찾을 수 없습니다."}</p>
+        <p className="text-gray-500 dark:text-gray-400">{error || t("tabDetail.notFound")}</p>
         <Button variant="outline" className="mt-4" asChild>
-          <Link to="/tabs">타브 목록으로</Link>
+          <Link to="/tabs">{t("tabDetail.backToList")}</Link>
         </Button>
       </div>
     );
@@ -157,7 +155,7 @@ export default function TabsDetail() {
             className="mb-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-miami-500 dark:text-gray-500"
           >
             <ArrowLeft className="h-3 w-3" />
-            타브 목록
+            {t("tabDetail.backToList")}
           </Link>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">{tab.title}</h1>
           {tab.artist && (
@@ -170,7 +168,7 @@ export default function TabsDetail() {
               ) : (
                 <GlobeLock className="h-3.5 w-3.5" />
               )}
-              {tab.isPublic ? "공개" : "비공개"}
+              {tab.isPublic ? t("tabDetail.public") : t("tabDetail.private")}
             </span>
             <span className="flex items-center gap-1">
               <Eye className="h-3.5 w-3.5" />
@@ -195,14 +193,14 @@ export default function TabsDetail() {
           {!isOwner && (
             <Button variant="outline" size="sm" className="gap-1" onClick={handleFork}>
               <GitFork className="h-3.5 w-3.5" />
-              포크
+              {t("tabDetail.fork")}
             </Button>
           )}
           {isOwner && (
             <Button size="sm" className="gap-1" asChild>
               <Link to={`/editor/${tab.id}`}>
                 <Pencil className="h-3.5 w-3.5" />
-                편집
+                {t("tabDetail.edit")}
               </Link>
             </Button>
           )}
@@ -217,9 +215,12 @@ export default function TabsDetail() {
           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
             <span>BPM: {content.bpm}</span>
             <span>
-              박자: {content.timeSignature[0]}/{content.timeSignature[1]}
+              {t("tabDetail.timeSignature", {
+                num: content.timeSignature[0],
+                den: content.timeSignature[1],
+              })}
             </span>
-            <span>튜닝: {content.tuning.join(" ")}</span>
+            <span>{t("tabDetail.tuning", { tuning: content.tuning.join(" ") })}</span>
           </div>
         </div>
       )}
@@ -231,7 +232,7 @@ export default function TabsDetail() {
       {content && content.sections.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center">
-            <p className="text-sm text-gray-400 dark:text-gray-500">아직 악보 데이터가 없습니다.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">{t("tabDetail.noScore")}</p>
           </CardContent>
         </Card>
       )}
@@ -240,16 +241,16 @@ export default function TabsDetail() {
       <div>
         {!showVersions ? (
           <Button variant="outline" size="sm" onClick={handleLoadVersions}>
-            버전 히스토리 보기
+            {t("tabDetail.showVersions")}
           </Button>
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">버전 히스토리</CardTitle>
+              <CardTitle className="text-sm">{t("tabDetail.versionHistoryTitle")}</CardTitle>
             </CardHeader>
             <CardContent>
               {versions.length === 0 ? (
-                <p className="text-xs text-gray-400">버전 정보가 없습니다.</p>
+                <p className="text-xs text-gray-400">{t("tabDetail.noVersions")}</p>
               ) : (
                 <div className="space-y-2">
                   {versions.map((v) => (

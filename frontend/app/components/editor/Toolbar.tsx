@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { useI18n } from "~/context/i18n";
 import type { Duration, MusicDirective, Technique } from "~/types/tab";
 import { DIRECTIVE_META, TECHNIQUE_META } from "~/types/tab";
 
@@ -45,27 +46,6 @@ interface DurationOption {
   icon: React.ReactNode;
   name: string;
 }
-
-const NOTE_DURATIONS: DurationOption[] = [
-  { value: 1, icon: <WholeNote size={16} />, name: "온음표" },
-  { value: 0.75, icon: <DottedHalfNote size={16} />, name: "점2분음표" },
-  { value: 0.5, icon: <HalfNote size={16} />, name: "2분음표" },
-  { value: 0.375, icon: <DottedQuarterNote size={16} />, name: "점4분음표" },
-  { value: 0.25, icon: <QuarterNote size={16} />, name: "4분음표" },
-  { value: 0.1875, icon: <DottedEighthNote size={16} />, name: "점8분음표" },
-  { value: 0.125, icon: <EighthNote size={16} />, name: "8분음표" },
-  { value: 0.0625, icon: <SixteenthNote size={16} />, name: "16분음표" },
-  { value: 0.03125, icon: <ThirtySecondNote size={16} />, name: "32분음표" },
-];
-
-const REST_DURATIONS: DurationOption[] = [
-  { value: -1, icon: <WholeRest size={16} />, name: "온쉼표" },
-  { value: -0.5, icon: <HalfRest size={16} />, name: "2분쉼표" },
-  { value: -0.25, icon: <QuarterRest size={16} />, name: "4분쉼표" },
-  { value: -0.125, icon: <EighthRest size={16} />, name: "8분쉼표" },
-  { value: -0.0625, icon: <SixteenthRest size={16} />, name: "16분쉼표" },
-  { value: -0.03125, icon: <ThirtySecondRest size={16} />, name: "32분쉼표" },
-];
 
 interface ToolbarProps {
   currentTool: "select" | "note" | "eraser";
@@ -116,9 +96,31 @@ export function Toolbar({
   onClearTechniques,
   onAddDirective,
 }: ToolbarProps) {
+  const { t } = useI18n();
   const [showTechniques, setShowTechniques] = useState(false);
   const [showDirectives, setShowDirectives] = useState(false);
   const [showRests, setShowRests] = useState(false);
+
+  const NOTE_DURATIONS: DurationOption[] = [
+    { value: 1, icon: <WholeNote size={16} />, name: t("note.whole") },
+    { value: 0.75, icon: <DottedHalfNote size={16} />, name: t("note.dottedHalf") },
+    { value: 0.5, icon: <HalfNote size={16} />, name: t("note.half") },
+    { value: 0.375, icon: <DottedQuarterNote size={16} />, name: t("note.dottedQuarter") },
+    { value: 0.25, icon: <QuarterNote size={16} />, name: t("note.quarter") },
+    { value: 0.1875, icon: <DottedEighthNote size={16} />, name: t("note.dottedEighth") },
+    { value: 0.125, icon: <EighthNote size={16} />, name: t("note.eighth") },
+    { value: 0.0625, icon: <SixteenthNote size={16} />, name: t("note.sixteenth") },
+    { value: 0.03125, icon: <ThirtySecondNote size={16} />, name: t("note.thirtySecond") },
+  ];
+
+  const REST_DURATIONS: DurationOption[] = [
+    { value: -1, icon: <WholeRest size={16} />, name: t("rest.whole") },
+    { value: -0.5, icon: <HalfRest size={16} />, name: t("rest.half") },
+    { value: -0.25, icon: <QuarterRest size={16} />, name: t("rest.quarter") },
+    { value: -0.125, icon: <EighthRest size={16} />, name: t("rest.eighth") },
+    { value: -0.0625, icon: <SixteenthRest size={16} />, name: t("rest.sixteenth") },
+    { value: -0.03125, icon: <ThirtySecondRest size={16} />, name: t("rest.thirtySecond") },
+  ];
 
   const isRest = currentDuration < 0;
   const durations = showRests ? REST_DURATIONS : NOTE_DURATIONS;
@@ -128,24 +130,24 @@ export function Toolbar({
       {/* 메인 툴바 */}
       <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 dark:border-gray-800 dark:bg-gray-900">
         {/* 도구 선택 */}
-        <ToolGroup label="도구">
+        <ToolGroup label={t("toolbar.tools")}>
           <ToolButton
             icon={<MousePointer2 className="h-4 w-4" />}
-            label="선택 도구"
+            label={t("toolbar.selectTool")}
             shortcut="V"
             active={currentTool === "select"}
             onClick={() => onToolChange("select")}
           />
           <ToolButton
             icon={<PenTool className="h-4 w-4" />}
-            label="음표 입력"
+            label={t("toolbar.noteTool")}
             shortcut="N"
             active={currentTool === "note"}
             onClick={() => onToolChange("note")}
           />
           <ToolButton
             icon={<Eraser className="h-4 w-4" />}
-            label="지우개"
+            label={t("toolbar.eraser")}
             shortcut="E"
             active={currentTool === "eraser"}
             onClick={() => onToolChange("eraser")}
@@ -155,12 +157,12 @@ export function Toolbar({
         <ToolDivider />
 
         {/* 음표/쉼표 길이 */}
-        <ToolGroup label={showRests ? "쉼표" : "음표"}>
+        <ToolGroup label={showRests ? t("toolbar.rests") : t("toolbar.notes")}>
           <div className="flex items-center gap-0.5">
             {/* 음표/쉼표 전환 토글 */}
             <button
               type="button"
-              title={showRests ? "음표로 전환" : "쉼표로 전환"}
+              title={showRests ? t("toolbar.toNotes") : t("toolbar.toRests")}
               onClick={() => {
                 setShowRests((v) => !v);
                 // 현재 duration의 부호를 전환
@@ -198,12 +200,12 @@ export function Toolbar({
               {showRests ? (
                 <>
                   <QuarterRest size={12} />
-                  쉼표
+                  {t("toolbar.rests")}
                 </>
               ) : (
                 <>
                   <QuarterNote size={12} />
-                  음표
+                  {t("toolbar.notes")}
                 </>
               )}
             </button>
@@ -222,7 +224,7 @@ export function Toolbar({
         <ToolDivider />
 
         {/* 프렛 번호 */}
-        <ToolGroup label="프렛">
+        <ToolGroup label={t("toolbar.fret")}>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -256,17 +258,17 @@ export function Toolbar({
         <ToolDivider />
 
         {/* 실행 취소/다시 실행 */}
-        <ToolGroup label="히스토리">
+        <ToolGroup label={t("toolbar.history")}>
           <ToolButton
             icon={<Undo2 className="h-4 w-4" />}
-            label="실행 취소"
+            label={t("toolbar.undo")}
             shortcut="⌘Z"
             disabled={!canUndo}
             onClick={onUndo}
           />
           <ToolButton
             icon={<Redo2 className="h-4 w-4" />}
-            label="다시 실행"
+            label={t("toolbar.redo")}
             shortcut="⌘⇧Z"
             disabled={!canRedo}
             onClick={onRedo}
@@ -276,12 +278,12 @@ export function Toolbar({
         <ToolDivider />
 
         {/* 추가 */}
-        <ToolGroup label="추가">
+        <ToolGroup label={t("toolbar.add")}>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={onAddMeasure}>
-            <Plus className="h-3 w-3" /> 마디
+            <Plus className="h-3 w-3" /> {t("toolbar.addBar")}
           </Button>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={onAddSection}>
-            <Plus className="h-3 w-3" /> 섹션
+            <Plus className="h-3 w-3" /> {t("toolbar.addSection")}
           </Button>
         </ToolGroup>
 
@@ -299,7 +301,7 @@ export function Toolbar({
             }}
           >
             <Zap className="h-3 w-3" />
-            기법
+            {t("toolbar.techniques")}
             {showTechniques ? (
               <ChevronUp className="h-3 w-3" />
             ) : (
@@ -316,7 +318,7 @@ export function Toolbar({
             }}
           >
             <Music className="h-3 w-3" />
-            지시
+            {t("toolbar.directives")}
             {showDirectives ? (
               <ChevronUp className="h-3 w-3" />
             ) : (
@@ -329,7 +331,7 @@ export function Toolbar({
         <div className="ml-auto flex items-center gap-1">
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={onTogglePublish}>
             {isPublic ? <Globe className="h-3.5 w-3.5" /> : <GlobeLock className="h-3.5 w-3.5" />}
-            {isPublic ? "공개" : "비공개"}
+            {isPublic ? t("common.public") : t("common.private")}
           </Button>
           <Button
             size="sm"
@@ -338,7 +340,7 @@ export function Toolbar({
             disabled={!isDirty || isSaving}
           >
             <Save className="h-3.5 w-3.5" />
-            {isSaving ? "저장 중..." : "저장"}
+            {isSaving ? t("toolbar.saving") : t("common.save")}
           </Button>
         </div>
       </div>
@@ -349,7 +351,7 @@ export function Toolbar({
           <div className="mb-1.5 flex items-center gap-1.5 px-1">
             <Zap className="h-3 w-3 text-gray-400" />
             <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-              연주 기법 {!hasSelection && "— 음표를 먼저 선택하세요"}
+              {t("toolbar.techniqueLabel")} {!hasSelection && t("toolbar.selectNoteFirst")}
             </span>
           </div>
           <div className="flex flex-wrap gap-1">
@@ -357,12 +359,12 @@ export function Toolbar({
             {hasSelection && selectedNoteTechniques.length > 0 && (
               <button
                 type="button"
-                title="모든 기법 제거"
+                title={t("toolbar.clearAll")}
                 onClick={onClearTechniques}
                 className="flex h-7 items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 text-xs font-medium text-red-600 transition-all hover:border-red-300 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-700"
               >
                 <X className="h-3 w-3" />
-                <span>없음</span>
+                <span>{t("toolbar.none")}</span>
               </button>
             )}
             {TECHNIQUE_META.map((tech) => {
@@ -401,14 +403,18 @@ export function Toolbar({
           <div className="mb-1.5 flex items-center gap-1.5 px-1">
             <Repeat className="h-3 w-3 text-gray-400" />
             <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
-              오선보 지시사항 — 마디를 먼저 선택하세요
+              {t("toolbar.directivesHint")}
             </span>
           </div>
           <div className="space-y-2">
             {(["repeat", "navigation", "dynamics"] as const).map((cat) => {
               const items = DIRECTIVE_META.filter((d) => d.category === cat);
               const catLabel =
-                cat === "repeat" ? "반복" : cat === "navigation" ? "네비게이션" : "다이나믹";
+                cat === "repeat"
+                  ? t("toolbar.categoryRepeat")
+                  : cat === "navigation"
+                    ? t("toolbar.categoryNavigation")
+                    : t("toolbar.categoryDynamics");
               return (
                 <div key={cat}>
                   <div className="mb-1 text-[9px] font-semibold uppercase tracking-wider text-gray-400">

@@ -17,13 +17,14 @@ import {
 import { PageLoader } from "~/components/common/PageLoader";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 
 export function meta() {
   return [
-    { title: "오디오 타브 추출 - Tone Knob" },
-    { name: "description", content: "오디오 파일에서 타브를 자동으로 추출하세요" },
+    { title: "Audio Tab Extractor - Tone Knob" },
+    { name: "description", content: "Extract guitar tabs from audio files automatically" },
   ];
 }
 
@@ -39,34 +40,56 @@ interface AiJob {
   createdAt: string;
 }
 
-const STATUS_CONFIG: Record<AiJobStatus, { icon: React.ReactNode; label: string; color: string }> =
-  {
-    queued: { icon: <Clock className="h-4 w-4" />, label: "대기 중", color: "text-amber-500" },
+export default function AudioExtractPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { t } = useI18n();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const STATUS_CONFIG: Record<
+    AiJobStatus,
+    { icon: React.ReactNode; label: string; color: string }
+  > = {
+    queued: {
+      icon: <Clock className="h-4 w-4" />,
+      label: t("audioExtract.status.queued"),
+      color: "text-amber-500",
+    },
     processing: {
       icon: <Loader2 className="h-4 w-4 animate-spin" />,
-      label: "분석 중",
+      label: t("audioExtract.status.processing"),
       color: "text-blue-500",
     },
     completed: {
       icon: <CheckCircle2 className="h-4 w-4" />,
-      label: "완료",
+      label: t("audioExtract.status.completed"),
       color: "text-green-500",
     },
-    failed: { icon: <XCircle className="h-4 w-4" />, label: "실패", color: "text-red-500" },
+    failed: {
+      icon: <XCircle className="h-4 w-4" />,
+      label: t("audioExtract.status.failed"),
+      color: "text-red-500",
+    },
   };
 
-const INSTRUMENTS = ["기타", "베이스", "우쿨렐레", "밴조"];
-const TUNINGS = ["표준 (EADGBe)", "드롭 D (DADGBe)", "오픈 G (DGDGBd)", "DADGAD"];
+  const INSTRUMENTS: { value: string; label: string }[] = [
+    { value: "guitar", label: t("audioExtract.instrument.guitar") },
+    { value: "bass", label: t("audioExtract.instrument.bass") },
+    { value: "ukulele", label: t("audioExtract.instrument.ukulele") },
+    { value: "banjo", label: t("audioExtract.instrument.banjo") },
+  ];
 
-export default function AudioExtractPage() {
-  const { user, isLoading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const TUNINGS: { value: string; label: string }[] = [
+    { value: "standard", label: t("audioExtract.tuning.standard") },
+    { value: "dropD", label: t("audioExtract.tuning.dropD") },
+    { value: "openG", label: t("audioExtract.tuning.openG") },
+    { value: "dadgad", label: t("audioExtract.tuning.dadgad") },
+  ];
 
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState("");
-  const [instrument, setInstrument] = useState("기타");
-  const [tuning, setTuning] = useState("표준 (EADGBe)");
+  const [instrument, setInstrument] = useState("guitar");
+  const [tuning, setTuning] = useState("standard");
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
@@ -81,7 +104,6 @@ export default function AudioExtractPage() {
     if (!user) return;
     try {
       const res = await api.aiGen.getMyJobs();
-      // 오디오 추출 작업만 필터
       const extracted = (res.data as AiJob[]).filter((j) => j.inputData.audioUrl !== undefined);
       setJobs(extracted);
     } catch {
@@ -104,7 +126,7 @@ export default function AudioExtractPage() {
 
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith("audio/")) {
-      alert("오디오 파일만 업로드할 수 있습니다");
+      alert(t("audioExtract.errorOnlyAudio"));
       return;
     }
     setAudioFile(file);
@@ -123,7 +145,6 @@ export default function AudioExtractPage() {
     if (!audioFile) return;
     setUploading(true);
     try {
-      // Supabase Storage에 업로드 후 발급된 공개 URL을 AI 추출 작업에 전달
       const { url } = await api.media.upload(audioFile, { category: "audio-extract" });
       await api.aiGen.createAudioExtractionJob({
         audioUrl: url,
@@ -134,7 +155,7 @@ export default function AudioExtractPage() {
       setAudioUrl("");
       await loadJobs();
     } catch {
-      alert("추출 요청 중 오류가 발생했습니다");
+      alert(t("audioExtract.errorSubmit"));
     } finally {
       setUploading(false);
     }
@@ -147,23 +168,23 @@ export default function AudioExtractPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">오디오 타브 추출</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          {t("audioExtract.heading")}
+        </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          오디오 파일에서 타브를 자동으로 추출하세요
+          {t("audioExtract.subtitle")}
         </p>
       </div>
 
-      {/* 업로드 폼 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <AudioWaveform className="h-4 w-4 text-cyan-500" />
-            오디오 업로드
+            {t("audioExtract.formTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* 파일 드롭존 */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -204,17 +225,18 @@ export default function AudioExtractPage() {
                 <>
                   <Upload className="h-10 w-10 text-gray-300 dark:text-gray-600" />
                   <p className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    파일을 드래그하거나 클릭하여 업로드
+                    {t("audioExtract.dragHint")}
                   </p>
-                  <p className="text-xs text-gray-400">MP3, WAV, FLAC, OGG, M4A 지원 (최대 50MB)</p>
+                  <p className="text-xs text-gray-400">{t("audioExtract.fileFormats")}</p>
                 </>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {/* 악기 */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">악기</label>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  {t("audioExtract.instrumentLabel")}
+                </label>
                 <div className="relative">
                   <select
                     value={instrument}
@@ -222,8 +244,8 @@ export default function AudioExtractPage() {
                     className="w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-8 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   >
                     {INSTRUMENTS.map((i) => (
-                      <option key={i} value={i}>
-                        {i}
+                      <option key={i.value} value={i.value}>
+                        {i.label}
                       </option>
                     ))}
                   </select>
@@ -231,18 +253,19 @@ export default function AudioExtractPage() {
                 </div>
               </div>
 
-              {/* 튜닝 */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">튜닝</label>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  {t("audioExtract.tuningLabel")}
+                </label>
                 <div className="relative">
                   <select
                     value={tuning}
                     onChange={(e) => setTuning(e.target.value)}
                     className="w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-8 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   >
-                    {TUNINGS.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    {TUNINGS.map((tun) => (
+                      <option key={tun.value} value={tun.value}>
+                        {tun.label}
                       </option>
                     ))}
                   </select>
@@ -261,15 +284,16 @@ export default function AudioExtractPage() {
               ) : (
                 <AudioWaveform className="mr-2 h-4 w-4" />
               )}
-              타브 추출 시작
+              {t("audioExtract.uploadBtn")}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* 작업 목록 */}
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">추출 내역</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          {t("audioExtract.historyTitle")}
+        </h2>
         <Button size="sm" variant="ghost" onClick={loadJobs}>
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -285,7 +309,7 @@ export default function AudioExtractPage() {
         <Card>
           <CardContent className="flex flex-col items-center py-16 text-center">
             <Music className="h-10 w-10 text-gray-300 dark:text-gray-700" />
-            <p className="mt-2 text-sm text-gray-400">추출 내역이 없습니다</p>
+            <p className="mt-2 text-sm text-gray-400">{t("audioExtract.noHistory")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -300,7 +324,7 @@ export default function AudioExtractPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                      {job.inputData.audioUrl?.split("/").pop() ?? "오디오 파일"}
+                      {job.inputData.audioUrl?.split("/").pop() ?? t("audioExtract.audioFile")}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-400">
                       {job.inputData.instrument && <span>{job.inputData.instrument}</span>}
@@ -332,12 +356,14 @@ export default function AudioExtractPage() {
                         {job.outputData.title}
                       </span>
                       <Button size="sm" variant="ghost" onClick={() => navigate("/editor/new")}>
-                        에디터에서 열기
+                        {t("audioExtract.openEditor")}
                       </Button>
                     </div>
                     {job.outputData.confidence != null && (
                       <p className="text-xs text-gray-400">
-                        신뢰도: {Math.round((job.outputData.confidence as number) * 100)}%
+                        {t("audioExtract.confidence", {
+                          n: Math.round((job.outputData.confidence as number) * 100),
+                        })}
                       </p>
                     )}
                   </div>

@@ -4,16 +4,21 @@ import { Link } from "react-router";
 import { FileMusic, Pencil, Plus } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
+import { useI18n } from "~/context/i18n";
 import { api } from "~/lib/api";
 import { useAuth } from "~/lib/auth";
 import type { TabListItem } from "~/types/tab";
 
 export function meta() {
-  return [{ title: "타브 에디터 - Tone Knob" }, { name: "description", content: "타브 에디터" }];
+  return [
+    { title: "Tab Editor - Tone Knob" },
+    { name: "description", content: "Guitar Tab Editor" },
+  ];
 }
 
 export default function Editor() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [myTabs, setMyTabs] = useState<TabListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,14 +38,15 @@ export default function Editor() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">타브 에디터</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            새 타브를 만들거나 기존 타브를 편집하세요
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t("editor.heading")}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("editor.subtitle")}</p>
         </div>
         <Button asChild>
           <Link to="/editor/new" className="gap-2">
-            <Plus className="h-4 w-4" />새 타브
+            <Plus className="h-4 w-4" />
+            {t("editor.newTab")}
           </Link>
         </Button>
       </div>
@@ -48,15 +54,13 @@ export default function Editor() {
       {!user ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FileMusic className="h-16 w-16 text-gray-300 dark:text-gray-700" />
-          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            로그인하면 저장된 타브를 편집할 수 있습니다.
-          </p>
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">{t("editor.loginPrompt")}</p>
           <div className="mt-4 flex gap-2">
             <Button variant="outline" asChild>
-              <Link to="/login">로그인</Link>
+              <Link to="/login">{t("editor.login")}</Link>
             </Button>
             <Button asChild>
-              <Link to="/editor/new">새 타브 만들기</Link>
+              <Link to="/editor/new">{t("editor.createFirst")}</Link>
             </Button>
           </div>
         </div>
@@ -67,11 +71,9 @@ export default function Editor() {
       ) : myTabs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FileMusic className="h-16 w-16 text-gray-300 dark:text-gray-700" />
-          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            아직 제작한 타브가 없습니다.
-          </p>
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">{t("editor.noTabs")}</p>
           <Button className="mt-4" asChild>
-            <Link to="/editor/new">첫 타브 만들기</Link>
+            <Link to="/editor/new">{t("editor.createFirst")}</Link>
           </Button>
         </div>
       ) : (

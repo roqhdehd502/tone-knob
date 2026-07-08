@@ -4,6 +4,7 @@ import { COMMUNITY_EVENTS } from "@tone-knob/shared";
 
 import { BadgeService } from "./badge/badge.service";
 import { CommunityService } from "./community/community.service";
+import { NotificationType } from "./entities/notification.entity";
 import { NotificationService } from "./notification/notification.service";
 import { ReviewService } from "./review/review.service";
 
@@ -135,12 +136,12 @@ export class CommunitySvcController {
     data: {
       recipientId: string;
       actorId: string;
-      type: string;
+      type: NotificationType;
       referenceId?: string;
       message: string;
     },
   ) {
-    return this.notificationService.create(data as any);
+    return this.notificationService.create(data);
   }
 
   @MessagePattern("notification.getByUser")

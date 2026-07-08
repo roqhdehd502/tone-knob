@@ -2,6 +2,7 @@ import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy, MessagePattern, Payload } from "@nestjs/microservices";
 import { SUBSCRIPTION_EVENTS } from "@tone-knob/shared";
 
+import { SubscriptionPlan } from "./entities/subscription.entity";
 import { SubscriptionService } from "./subscription/subscription.service";
 
 @Controller()
@@ -32,7 +33,7 @@ export class SubscriptionSvcController {
   ) {
     const subscription = await this.subscriptionService.subscribe(
       data.userId,
-      data.plan as any,
+      data.plan as SubscriptionPlan,
       data.externalPaymentId,
     );
     this.communityClient.emit(SUBSCRIPTION_EVENTS.ACTIVATED, {
