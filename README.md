@@ -87,6 +87,24 @@ cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 | `VITE_API_URL`            | frontend                         | Gateway URL                                    |
 | `VITE_SENTRY_DSN`         | frontend                         | 클라이언트 에러 모니터링 (선택, 미설정 시 SDK 비활성) |
 
+### OAuth 소셜 로그인 설정
+
+소셜 로그인은 `services/gateway/.env`에 키를 설정해야 활성화됩니다. 미설정 시 해당 Provider 전략이 자동으로 비활성화되며, 버튼 클릭 시 500 에러가 반환됩니다.
+
+**Google OAuth2**
+
+1. [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials → OAuth 2.0 Client ID (Web application) 생성
+2. Authorized redirect URI: `http://localhost:3000/api/auth/google/callback`
+3. `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_CALLBACK_URL` 설정
+
+**GitHub OAuth2**
+
+1. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
+2. Authorization callback URL: `http://localhost:3000/api/auth/github/callback`
+3. `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` / `GITHUB_CALLBACK_URL` 설정
+
+> 프로덕션 배포 시에는 callback URL을 실제 도메인으로 변경하고 OAuth App 설정에도 동일하게 등록해야 합니다.
+
 ## 서비스 아키텍처
 
 ```

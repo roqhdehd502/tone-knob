@@ -133,6 +133,7 @@ export const en: Messages = {
   "login.privacy": "Privacy Policy",
   "login.termsAgreementEnd": ".",
   "login.errorGeneric": "Login failed",
+  "login.oauthError": "An error occurred during social login. Please try again.",
   "login.brandHeading": "Make music,\nplay together",
   "login.brandSubtitle": "From tab creation to real-time jam,\nstart your musical journey.",
   "login.feature1": "Easily create sheet music with our intuitive tab editor",

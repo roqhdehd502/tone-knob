@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { Eye, EyeOff, Guitar, Headphones, Loader2, Mic2 } from "lucide-react";
 
@@ -18,10 +18,12 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const oauthErrorParam = searchParams.get("error");
+  const [error, setError] = useState(oauthErrorParam ? t("login.oauthError") : "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {

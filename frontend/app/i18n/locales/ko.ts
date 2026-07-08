@@ -131,6 +131,7 @@ export const ko = {
   "login.privacy": "개인정보처리방침",
   "login.termsAgreementEnd": "에 동의하는 것으로 간주됩니다.",
   "login.errorGeneric": "로그인에 실패했습니다",
+  "login.oauthError": "소셜 로그인 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
   "login.brandHeading": "음악을 만들고,\n함께 연주하세요",
   "login.brandSubtitle": "타브 제작부터 실시간 합주까지,\n당신의 음악 여정을 시작하세요.",
   "login.feature1": "직관적인 타브 에디터로 쉽게 악보 제작",

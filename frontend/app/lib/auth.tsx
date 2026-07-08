@@ -14,7 +14,7 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
-  setSocialTokens: (accessToken: string, refreshToken: string) => void;
+  setSocialTokens: (accessToken: string, refreshToken: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -72,10 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setSocialTokens = useCallback(
-    (accessToken: string, refreshToken: string) => {
+    async (accessToken: string, refreshToken: string) => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      void refreshUser();
+      await refreshUser();
     },
     [refreshUser],
   );

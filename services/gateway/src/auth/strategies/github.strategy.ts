@@ -27,10 +27,13 @@ export class GitHubStrategy extends PassportStrategy(Strategy, "github") {
     },
     done: (err: unknown, user?: Record<string, unknown>) => void,
   ) {
+    // GitHub 사용자가 이메일을 비공개로 설정한 경우 emails 배열이 비어 있다.
+    // 빈 문자열을 DB에 저장하면 UNIQUE 제약 충돌이 발생하므로 noreply 주소로 대체한다.
+    const email = profile.emails?.[0]?.value || `${profile.id}@users.noreply.github.com`;
     const user = {
       provider: "github",
       providerId: profile.id,
-      email: profile.emails?.[0]?.value ?? "",
+      email,
       displayName: profile.displayName ?? "",
       avatarUrl: profile.photos?.[0]?.value ?? "",
     };

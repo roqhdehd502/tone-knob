@@ -141,11 +141,15 @@ export class AuthProxyController {
     },
     @Res() res: Response,
   ) {
-    const result = await firstValueFrom(this.authClient.send("auth.socialLogin", req.user));
     const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
-    res.redirect(
-      `${frontendUrl}/auth/callback?accessToken=${result.tokens.accessToken}&refreshToken=${result.tokens.refreshToken}`,
-    );
+    try {
+      const result = await firstValueFrom(this.authClient.send("auth.socialLogin", req.user));
+      res.redirect(
+        `${frontendUrl}/auth/callback?accessToken=${result.tokens.accessToken}&refreshToken=${result.tokens.refreshToken}`,
+      );
+    } catch {
+      res.redirect(`${frontendUrl}/login?error=social_auth_failed`);
+    }
   }
 
   // ─── GitHub OAuth ───
@@ -184,10 +188,14 @@ export class AuthProxyController {
     },
     @Res() res: Response,
   ) {
-    const result = await firstValueFrom(this.authClient.send("auth.socialLogin", req.user));
     const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
-    res.redirect(
-      `${frontendUrl}/auth/callback?accessToken=${result.tokens.accessToken}&refreshToken=${result.tokens.refreshToken}`,
-    );
+    try {
+      const result = await firstValueFrom(this.authClient.send("auth.socialLogin", req.user));
+      res.redirect(
+        `${frontendUrl}/auth/callback?accessToken=${result.tokens.accessToken}&refreshToken=${result.tokens.refreshToken}`,
+      );
+    } catch {
+      res.redirect(`${frontendUrl}/login?error=social_auth_failed`);
+    }
   }
 }
