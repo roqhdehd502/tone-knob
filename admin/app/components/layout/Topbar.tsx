@@ -6,12 +6,25 @@ import { useI18n } from "~/context/i18n";
 import { useSidebar } from "~/context/sidebar";
 import type { Locale } from "~/i18n";
 
+/** {@link Topbar} 컴포넌트 props */
 interface Props {
+  /** 상단 우측에 표시할 어드민 이름 */
   adminName: string;
+  /** 상단 우측에 표시할 어드민 이메일 */
   adminEmail: string;
+  /** 페이지 제목 (h1) */
   title: string;
 }
 
+/**
+ * 어드민 패널 상단 헤더 바.
+ *
+ * - 모바일 환경에서 햄버거 아이콘으로 사이드바를 토글한다.
+ * - 언어 전환 버튼(`KO` / `EN`)이 `POST /set-locale`로 쿠키를 설정한다.
+ * - 현재 로케일은 root loader 데이터에서 우선 읽고, 없으면 i18n 컨텍스트 값을 사용한다.
+ *
+ * @param props - {@link Props}
+ */
 export function Topbar({ adminName, adminEmail, title }: Props) {
   const { toggle } = useSidebar();
   const { t, locale } = useI18n();

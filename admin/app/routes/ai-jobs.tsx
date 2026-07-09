@@ -7,12 +7,19 @@ import type { AiJobRow } from "~/types/db";
 
 import type { Route } from "./+types/ai-jobs";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "AI Jobs - Tone Knob Admin" }];
 }
 
+/**
+ * AI 작업 목록 로더.
+ * 쿼리 파라미터 `status`(`all` | `queued` | `processing` | `completed` | `failed`),
+ * `type`(작업 유형), `page`를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -64,6 +71,7 @@ function statusVariant(s: string) {
   return "default" as const;
 }
 
+/** AI 작업 모니터링 페이지. 상태·유형 필터와 작업 목록을 제공한다. */
 export default function AiJobsPage({ loaderData }: Route.ComponentProps) {
   const { admin, jobs, total, page, status, type, totalPages, queuedCount, failedCount } =
     loaderData;

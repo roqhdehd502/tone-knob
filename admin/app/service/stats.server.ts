@@ -2,8 +2,16 @@ import type { TabRow, UserRow } from "~/types/db";
 
 import { getSupabase } from "./supabase.server";
 
+/** 대시보드 통계 조회 기간 */
 export type StatsPeriod = "today" | "7d" | "30d" | "all";
 
+/**
+ * `StatsPeriod`를 ISO 8601 시작 시각으로 변환한다.
+ * `"all"`인 경우 필터링이 필요 없으므로 `null`을 반환한다.
+ *
+ * @param period - 조회 기간
+ * @returns ISO 8601 문자열 또는 `null`
+ */
 function periodStart(period: StatsPeriod): string | null {
   if (period === "all") return null;
   const now = Date.now();
@@ -13,6 +21,13 @@ function periodStart(period: StatsPeriod): string | null {
   return null;
 }
 
+/**
+ * 대시보드에 표시할 주요 집계 통계를 병렬로 조회한다.
+ * `period`가 `"all"`이면 신규 사용자·타브는 최근 7일 기준으로 표시된다.
+ *
+ * @param period - 조회 기간 (기본값: `"7d"`)
+ * @returns 사용자·타브·구독·합주방·녹음·결제·AI 작업 통계와 기간 레이블
+ */
 export async function getDashboardStats(period: StatsPeriod = "7d") {
   const supabase = getSupabase();
   const since = periodStart(period);
@@ -62,6 +77,12 @@ export async function getDashboardStats(period: StatsPeriod = "7d") {
   };
 }
 
+/**
+ * 최근 가입한 사용자 목록을 반환한다.
+ *
+ * @param limit - 조회 건수 (기본값: `10`)
+ * @returns {@link UserRow} 배열 (최신순)
+ */
 export async function getRecentUsers(limit = 10): Promise<UserRow[]> {
   const supabase = getSupabase();
   const { data } = await supabase
@@ -72,6 +93,12 @@ export async function getRecentUsers(limit = 10): Promise<UserRow[]> {
   return (data ?? []) as unknown as UserRow[];
 }
 
+/**
+ * 최근 등록된 타브 목록을 반환한다.
+ *
+ * @param limit - 조회 건수 (기본값: `10`)
+ * @returns {@link TabRow} 배열 (최신순)
+ */
 export async function getRecentTabs(limit = 10): Promise<TabRow[]> {
   const supabase = getSupabase();
   const { data } = await supabase

@@ -2,15 +2,33 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "./cn";
 
+/** {@link StatsCard} 컴포넌트 props */
 interface Props {
+  /** 카드 상단 레이블 */
   title: string;
+  /** 표시할 수치 또는 문자열 */
   value: number | string;
+  /** 수치 아래에 표시할 보조 설명 (선택) */
   sub?: string;
+  /** 우측 상단에 렌더링할 Lucide 아이콘 */
   icon: LucideIcon;
+  /** 아이콘 컨테이너에 적용할 색상 Tailwind 클래스 (기본값: `"text-blue-600"`) */
   iconColor?: string;
-  trend?: { value: number; label: string };
+  /** 증감 추세 정보 (선택) */
+  trend?: {
+    /** 증감 수치 (양수=증가, 음수=감소) */
+    value: number;
+    /** 추세 기간 레이블 (e.g. `"7일 신규"`) */
+    label: string;
+  };
 }
 
+/**
+ * 대시보드에 주요 지표를 카드 형태로 표시하는 컴포넌트.
+ * `trend`가 제공되면 카드 하단에 증감 색상 표시를 추가한다.
+ *
+ * @param props - {@link Props}
+ */
 export function StatsCard({
   title,
   value,

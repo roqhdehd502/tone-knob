@@ -9,12 +9,20 @@ import type { UserDetailRow, UserRow } from "~/types/db";
 
 import type { Route } from "./+types/users";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Users - Tone Knob Admin" }];
 }
 
+/**
+ * 사용자 관리 액션.
+ * - `ban`: 역할을 `"banned"`로 변경
+ * - `unban`: 역할을 `"user"`로 복원
+ * - `setPlan`: 구독 티어 변경 및 활성 구독 플랜 동기화
+ */
 export async function action({ request }: Route.ActionArgs) {
   await requireAdmin(request);
   const formData = await request.formData();
@@ -35,6 +43,11 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect(request.url);
 }
 
+/**
+ * 사용자 목록 로더.
+ * 쿼리 파라미터 `q`(검색어), `page`(페이지), `selected`(상세 표시 사용자 ID)를 지원한다.
+ * 이메일 또는 사용자명 부분 일치 검색이 가능하며, 선택된 사용자는 상세 집계 정보를 함께 조회한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -103,6 +116,10 @@ function detailHref(search: string, page: number, id: string | null) {
   return `/users?${params.toString()}`;
 }
 
+/**
+ * 사용자 관리 페이지.
+ * 목록 테이블, 검색 필터, 페이지네이션, 선택 사용자 상세 패널을 렌더링한다.
+ */
 export default function UsersPage({ loaderData }: Route.ComponentProps) {
   const { admin, users, total, page, search, totalPages, selectedId, detail } = loaderData;
   const { t, dateLocale } = useI18n();

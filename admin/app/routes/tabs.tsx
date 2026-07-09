@@ -9,12 +9,19 @@ import type { TabRow } from "~/types/db";
 
 import type { Route } from "./+types/tabs";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Tabs - Tone Knob Admin" }];
 }
 
+/**
+ * 타브 관리 액션.
+ * - `forceHide`: `isPublic`을 `false`로 강제 비공개 처리
+ * - `delete`: 타브 영구 삭제
+ */
 export async function action({ request }: Route.ActionArgs) {
   await requireAdmin(request);
   const formData = await request.formData();
@@ -31,6 +38,10 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect(request.url);
 }
 
+/**
+ * 타브 목록 로더.
+ * 쿼리 파라미터 `q`(검색어), `page`(페이지), `visibility`(`all` | `public` | `private`)를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -68,6 +79,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
+/** 타브 관리 페이지. 목록 테이블, 공개/검색 필터, 강제 비공개·삭제 액션을 제공한다. */
 export default function TabsPage({ loaderData }: Route.ComponentProps) {
   const { admin, tabs, total, page, search, visibility, totalPages } = loaderData;
   const { t, dateLocale } = useI18n();

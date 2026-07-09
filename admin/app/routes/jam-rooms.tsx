@@ -9,12 +9,18 @@ import type { JamRoomRow } from "~/types/db";
 
 import type { Route } from "./+types/jam-rooms";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Jam Rooms - Tone Knob Admin" }];
 }
 
+/**
+ * 합주방 강제 종료 액션.
+ * `isActive`를 `false`로, `currentParticipants`를 `0`으로 초기화한다.
+ */
 export async function action({ request }: Route.ActionArgs) {
   await requireAdmin(request);
   const formData = await request.formData();
@@ -24,6 +30,10 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect(request.url);
 }
 
+/**
+ * 합주방 목록 로더.
+ * 쿼리 파라미터 `active`(`all` | `true` | `false`), `page`를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -58,6 +68,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
+/** 합주방 관리 페이지. 목록 조회와 강제 종료 액션을 제공한다. */
 export default function JamRoomsPage({ loaderData }: Route.ComponentProps) {
   const { admin, rooms, total, page, filter, totalPages } = loaderData;
   const { t, dateLocale } = useI18n();

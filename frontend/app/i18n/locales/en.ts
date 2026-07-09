@@ -369,6 +369,8 @@ export const en: Messages = {
   "jamroomDetail.acoustic": "Acoustic Guitar",
   "jamroomDetail.bass": "Bass",
   "jamroomDetail.keyboard": "Keyboard",
+  "jamroomDetail.tab": "Tab to Practice",
+  "jamroomDetail.tabNoArtist": "No artist info",
   "jamroomDetail.mr": "MR Player",
 
   // ── MR Player ────────────────────────────────────────────────────────────────

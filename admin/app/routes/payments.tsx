@@ -9,12 +9,18 @@ import type { PaymentRow } from "~/types/db";
 
 import type { Route } from "./+types/payments";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Payments - Tone Knob Admin" }];
 }
 
+/**
+ * 결제 관리 액션.
+ * 지정한 결제 ID의 상태를 `"refunded"`로 변경하여 환불 처리한다.
+ */
 export async function action({ request }: Route.ActionArgs) {
   await requireAdmin(request);
   const formData = await request.formData();
@@ -24,6 +30,10 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect(request.url);
 }
 
+/**
+ * 결제 목록 로더.
+ * 쿼리 파라미터 `status`(`all` | `pending` | `completed` | `failed` | `refunded`), `page`를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -64,6 +74,7 @@ function statusVariant(s: string) {
   return "default" as const;
 }
 
+/** 결제 내역 관리 페이지. 결제 목록과 환불 처리 액션을 제공한다. */
 export default function PaymentsPage({ loaderData }: Route.ComponentProps) {
   const { admin, payments, total, page, status, totalPages } = loaderData;
   const { t, dateLocale } = useI18n();

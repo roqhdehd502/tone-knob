@@ -10,6 +10,11 @@ export interface JamRoom {
     avatarUrl?: string;
   };
   tabId?: string;
+  tab?: {
+    id: string;
+    title: string;
+    artist?: string;
+  };
   maxParticipants: number;
   currentParticipants: number;
   isActive: boolean;

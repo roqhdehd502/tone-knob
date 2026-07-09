@@ -365,6 +365,8 @@ export const ko = {
   "jamroomDetail.acoustic": "어쿠스틱 기타",
   "jamroomDetail.bass": "베이스",
   "jamroomDetail.keyboard": "키보드",
+  "jamroomDetail.tab": "연주할 타브",
+  "jamroomDetail.tabNoArtist": "아티스트 정보 없음",
   "jamroomDetail.mr": "MR 재생",
 
   // ── MR Player ────────────────────────────────────────────────────────────────

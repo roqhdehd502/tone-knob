@@ -17,6 +17,9 @@ export class Tab {
   @Column({ type: "varchar", length: 200 })
   title: string;
 
+  @Column({ type: "varchar", length: 100, nullable: true })
+  artist: string;
+
   @Column({ type: "jsonb" })
   content: Record<string, unknown>;
 

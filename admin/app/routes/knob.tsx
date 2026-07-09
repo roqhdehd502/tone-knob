@@ -9,12 +9,19 @@ import type { KnobTransactionRow } from "~/types/db";
 
 import type { Route } from "./+types/knob";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Knob Currency - Tone Knob Admin" }];
 }
 
+/**
+ * Knob 포인트 수동 조정 액션.
+ * 이메일로 사용자를 찾아 Knob 잔액을 직접 증감하고 트랜잭션 기록을 남긴다.
+ * 유효하지 않은 이메일 또는 금액 0인 경우 `/knob`으로 리다이렉트한다.
+ */
 export async function action({ request }: Route.ActionArgs) {
   await requireAdmin(request);
   const formData = await request.formData();
@@ -54,6 +61,10 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect("/knob");
 }
 
+/**
+ * Knob 거래 내역 로더.
+ * 쿼리 파라미터 `q`(이메일 검색), `page`를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -116,6 +127,7 @@ function txVariant(tp: string) {
   return tp.startsWith("earn") ? ("success" as const) : ("warning" as const);
 }
 
+/** Knob 포인트 관리 페이지. 거래 내역 조회와 수동 조정 폼을 제공한다. */
 export default function KnobPage({ loaderData }: Route.ComponentProps) {
   const { admin, topUsers, transactions, txTotal, page, typeFilter, txTotalPages, error } =
     loaderData;

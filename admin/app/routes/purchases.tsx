@@ -7,12 +7,19 @@ import type { TabPurchaseRow } from "~/types/db";
 
 import type { Route } from "./+types/purchases";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Purchases - Tone Knob Admin" }];
 }
 
+/**
+ * 타브 구매 목록 로더.
+ * 구매자 이메일·사용자명과 타브 제목을 조인하여 반환한다.
+ * 쿼리 파라미터 `page`를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -51,6 +58,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
+/** 타브 구매 내역 페이지. 구매 목록과 구매자/타브 정보를 표시한다. */
 export default function PurchasesPage({ loaderData }: Route.ComponentProps) {
   const { admin, purchases, total, page, totalPages, totalKnob } = loaderData;
   const { t, dateLocale } = useI18n();

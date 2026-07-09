@@ -7,12 +7,18 @@ import type { SubscriptionRow } from "~/types/db";
 
 import type { Route } from "./+types/subscriptions";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Subscriptions - Tone Knob Admin" }];
 }
 
+/**
+ * 구독 목록 로더.
+ * 쿼리 파라미터 `status`(`all` | `active` | `cancelled` | `expired`), `page`를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -43,6 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
+/** 구독 현황 페이지. 구독 목록과 상태 필터를 제공한다. */
 export default function SubscriptionsPage({ loaderData }: Route.ComponentProps) {
   const { admin, subs, total, page, status, totalPages } = loaderData;
   const { t, dateLocale } = useI18n();

@@ -7,16 +7,25 @@ import { commitSession, getSession } from "~/service/session.server";
 
 import type { Route } from "./+types/login";
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Admin Login - Tone Knob Admin" }];
 }
 
+/**
+ * 이미 로그인된 어드민이 `/login`에 접근하면 대시보드(`/`)로 리다이렉트한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   if (session.get("adminId")) throw redirect("/");
   return null;
 }
 
+/**
+ * 로그인 폼 제출 액션.
+ * 이메일·비밀번호를 검증하고 성공하면 세션에 어드민 정보를 저장한 뒤 대시보드로 이동한다.
+ * 실패 시 400/401 상태 코드와 함께 오류 메시지를 반환한다.
+ */
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const t = createT(getLocale(request.headers.get("Cookie") ?? ""));
@@ -42,6 +51,10 @@ export async function action({ request }: Route.ActionArgs) {
   });
 }
 
+/**
+ * 어드민 로그인 페이지.
+ * 이메일·비밀번호 입력 폼과 언어 전환 버튼을 제공한다.
+ */
 export default function LoginPage({ actionData }: Route.ComponentProps) {
   const { t, locale } = useI18n();
 

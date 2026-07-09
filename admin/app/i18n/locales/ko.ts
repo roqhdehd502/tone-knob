@@ -284,5 +284,6 @@ export const ko = {
   "purchases.refunded": "환불",
 } as const;
 
-export type Messages = typeof ko;
-export type MessageKey = keyof Messages;
+export type MessageKey = keyof typeof ko;
+/** 로케일별 번역 메시지 맵 타입 — 값은 `string`으로 완화하여 다국어 번역을 허용한다 */
+export type Messages = Record<MessageKey, string>;

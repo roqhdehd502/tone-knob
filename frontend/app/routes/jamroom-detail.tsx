@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router";
 
 import {
   ArrowLeft,
+  BookOpen,
+  FileMusic,
   LogOut,
   MessageSquare,
   Mic,
@@ -16,6 +18,7 @@ import {
   Wifi,
 } from "lucide-react";
 
+import { TabCanvas } from "~/components/editor/TabCanvas";
 import { AmpSimulatorPanel } from "~/components/jam/AmpSimulatorPanel";
 import { AudioLevelMeter } from "~/components/jam/AudioLevelMeter";
 import { AudioMixer } from "~/components/jam/AudioMixer";
@@ -46,7 +49,7 @@ import type { MrControlEvent, MrSetEvent } from "~/lib/jam/use-jam-socket";
 import { useJamSocket } from "~/lib/jam/use-jam-socket";
 import { useWebRTC } from "~/lib/jam/use-webrtc";
 import type { JamParticipant, JamRoom } from "~/types/jam-room";
-import type { InstrumentType } from "~/types/tab";
+import type { InstrumentType, TabDocument } from "~/types/tab";
 
 export function meta() {
   return [
@@ -85,6 +88,8 @@ export default function JamroomDetail() {
   const [mrOpen, setMrOpen] = useState(false);
   const [remoteMr, setRemoteMr] = useState<MrSetEvent | null>(null);
   const [remoteControl, setRemoteControl] = useState<MrControlEvent | null>(null);
+  const [tabOpen, setTabOpen] = useState(false);
+  const [tabContent, setTabContent] = useState<TabDocument | null>(null);
   const syncRef = useRef<AudioSynchronizer | null>(null);
   const remoteAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -309,6 +314,16 @@ export default function JamroomDetail() {
     try {
       const roomData = await api.jamRooms.get(id);
       setRoom(roomData);
+      if (roomData.tab?.id) {
+        try {
+          const tabDetail = await api.tabs.get(roomData.tab.id);
+          if (tabDetail.content?.sections?.length > 0) {
+            setTabContent(tabDetail.content);
+          }
+        } catch {
+          // Tab might be private or unavailable
+        }
+      }
       await loadParticipants();
     } catch (error) {
       console.error("Failed to load room:", error);
@@ -520,7 +535,7 @@ export default function JamroomDetail() {
                 )}
               </div>
 
-              <div className="mb-5 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mb-5 flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span>
@@ -531,6 +546,18 @@ export default function JamroomDetail() {
                   <Music className="h-4 w-4" />
                   <span>{room.bpm} BPM</span>
                 </div>
+                {room.tab && (
+                  <a
+                    href={`/tabs/${room.tab.id}`}
+                    className="flex items-center gap-1.5 rounded-md bg-miami-50 px-2 py-0.5 text-miami-700 hover:bg-miami-100 dark:bg-miami-900/20 dark:text-miami-300 dark:hover:bg-miami-900/40"
+                  >
+                    <FileMusic className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium">
+                      {room.tab.title}
+                      {room.tab.artist ? ` — ${room.tab.artist}` : ""}
+                    </span>
+                  </a>
+                )}
                 <div className="flex items-center gap-1.5">
                   <div
                     className={`h-1.5 w-1.5 rounded-full ${socket.connected ? "bg-green-500" : "bg-gray-400"}`}
@@ -672,18 +699,65 @@ export default function JamroomDetail() {
                       </span>
                       <span className="text-xs text-gray-400">{mrOpen ? "▲" : "▼"}</span>
                     </button>
-                    {mrOpen && (
-                      <div className="border-t border-gray-200 p-3 dark:border-gray-700">
-                        <MrPlayer
-                          isHost={room.hostId === user?.id}
-                          remoteMr={remoteMr}
-                          remoteControl={remoteControl}
-                          onSetMr={socket.emitMrSet}
-                          onControl={socket.emitMrControl}
+                    <div
+                      className={
+                        mrOpen
+                          ? "border-t border-gray-200 p-3 dark:border-gray-700"
+                          : "hidden"
+                      }
+                    >
+                      <MrPlayer
+                        isHost={room.hostId === user?.id}
+                        remoteMr={remoteMr}
+                        remoteControl={remoteControl}
+                        onSetMr={socket.emitMrSet}
+                        onControl={socket.emitMrControl}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 타브 악보 */}
+                  {tabContent && (
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setTabOpen((o) => !o)}
+                        className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        <span className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-miami-500" />
+                          {t("jamroomDetail.tab")}
+                          {room.tab?.title && (
+                            <span className="text-xs font-normal text-gray-400">
+                              {room.tab.title}
+                              {room.tab.artist ? ` — ${room.tab.artist}` : ""}
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-xs text-gray-400">{tabOpen ? "▲" : "▼"}</span>
+                      </button>
+                      <div
+                        className={
+                          tabOpen
+                            ? "overflow-auto border-t border-gray-200 p-3 dark:border-gray-700"
+                            : "hidden"
+                        }
+                      >
+                        <TabCanvas
+                          sections={tabContent.sections}
+                          tuning={tabContent.tuning}
+                          selectedNoteIds={new Set()}
+                          selectedMeasureId={null}
+                          currentTool="select"
+                          currentDuration={0.25}
+                          currentFret={0}
+                          onNoteClick={() => {}}
+                          onCellClick={() => {}}
+                          onMeasureClick={() => {}}
                         />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

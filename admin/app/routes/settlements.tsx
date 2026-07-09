@@ -9,12 +9,19 @@ import type { SettlementRow } from "~/types/db";
 
 import type { Route } from "./+types/settlements";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Settlements - Tone Knob Admin" }];
 }
 
+/**
+ * 정산 관리 액션.
+ * - `approve`: 정산 상태를 `"processing"`으로 변경하여 승인
+ * - `reject`: 정산 상태를 `"failed"`로 변경하여 거절
+ */
 export async function action({ request }: Route.ActionArgs) {
   await requireAdmin(request);
   const formData = await request.formData();
@@ -30,6 +37,11 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect(request.url);
 }
 
+/**
+ * 정산 목록 로더.
+ * 쿼리 파라미터 `status`(`all` | `pending` | `processing` | `completed` | `failed`), `page`를 지원한다.
+ * 판매자 정보를 조인하여 반환한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -94,6 +106,7 @@ function statusVariant(s: string) {
   return "default" as const;
 }
 
+/** 정산 관리 페이지. 정산 목록과 승인/거절 액션을 제공한다. */
 export default function SettlementsPage({ loaderData }: Route.ComponentProps) {
   const { admin, settlements, total, page, status, search, totalPages, pendingSum } = loaderData;
   const { t } = useI18n();

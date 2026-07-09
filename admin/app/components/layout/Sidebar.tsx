@@ -20,10 +20,20 @@ import { useSidebar } from "~/context/sidebar";
 
 import { cn } from "../ui/cn";
 
+/**
+ * 어드민 패널 좌측 네비게이션 사이드바.
+ *
+ * - 데스크톱(`lg:` 이상): 항상 표시되며 레이아웃 흐름에 포함된다.
+ * - 모바일/태블릿: `useSidebar().toggle()`로 열고 닫는 슬라이드 드로어로 동작한다.
+ *   열린 상태에서는 배경에 반투명 오버레이가 표시되어 클릭 시 닫힌다.
+ *
+ * 하단의 로그아웃 버튼은 `POST /logout` 폼 제출로 세션을 파기한다.
+ */
 export function Sidebar() {
   const { isOpen, close } = useSidebar();
   const { t } = useI18n();
 
+  /** 사이드바 네비게이션 항목 목록 */
   const navItems = [
     { to: "/", label: t("nav.dashboard"), icon: LayoutDashboard, end: true },
     { to: "/users", label: t("nav.users"), icon: Users },

@@ -10,10 +10,16 @@ import { getDashboardStats, getRecentTabs, getRecentUsers } from "~/service/stat
 
 import type { Route } from "./+types/dashboard";
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Dashboard - Tone Knob Admin" }];
 }
 
+/**
+ * 대시보드 데이터 로더.
+ * URL 쿼리 파라미터 `period`로 통계 기간을 선택하며 기본값은 `"7d"`이다.
+ * 통계·최근 사용자·최근 타브를 병렬로 조회한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -27,12 +33,18 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { admin, stats, recentUsers, recentTabs, period };
 }
 
+/** 기간 선택 버튼에 표시할 StatsPeriod 순서 */
 const PERIOD_KEYS: StatsPeriod[] = ["today", "7d", "30d", "all"];
 
+/**
+ * 대시보드 페이지 컴포넌트.
+ * 기간 선택 탭, 주요 지표 카드 그리드, AI 작업 요약, 최근 사용자/타브 테이블을 렌더링한다.
+ */
 export default function DashboardPage({ loaderData }: Route.ComponentProps) {
   const { admin, stats, recentUsers, recentTabs, period } = loaderData;
   const { t } = useI18n();
 
+  /** StatsPeriod 값을 현재 로케일에 맞는 레이블 문자열로 변환한다 */
   const periodLabel = (v: StatsPeriod): string => {
     if (v === "today") return t("period.today");
     if (v === "7d") return t("period.7d");

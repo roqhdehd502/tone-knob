@@ -87,7 +87,7 @@ export class JamRoomService {
   async findOne(id: string): Promise<JamRoom> {
     const room = await this.jamRoomRepository.findOne({
       where: { id },
-      relations: ["host"],
+      relations: ["host", "tab"],
     });
     if (!room) {
       throw new RpcException({ statusCode: 404, message: "합주방을 찾을 수 없습니다" });

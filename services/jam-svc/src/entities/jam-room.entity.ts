@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
+import { Tab } from "./tab.entity";
 import { User } from "./user.entity";
 
 @Entity("jam_rooms")
@@ -31,6 +32,10 @@ export class JamRoom {
 
   @Column({ type: "uuid", nullable: true })
   tabId: string;
+
+  @ManyToOne(() => Tab, { nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "tabId" })
+  tab: Tab;
 
   @Column({ type: "integer", default: 4 })
   maxParticipants: number;

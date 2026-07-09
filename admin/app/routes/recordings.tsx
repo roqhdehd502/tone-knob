@@ -7,12 +7,18 @@ import type { RecordingRow } from "~/types/db";
 
 import type { Route } from "./+types/recordings";
 
+/** 페이지당 표시할 행 수 */
 const PAGE_SIZE = 20;
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Recordings - Tone Knob Admin" }];
 }
 
+/**
+ * 녹음 목록 로더.
+ * 쿼리 파라미터 `visibility`(`all` | `public` | `private` | `unlisted`), `page`를 지원한다.
+ */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const url = new URL(request.url);
@@ -43,6 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
+/** 녹음 관리 페이지. 녹음 목록과 공개 범위 필터를 제공한다. */
 export default function RecordingsPage({ loaderData }: Route.ComponentProps) {
   const { admin, recordings, total, page, visibility, totalPages } = loaderData;
   const { t, dateLocale } = useI18n();

@@ -9,10 +9,17 @@ import type { BadgeRow } from "~/types/db";
 
 import type { Route } from "./+types/badges";
 
+/** 브라우저 탭 제목 메타 */
 export function meta() {
   return [{ title: "Badges - Tone Knob Admin" }];
 }
 
+/**
+ * 배지 관리 액션.
+ * - `award`: 이메일로 사용자를 조회한 뒤 특정 배지를 수여
+ * - `revoke`: 사용자에게서 배지를 회수
+ * - `create`: 새 배지를 생성
+ */
 export async function action({ request }: Route.ActionArgs) {
   await requireAdmin(request);
   const formData = await request.formData();
@@ -43,6 +50,7 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect("/badges");
 }
 
+/** 배지 목록 및 수여 현황 로더. 전체 배지 목록과 최근 수여 이력을 반환한다. */
 export async function loader({ request }: Route.LoaderArgs) {
   const admin = await requireAdmin(request);
   const supabase = getSupabase();
@@ -58,6 +66,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { admin, badges };
 }
 
+/** 배지 관리 페이지. 배지 목록, 수여 폼, 생성 폼을 제공한다. */
 export default function BadgesPage({ loaderData, actionData }: Route.ComponentProps) {
   const { admin, badges } = loaderData;
   const { t } = useI18n();
