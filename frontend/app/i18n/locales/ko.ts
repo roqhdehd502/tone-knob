@@ -365,6 +365,14 @@ export const ko = {
   "jamroomDetail.acoustic": "어쿠스틱 기타",
   "jamroomDetail.bass": "베이스",
   "jamroomDetail.keyboard": "키보드",
+  "jamroomDetail.mr": "MR 재생",
+
+  // ── MR Player ────────────────────────────────────────────────────────────────
+  "mr.ytUrlPlaceholder": "YouTube URL 입력 (예: https://www.youtube.com/watch?v=...)",
+  "mr.load": "불러오기",
+  "mr.ytInvalidUrl": "유효한 YouTube URL이 아닙니다.",
+  "mr.ytHint": "YouTube URL을 입력하면 방의 모든 참가자에게 공유됩니다.",
+  "mr.waitingHost": "호스트가 MR을 설정하면 여기에 표시됩니다.",
 
   // ── Community ────────────────────────────────────────────────────────────────
   "community.title": "커뮤니티 - Tone Knob",

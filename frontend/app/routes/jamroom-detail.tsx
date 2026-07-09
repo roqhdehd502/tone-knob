@@ -8,6 +8,7 @@ import {
   Mic,
   MicOff,
   Music,
+  Music2,
   Radio,
   Send,
   Users,
@@ -19,6 +20,7 @@ import { AmpSimulatorPanel } from "~/components/jam/AmpSimulatorPanel";
 import { AudioLevelMeter } from "~/components/jam/AudioLevelMeter";
 import { AudioMixer } from "~/components/jam/AudioMixer";
 import { ChatMessageItem } from "~/components/jam/ChatMessage";
+import { MrPlayer } from "~/components/jam/MrPlayer";
 import { SoundCheckPanel } from "~/components/jam/SoundCheckPanel";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -40,6 +42,7 @@ import type { SyncState } from "~/lib/jam/audio-synchronizer";
 import { AudioSynchronizer } from "~/lib/jam/audio-synchronizer";
 import { getLatencyColor } from "~/lib/jam/latency";
 import { useAudioMonitor } from "~/lib/jam/use-audio-monitor";
+import type { MrControlEvent, MrSetEvent } from "~/lib/jam/use-jam-socket";
 import { useJamSocket } from "~/lib/jam/use-jam-socket";
 import { useWebRTC } from "~/lib/jam/use-webrtc";
 import type { JamParticipant, JamRoom } from "~/types/jam-room";
@@ -79,6 +82,9 @@ export default function JamroomDetail() {
   const [showSoundCheck, setShowSoundCheck] = useState(true);
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(loadAudioSettings);
   const [ampSettings, setAmpSettings] = useState<AmpSettings>({ ...DEFAULT_AMP_SETTINGS });
+  const [mrOpen, setMrOpen] = useState(false);
+  const [remoteMr, setRemoteMr] = useState<MrSetEvent | null>(null);
+  const [remoteControl, setRemoteControl] = useState<MrControlEvent | null>(null);
   const syncRef = useRef<AudioSynchronizer | null>(null);
   const remoteAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -147,6 +153,13 @@ export default function JamroomDetail() {
       },
       [],
     ),
+    onMrSet: useCallback((data: MrSetEvent) => {
+      setRemoteMr(data);
+      setMrOpen(true);
+    }, []),
+    onMrControl: useCallback((data: MrControlEvent) => {
+      setRemoteControl({ ...data });
+    }, []),
   });
   socketRef.current = socket;
 
@@ -643,6 +656,32 @@ export default function JamroomDetail() {
                       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                         {t("jamroomDetail.peerConnecting")}
                       </p>
+                    )}
+                  </div>
+
+                  {/* MR 플레이어 */}
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => setMrOpen((o) => !o)}
+                      className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Music2 className="h-4 w-4 text-miami-500" />
+                        {t("jamroomDetail.mr")}
+                      </span>
+                      <span className="text-xs text-gray-400">{mrOpen ? "▲" : "▼"}</span>
+                    </button>
+                    {mrOpen && (
+                      <div className="border-t border-gray-200 p-3 dark:border-gray-700">
+                        <MrPlayer
+                          isHost={room.hostId === user?.id}
+                          remoteMr={remoteMr}
+                          remoteControl={remoteControl}
+                          onSetMr={socket.emitMrSet}
+                          onControl={socket.emitMrControl}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>

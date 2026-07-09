@@ -9,6 +9,16 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface MrSetEvent {
+  type: "youtube";
+  videoId: string;
+}
+
+export interface MrControlEvent {
+  action: "play" | "pause";
+  position?: number;
+}
+
 interface JamSocketOptions {
   roomId: string;
   userId: string;
@@ -20,6 +30,8 @@ interface JamSocketOptions {
   onICECandidate?: (data: { fromUserId: string; signal: unknown }) => void;
   onUserMuted?: (data: { userId: string; isMuted: boolean }) => void;
   onPlaybackSynced?: (data: { fromUserId: string; position: number; isPlaying: boolean }) => void;
+  onMrSet?: (data: MrSetEvent) => void;
+  onMrControl?: (data: MrControlEvent) => void;
 }
 
 export function useJamSocket(options: JamSocketOptions) {
@@ -34,6 +46,8 @@ export function useJamSocket(options: JamSocketOptions) {
     onICECandidate,
     onUserMuted,
     onPlaybackSynced,
+    onMrSet,
+    onMrControl,
   } = options;
 
   const socketRef = useRef<Socket | null>(null);
@@ -51,8 +65,9 @@ export function useJamSocket(options: JamSocketOptions) {
   const latencyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
-    const socket = io(`${apiUrl}/jam`, {
+    const jamWsUrl =
+      import.meta.env.VITE_JAM_WS_URL ?? import.meta.env.VITE_API_URL ?? "http://localhost:3004";
+    const socket = io(`${jamWsUrl}/jam`, {
       transports: ["websocket"],
       withCredentials: true,
     });
@@ -107,6 +122,15 @@ export function useJamSocket(options: JamSocketOptions) {
       },
     );
 
+    // MR 이벤트
+    socket.on("mr:set", (data: MrSetEvent) => {
+      onMrSet?.(data);
+    });
+
+    socket.on("mr:control", (data: MrControlEvent) => {
+      onMrControl?.(data);
+    });
+
     // 채팅 메시지 수신
     socket.on("chat-message", (data: ChatMessage) => {
       setChatMessages((prev) => [...prev.slice(-99), data]);
@@ -143,6 +167,8 @@ export function useJamSocket(options: JamSocketOptions) {
     onICECandidate,
     onUserMuted,
     onPlaybackSynced,
+    onMrSet,
+    onMrControl,
   ]);
 
   const sendOffer = useCallback(
@@ -203,6 +229,20 @@ export function useJamSocket(options: JamSocketOptions) {
     [roomId],
   );
 
+  const emitMrSet = useCallback(
+    (type: "youtube", videoId: string) => {
+      socketRef.current?.emit("mr:set", { roomId, type, videoId });
+    },
+    [roomId],
+  );
+
+  const emitMrControl = useCallback(
+    (action: "play" | "pause", position?: number) => {
+      socketRef.current?.emit("mr:control", { roomId, action, position });
+    },
+    [roomId],
+  );
+
   return {
     connected,
     participants,
@@ -214,5 +254,7 @@ export function useJamSocket(options: JamSocketOptions) {
     toggleMute,
     syncPlayback,
     sendChatMessage,
+    emitMrSet,
+    emitMrControl,
   };
 }

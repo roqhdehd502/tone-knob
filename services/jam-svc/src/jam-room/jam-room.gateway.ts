@@ -23,6 +23,18 @@ interface SignalPayload {
   signal: unknown;
 }
 
+interface MrSetPayload {
+  roomId: string;
+  type: "youtube";
+  videoId: string;
+}
+
+interface MrControlPayload {
+  roomId: string;
+  action: "play" | "pause";
+  position?: number;
+}
+
 @WebSocketGateway({
   cors: { origin: "*", credentials: true },
   namespace: "/jam",
@@ -35,6 +47,7 @@ export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect 
   private userSocketMap = new Map<string, string>();
   private socketUserMap = new Map<string, string>();
   private socketRoomMap = new Map<string, string>();
+  private roomMrState = new Map<string, { type: "youtube"; videoId: string }>();
 
   constructor(private readonly jamRoomService: JamRoomService) {}
 
@@ -85,6 +98,12 @@ export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect 
           volume: p.volume,
         })),
       });
+
+      // 신규 참가자에게 현재 MR 상태 전달
+      const mrState = this.roomMrState.get(roomId);
+      if (mrState) {
+        client.emit("mr:set", mrState);
+      }
 
       client.to(roomId).emit("user-joined", { userId, socketId: client.id });
       this.logger.log(`User ${userId} joined room ${roomId}`);
@@ -197,5 +216,16 @@ export class JamRoomGateway implements OnGatewayConnection, OnGatewayDisconnect 
   @SubscribeMessage("ping-latency")
   handlePingLatency(@MessageBody() data: { timestamp: number }, @ConnectedSocket() client: Socket) {
     client.emit("pong-latency", { timestamp: data.timestamp });
+  }
+
+  @SubscribeMessage("mr:set")
+  handleMrSet(@MessageBody() data: MrSetPayload, @ConnectedSocket() client: Socket) {
+    this.roomMrState.set(data.roomId, { type: data.type, videoId: data.videoId });
+    client.to(data.roomId).emit("mr:set", { type: data.type, videoId: data.videoId });
+  }
+
+  @SubscribeMessage("mr:control")
+  handleMrControl(@MessageBody() data: MrControlPayload, @ConnectedSocket() client: Socket) {
+    client.to(data.roomId).emit("mr:control", { action: data.action, position: data.position });
   }
 }

@@ -369,6 +369,14 @@ export const en: Messages = {
   "jamroomDetail.acoustic": "Acoustic Guitar",
   "jamroomDetail.bass": "Bass",
   "jamroomDetail.keyboard": "Keyboard",
+  "jamroomDetail.mr": "MR Player",
+
+  // ── MR Player ────────────────────────────────────────────────────────────────
+  "mr.ytUrlPlaceholder": "Enter YouTube URL (e.g. https://www.youtube.com/watch?v=...)",
+  "mr.load": "Load",
+  "mr.ytInvalidUrl": "Invalid YouTube URL.",
+  "mr.ytHint": "Entering a YouTube URL will share it with all participants.",
+  "mr.waitingHost": "The host hasn't set an MR yet.",
 
   // ── Community ────────────────────────────────────────────────────────────────
   "community.title": "Community - Tone Knob",
