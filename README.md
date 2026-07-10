@@ -38,7 +38,7 @@ tone-knob/
 | Realtime | Socket.IO (협업 편집 `/collab`, 합주룸 `/jam`)                        |
 | DB       | Supabase (PostgreSQL 17)                                              |
 | Infra    | Turborepo, Docker Compose                                             |
-| CI/CD    | GitHub Actions (Blue-Green Deploy)                                    |
+| CI/CD    | GitHub Actions — main push → OCI SSH 자동 배포                        |
 
 ## 빠른 시작
 
@@ -233,12 +233,25 @@ docker compose -f docker-compose.prod.yml up -d --build
   └─ https://jam.YOUR_DOMAIN/*   → nginx → jam-svc:3004  (Socket.IO WebSocket)
 ```
 
-### 업데이트 배포
+### 자동 배포 (GitHub Actions)
+
+`main` 브랜치에 push하면 `.github/workflows/deploy.yml`이 OCI VM에 자동으로 배포한다.
+
+GitHub 레포 → **Settings → Secrets and variables → Actions** 에서 아래 4개 Secret을 등록해야 한다:
+
+| Secret | 값 예시 | 설명 |
+| --- | --- | --- |
+| `OCI_SSH_HOST` | `144.xxx.xxx.xxx` | OCI VM 공개 IP |
+| `OCI_SSH_USER` | `ubuntu` | SSH 접속 사용자명 |
+| `OCI_SSH_PRIVATE_KEY` | `-----BEGIN OPENSSH...` | SSH 개인키 전체 내용 |
+| `OCI_DEPLOY_PATH` | `/opt/tone-knob` | VM 레포 클론 경로 |
+
+### 수동 배포 (긴급 시)
 
 ```bash
 cd /opt/tone-knob
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
+git fetch origin && git reset --hard origin/main
+docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
 ```
 
 프론트엔드는 `frontend/vercel.json`으로 Vercel에 정적 배포한다 (`VITE_API_URL`을 `https://YOUR_DOMAIN` 으로 설정).

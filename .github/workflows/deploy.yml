@@ -1,0 +1,36 @@
+# main 브랜치 push 시 OCI VM에 자동 배포
+#
+# 필수 GitHub Secrets (Settings → Secrets and variables → Actions):
+#   OCI_SSH_HOST        — OCI VM 공개 IP (예: 144.xxx.xxx.xxx)
+#   OCI_SSH_USER        — SSH 접속 사용자명 (예: ubuntu)
+#   OCI_SSH_PRIVATE_KEY — SSH 개인키 전체 내용 (-----BEGIN OPENSSH PRIVATE KEY-----)
+#   OCI_DEPLOY_PATH     — VM 레포 클론 경로 (예: /opt/tone-knob)
+#
+# 배포 흐름:
+#   SSH 접속 → git reset --hard origin/main → docker compose up --build
+
+name: Deploy to OCI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: SSH Deploy → OCI ARM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to OCI via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_SSH_HOST }}
+          username: ${{ secrets.OCI_SSH_USER }}
+          key: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.OCI_DEPLOY_PATH }}
+            git fetch origin
+            git reset --hard origin/main
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            echo "Deploy complete: $(date)"
