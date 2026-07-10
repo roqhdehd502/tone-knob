@@ -14,7 +14,7 @@ const path = require("path");
 const { Client } = require("pg");
 
 require("dotenv").config({
-  path: path.join(__dirname, "../services/marketplace-svc/.env"),
+  path: path.join(__dirname, "../backend/marketplace-svc/.env"),
 });
 
 const MIGRATIONS_DIR = path.join(__dirname, "../supabase/migrations");
@@ -121,7 +121,7 @@ async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error(
-      `${colors.red}DATABASE_URL 환경변수를 찾을 수 없습니다 (services/marketplace-svc/.env 확인 필요)${colors.reset}`,
+      `${colors.red}DATABASE_URL 환경변수를 찾을 수 없습니다 (backend/marketplace-svc/.env 확인 필요)${colors.reset}`,
     );
     process.exit(1);
   }

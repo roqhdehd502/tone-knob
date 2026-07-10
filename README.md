@@ -10,7 +10,7 @@ Turborepo 기반 모노레포 — 9개 마이크로서비스 + Gateway + Fronten
 tone-knob/
 ├── frontend/              # React Router V7 (SSR) + React 19 + TailwindCSS v4 (유저 화면)
 ├── admin/                 # React Router V7 (SSR) + TailwindCSS v4 (관리자 패널, :3100)
-├── services/
+├── backend/
 │   ├── gateway/           # HTTP API Gateway (:3000) → 각 서비스 TCP 프록시
 │   ├── auth-svc/          # 인증/사용자 (TCP :3001)
 │   ├── tab-svc/           # 타브 CRUD, 연습 (TCP :3002)
@@ -61,7 +61,7 @@ npx turbo run build --force     # shared → 전체 서비스 빌드
 npm run dev:all
 
 # 또는 개별 실행
-npm run dev:services            # Gateway + 9개 마이크로서비스
+npm run dev:services            # Gateway + 마이크로서비스
 npm run dev:admin               # 관리자 패널만 (http://localhost:3100)
 cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 ```
@@ -70,26 +70,26 @@ cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 
 각 서비스 디렉토리의 `.env.sample`을 `.env`로 복사하여 설정합니다.
 
-| 변수                      | 위치                             | 설명                                           |
-| ------------------------- | -------------------------------- | ---------------------------------------------- |
-| `DATABASE_URL`            | 7개 서비스 (DB 사용)             | Supabase PostgreSQL URL (공유 DB, 독립 커넥션) |
-| `JWT_SECRET`              | auth-svc, gateway, jam-svc       | JWT 서명/검증 시크릿 (동일 값 필수, 64자+)     |
-| `COMMUNITY_SVC_HOST/PORT` | tab-svc, marketplace-svc, ai-svc | 이벤트 발행 대상                               |
-| `MARKETPLACE_SVC_HOST/PORT` | auth-svc, tab-svc, jam-svc     | 이벤트 발행 대상 (Knob 활동 기반 자동 적립)    |
-| `GOOGLE_CLIENT_ID/SECRET` | gateway                          | Google OAuth2 (선택, 미설정 시 비활성)         |
-| `GITHUB_CLIENT_ID/SECRET` | gateway                          | GitHub OAuth2 (선택, 미설정 시 비활성)         |
-| `ML_SERVER_URL`           | ai-svc                           | ML 서버 엔드포인트 (미연결 시 더미 결과로 대체) |
-| `GATEWAY_PUBLIC_URL`      | ai-svc                           | ML 서버가 콜백할 Gateway 공개 주소             |
-| `ML_WEBHOOK_SECRET`       | ai-svc, gateway                  | ML 웹훅 인증 공유 시크릿 (동일 값 필수, 선택)  |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | media-svc      | Supabase Storage 연동 (미설정 시 업로드 비활성) |
-| `REDIS_URL`               | tab-svc                          | 타브 목록 캐싱 (30초 TTL, 연결 실패 시 캐시 없이 동작) |
-| `SENTRY_DSN`              | gateway                          | 에러 모니터링 (선택, 미설정 시 SDK 비활성)     |
-| `VITE_API_URL`            | frontend                         | Gateway URL                                    |
-| `VITE_SENTRY_DSN`         | frontend                         | 클라이언트 에러 모니터링 (선택, 미설정 시 SDK 비활성) |
-| `PORTONE_STORE_ID`        | marketplace-svc, gateway         | PortOne V2 Store ID (`store-XXXXXXXX` 형식, 콘솔 발급 필수) |
-| `PORTONE_CHANNEL_KEY`     | marketplace-svc, gateway         | PortOne V2 채널키 (테스트: `test_ck_...`, 실결제: `live_ck_...`) |
-| `PORTONE_API_SECRET`      | marketplace-svc                  | PortOne V2 API Secret (서버 전용, 외부 노출 금지) |
-| `PORTONE_WEBHOOK_SECRET`  | marketplace-svc                  | PortOne 웹훅 서명 검증 시크릿 (선택, 미설정 시 검증 생략) |
+| 변수                                         | 위치                             | 설명                                                             |
+| -------------------------------------------- | -------------------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`                               | 7개 서비스 (DB 사용)             | Supabase PostgreSQL URL (공유 DB, 독립 커넥션)                   |
+| `JWT_SECRET`                                 | auth-svc, gateway, jam-svc       | JWT 서명/검증 시크릿 (동일 값 필수, 64자+)                       |
+| `COMMUNITY_SVC_HOST/PORT`                    | tab-svc, marketplace-svc, ai-svc | 이벤트 발행 대상                                                 |
+| `MARKETPLACE_SVC_HOST/PORT`                  | auth-svc, tab-svc, jam-svc       | 이벤트 발행 대상 (Knob 활동 기반 자동 적립)                      |
+| `GOOGLE_CLIENT_ID/SECRET`                    | gateway                          | Google OAuth2 (선택, 미설정 시 비활성)                           |
+| `GITHUB_CLIENT_ID/SECRET`                    | gateway                          | GitHub OAuth2 (선택, 미설정 시 비활성)                           |
+| `ML_SERVER_URL`                              | ai-svc                           | ML 서버 엔드포인트 (미연결 시 더미 결과로 대체)                  |
+| `GATEWAY_PUBLIC_URL`                         | ai-svc                           | ML 서버가 콜백할 Gateway 공개 주소                               |
+| `ML_WEBHOOK_SECRET`                          | ai-svc, gateway                  | ML 웹훅 인증 공유 시크릿 (동일 값 필수, 선택)                    |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | media-svc                        | Supabase Storage 연동 (미설정 시 업로드 비활성)                  |
+| `REDIS_URL`                                  | tab-svc                          | 타브 목록 캐싱 (30초 TTL, 연결 실패 시 캐시 없이 동작)           |
+| `SENTRY_DSN`                                 | gateway                          | 에러 모니터링 (선택, 미설정 시 SDK 비활성)                       |
+| `VITE_API_URL`                               | frontend                         | Gateway URL                                                      |
+| `VITE_SENTRY_DSN`                            | frontend                         | 클라이언트 에러 모니터링 (선택, 미설정 시 SDK 비활성)            |
+| `PORTONE_STORE_ID`                           | marketplace-svc, gateway         | PortOne V2 Store ID (`store-XXXXXXXX` 형식, 콘솔 발급 필수)      |
+| `PORTONE_CHANNEL_KEY`                        | marketplace-svc, gateway         | PortOne V2 채널키 (테스트: `test_ck_...`, 실결제: `live_ck_...`) |
+| `PORTONE_API_SECRET`                         | marketplace-svc                  | PortOne V2 API Secret (서버 전용, 외부 노출 금지)                |
+| `PORTONE_WEBHOOK_SECRET`                     | marketplace-svc                  | PortOne 웹훅 서명 검증 시크릿 (선택, 미설정 시 검증 생략)        |
 
 ### PortOne V2 결제 설정
 
@@ -99,12 +99,12 @@ cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 2. **내 식별코드 · API Keys** → **V2 Store ID** 복사 (형식: `store-XXXXXXXX`)
    - ⚠️ `iamporttest_4`는 V1 가맹점 코드로 V2 SDK와 호환되지 않음
 3. **결제 연동 → 채널 관리** → 테스트/실결제 채널 생성 후 채널키 복사
-4. `services/marketplace-svc/.env` 및 `services/gateway/.env`에 `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY` 설정
-5. `services/marketplace-svc/.env`에만 `PORTONE_API_SECRET` 설정 (서버 전용 시크릿)
+4. `backend/marketplace-svc/.env` 및 `backend/gateway/.env`에 `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY` 설정
+5. `backend/marketplace-svc/.env`에만 `PORTONE_API_SECRET` 설정 (서버 전용 시크릿)
 
 ### OAuth 소셜 로그인 설정
 
-소셜 로그인은 `services/gateway/.env`에 키를 설정해야 활성화됩니다. 미설정 시 해당 Provider 전략이 자동으로 비활성화되며, 버튼 클릭 시 500 에러가 반환됩니다.
+소셜 로그인은 `backend/gateway/.env`에 키를 설정해야 활성화됩니다. 미설정 시 해당 Provider 전략이 자동으로 비활성화되며, 버튼 클릭 시 500 에러가 반환됩니다.
 
 **Google OAuth2**
 
@@ -158,7 +158,7 @@ auth    tab-svc  jam-svc  community  marketplace  subscription  media  ai-svc
 
 ## DB 마이그레이션
 
-`supabase/migrations/*.sql`은 `scripts/migrate.js`로 실행한다. `services/marketplace-svc/.env`의 `DATABASE_URL`로 직접 접속하며,
+`supabase/migrations/*.sql`은 `scripts/migrate.js`로 실행한다. `backend/marketplace-svc/.env`의 `DATABASE_URL`로 직접 접속하며,
 적용 이력은 DB의 `public.schema_migrations` 테이블에 기록되어 이미 적용된 파일은 재실행 시 자동으로 건너뛴다.
 
 ```bash
@@ -187,7 +187,7 @@ Postgres는 Supabase(관리형)를 그대로 사용하므로 별도 매니페스
 
 ```bash
 # 1. 각 서비스 이미지 빌드 후 사용할 레지스트리에 푸시 (예: tone-knob/auth-svc:latest)
-#    docker build -f services/auth-svc/Dockerfile -t tone-knob/auth-svc:latest .
+#    docker build -f backend/auth-svc/Dockerfile -t tone-knob/auth-svc:latest .
 
 # 2. k8s/02-secret.yaml의 CHANGE_ME 값들을 실제 값으로 교체 (DATABASE_URL, JWT_SECRET 등)
 
@@ -202,15 +202,15 @@ kubectl apply -f k8s/
 
 ## Fly.io 배포 (프론트엔드는 Vercel)
 
-각 백엔드 서비스(`services/*/fly.toml`)는 기존 Dockerfile/TCP 구조를 그대로 사용하며, Fly 프라이빗 네트워킹
+각 백엔드 서비스(`backend/*/fly.toml`)는 기존 Dockerfile/TCP 구조를 그대로 사용하며, Fly 프라이빗 네트워킹
 (`<app-name>.internal:<port>`)으로 서로 통신한다 — 코드 변경이 필요 없다. 자세한 배경은
 [MSA 아키텍처 §9.1](./docs/04_구현/02_MSA아키텍처.md#91-서비스별-배포-플랫폼-확정안) 참고.
 
 ```bash
 # 레포 루트에서 서비스별로 실행 (예: auth-svc)
-fly deploy --config services/auth-svc/fly.toml --dockerfile services/auth-svc/Dockerfile
+fly deploy --config backend/auth-svc/fly.toml --dockerfile backend/auth-svc/Dockerfile
 
-# gateway는 각 서비스의 *_SVC_HOST를 <app-name>.internal 형태로 설정해야 한다 (services/gateway/fly.toml 참고)
+# gateway는 각 서비스의 *_SVC_HOST를 <app-name>.internal 형태로 설정해야 한다 (backend/gateway/fly.toml 참고)
 ```
 
 프론트엔드는 기존 `frontend/vercel.json`으로 Vercel에 정적 배포한다 (`VITE_API_URL`을 gateway의 Fly 퍼블릭 URL로 설정).

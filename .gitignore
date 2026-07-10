@@ -48,4 +48,4 @@ tsconfig.tsbuildinfo
 
 # Package build outputs (monorepo)
 packages/*/dist/
-services/*/dist/
+backend/*/dist/

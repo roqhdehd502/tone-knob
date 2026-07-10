@@ -120,8 +120,8 @@ tone-knob/                          ← Workspace Root
 │   └── eslint-config/              ← 공통 ESLint 설정
 │       └── index.mjs
 │
-├── services/                       ← 마이크로서비스들
-│   ├── gateway/                    ← API Gateway (기존 backend/ 리팩토링)
+├── backend/                        ← 마이크로서비스들
+│   ├── gateway/                    ← API Gateway
 │   ├── auth-svc/                   ← Auth + User
 │   ├── tab-svc/                    ← Tab + Practice
 │   ├── jam-svc/                    ← JamRoom + Collab + Recording (WebSocket)
@@ -143,7 +143,7 @@ tone-knob/                          ← Workspace Root
 {
   "name": "tone-knob",
   "private": true,
-  "workspaces": ["frontend", "services/*", "packages/*"],
+  "workspaces": ["frontend", "backend/*", "packages/*"],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -311,19 +311,19 @@ Supabase (단일 PostgreSQL)
 
 - [x] Turborepo + npm workspaces 설정
 - [x] `packages/shared` 생성 (공통 타입, DTO)
-- [x] 서비스 디렉토리 구조 생성 (`services/`)
+- [x] 서비스 디렉토리 구조 생성 (`backend/`)
 - [x] 공통 ESLint 설정 패키지 (`packages/eslint-config`)
 
 ### Phase 1: Gateway + Auth 분리 ✅ 완료
 
 ```
-[ Gateway (services/gateway/) ] ← HTTP 진입점 (:3000)
+[ Gateway (backend/gateway/) ] ← HTTP 진입점 (:3000)
     ↓ TCP
 [ auth-svc (:3001) ] ← Auth, User 분리
 ```
 
-- [x] `services/gateway/` — HTTP 라우팅, JWT 로컬 검증, Rate Limiting, Swagger
-- [x] `services/auth-svc/` — Auth + User 모듈 추출 (TCP 마이크로서비스)
+- [x] `backend/gateway/` — HTTP 라우팅, JWT 로컬 검증, Rate Limiting, Swagger
+- [x] `backend/auth-svc/` — Auth + User 모듈 추출 (TCP 마이크로서비스)
 - [x] Gateway → auth-svc TCP 통신 설정 (AUTH_SERVICE 클라이언트)
 - [x] JWT 검증 로직: Gateway에서 Passport JWT 로컬 검증
 
@@ -335,8 +335,8 @@ Supabase (단일 PostgreSQL)
 [ auth-svc (:3001) ]  [ tab-svc (:3002) ]  [ jam-svc (TCP :3003 + HTTP :3004) ]
 ```
 
-- [x] `services/tab-svc/` — Tab CRUD, TabVersion, Practice 추출 (TCP :3002)
-- [x] `services/jam-svc/` — JamRoom, Collab 추출 (Hybrid: TCP :3003 + WebSocket HTTP :3004)
+- [x] `backend/tab-svc/` — Tab CRUD, TabVersion, Practice 추출 (TCP :3002)
+- [x] `backend/jam-svc/` — JamRoom, Collab 추출 (Hybrid: TCP :3003 + WebSocket HTTP :3004)
 - [x] Gateway → tab-svc, jam-svc 프록시 컨트롤러 추가
 - [x] docker-compose.services.yml 멀티서비스 설정
 - [x] 각 서비스 Dockerfile 생성
@@ -351,9 +351,9 @@ Supabase (단일 PostgreSQL)
 [ community-svc (:3005) ]  [ marketplace-svc (:3006) ]  [ subscription-svc (:3007) ]
 ```
 
-- [x] `services/community-svc/` — Like, Comment, Follow, Notification, Review (TCP :3005)
-- [x] `services/marketplace-svc/` — Marketplace, Payment, Settlement (TCP :3006)
-- [x] `services/subscription-svc/` — Subscription (TCP :3007)
+- [x] `backend/community-svc/` — Like, Comment, Follow, Notification, Review (TCP :3005)
+- [x] `backend/marketplace-svc/` — Marketplace, Payment, Settlement (TCP :3006)
+- [x] `backend/subscription-svc/` — Subscription (TCP :3007)
 - [x] Gateway → community-svc, marketplace-svc, subscription-svc 프록시 컨트롤러 추가
 - [x] docker-compose.services.yml 7개 서비스 설정
 - [x] 각 서비스 Dockerfile 생성 (총 7개)
@@ -368,8 +368,8 @@ Supabase (단일 PostgreSQL)
 [ media-svc (:3008) ]  [ ai-svc (:3009) ]
 ```
 
-- [x] `services/media-svc/` — CDN URL 변환, Region 선택/헬스체크 (TCP :3008, DB 불필요)
-- [x] `services/ai-svc/` — AI 타브 생성, 오디오 추출, ML 서버 웹훅 (TCP :3009, 독립 스케일아웃 가능)
+- [x] `backend/media-svc/` — CDN URL 변환, Region 선택/헬스체크 (TCP :3008, DB 불필요)
+- [x] `backend/ai-svc/` — AI 타브 생성, 오디오 추출, ML 서버 웹훅 (TCP :3009, 독립 스케일아웃 가능)
 - [x] Gateway → media-svc, ai-svc 프록시 컨트롤러 추가
 - [x] docker-compose.services.yml 9개 서비스 설정
 - [x] 각 서비스 Dockerfile 생성 (총 9개)
@@ -399,14 +399,14 @@ Supabase (단일 PostgreSQL)
 
 또는 동일한 Dockerfile/`k8s/` 매니페스트로 **Kubernetes**(자체 호스팅/관리형) 배포도 가능 (8장 참고).
 
-> **변경 이력**: 최초 설계는 HTTP-only 서비스(gateway/auth-svc/tab-svc/community-svc/marketplace-svc/subscription-svc)를 Vercel 서버리스로, 상시 실행이 필요한 서비스(jam-svc/media-svc/ai-svc)만 Railway/Fly.io로 분리하는 것이었다(9.1~9.3절 원안, 아래 보존). 그러나 실제로는 gateway를 제외한 8개 서비스 모두 **TCP 마이크로서비스**(`Transport.TCP`)이고 HTTP 서버가 없다 — Vercel 서버리스 함수는 HTTP 요청/응답 모델이므로, 이를 배포하려면 서비스마다 HTTP 어댑터를 추가하고 모든 `@MessagePattern`/`ClientProxy.send` 호출부를 REST로 재작성해야 한다. 검증되지 않은 상태로 9개 서비스를 한꺼번에 재작성하는 리스크보다, **기존 Dockerfile/TCP 구조를 그대로 쓸 수 있는 Fly.io 단일 플랫폼**으로 통일하는 것이 더 안전하다고 판단해 확정안을 변경했다. 각 서비스의 `services/*/fly.toml`이 이미 작성되어 있다 (`fly deploy --config services/<svc>/fly.toml --dockerfile services/<svc>/Dockerfile`, 레포 루트에서 실행). Fly의 프라이빗 네트워킹(6PN, `<app>.internal:<port>`)이 TCP 인터-서비스 통신을 그대로 지원하므로 코드 변경이 전혀 필요 없다.
+> **변경 이력**: 최초 설계는 HTTP-only 서비스(gateway/auth-svc/tab-svc/community-svc/marketplace-svc/subscription-svc)를 Vercel 서버리스로, 상시 실행이 필요한 서비스(jam-svc/media-svc/ai-svc)만 Railway/Fly.io로 분리하는 것이었다(9.1~9.3절 원안, 아래 보존). 그러나 실제로는 gateway를 제외한 8개 서비스 모두 **TCP 마이크로서비스**(`Transport.TCP`)이고 HTTP 서버가 없다 — Vercel 서버리스 함수는 HTTP 요청/응답 모델이므로, 이를 배포하려면 서비스마다 HTTP 어댑터를 추가하고 모든 `@MessagePattern`/`ClientProxy.send` 호출부를 REST로 재작성해야 한다. 검증되지 않은 상태로 9개 서비스를 한꺼번에 재작성하는 리스크보다, **기존 Dockerfile/TCP 구조를 그대로 쓸 수 있는 Fly.io 단일 플랫폼**으로 통일하는 것이 더 안전하다고 판단해 확정안을 변경했다. 각 서비스의 `backend/*/fly.toml`이 이미 작성되어 있다 (`fly deploy --config backend/<svc>/fly.toml --dockerfile backend/<svc>/Dockerfile`, 레포 루트에서 실행). Fly의 프라이빗 네트워킹(6PN, `<app>.internal:<port>`)이 TCP 인터-서비스 통신을 그대로 지원하므로 코드 변경이 전혀 필요 없다.
 
 ### 9.2 (원안, 참고용) Vercel 서버리스 서비스 구조
 
 각 서비스에 HTTP 어댑터를 추가한다면 다음 구조였을 것이다 (현재는 미구현, 9.1의 변경 이력 참고):
 
 ```
-services/auth-svc/
+backend/auth-svc/
 ├── src/               ← NestJS 소스
 ├── api/index.ts       ← Vercel 서버리스 진입점 (HTTP 어댑터 필요, 미구현)
 └── vercel.json
@@ -421,7 +421,7 @@ services/auth-svc/
 배포환경 (Fly.io):              @nestjs/microservices TCP, host=<app-name>.internal (동일 프로토콜)
 ```
 
-환경 변수로 호스트만 교체 (`services/gateway/fly.toml` 예시):
+환경 변수로 호스트만 교체 (`backend/gateway/fly.toml` 예시):
 
 ```
 AUTH_SVC_HOST=tone-knob-auth-svc.internal
@@ -486,7 +486,7 @@ packages/shared/
 └─────────────────────────────────┘
           ↑
 ┌─────────┴───────────────────────┐
-│  services/* (각 마이크로서비스)    │  ← @tone-knob/shared 사용
+│  backend/* (각 마이크로서비스)    │  ← @tone-knob/shared 사용
 └─────────────────────────────────┘
 ```
 
