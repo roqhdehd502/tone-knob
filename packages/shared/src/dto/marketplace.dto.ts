@@ -43,8 +43,10 @@ export class ConfirmPaymentDto {
 
 export class ConfirmBillingKeyPaymentDto {
   @ApiProperty({
-    description: "PortOne V2 결제 ID (최초 빌링키 발급 + 결제 시 사용한 paymentId)",
-    example: "payment_sub_abc123",
+    description:
+      "빌링키 발급 시 사용한 issueId (내부 externalOrderId). " +
+      "requestIssueBillingKey는 결제를 생성하지 않으므로 PortOne paymentId가 아닌 발급 참조 ID임.",
+    example: "order_1719700000000_abc1234",
   })
   @IsString()
   @IsNotEmpty()

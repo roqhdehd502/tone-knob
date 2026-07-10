@@ -86,6 +86,21 @@ cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 | `SENTRY_DSN`              | gateway                          | 에러 모니터링 (선택, 미설정 시 SDK 비활성)     |
 | `VITE_API_URL`            | frontend                         | Gateway URL                                    |
 | `VITE_SENTRY_DSN`         | frontend                         | 클라이언트 에러 모니터링 (선택, 미설정 시 SDK 비활성) |
+| `PORTONE_STORE_ID`        | marketplace-svc, gateway         | PortOne V2 Store ID (`store-XXXXXXXX` 형식, 콘솔 발급 필수) |
+| `PORTONE_CHANNEL_KEY`     | marketplace-svc, gateway         | PortOne V2 채널키 (테스트: `test_ck_...`, 실결제: `live_ck_...`) |
+| `PORTONE_API_SECRET`      | marketplace-svc                  | PortOne V2 API Secret (서버 전용, 외부 노출 금지) |
+| `PORTONE_WEBHOOK_SECRET`  | marketplace-svc                  | PortOne 웹훅 서명 검증 시크릿 (선택, 미설정 시 검증 생략) |
+
+### PortOne V2 결제 설정
+
+구독 정기결제(빌링키 발급)는 PortOne V2를 통해 처리됩니다.
+
+1. [PortOne 콘솔](https://admin.portone.io) 로그인 후 V2 프로젝트 생성
+2. **내 식별코드 · API Keys** → **V2 Store ID** 복사 (형식: `store-XXXXXXXX`)
+   - ⚠️ `iamporttest_4`는 V1 가맹점 코드로 V2 SDK와 호환되지 않음
+3. **결제 연동 → 채널 관리** → 테스트/실결제 채널 생성 후 채널키 복사
+4. `services/marketplace-svc/.env` 및 `services/gateway/.env`에 `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY` 설정
+5. `services/marketplace-svc/.env`에만 `PORTONE_API_SECRET` 설정 (서버 전용 시크릿)
 
 ### OAuth 소셜 로그인 설정
 

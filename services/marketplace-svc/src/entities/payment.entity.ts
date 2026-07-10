@@ -51,7 +51,7 @@ export class Payment {
   })
   status: PaymentStatus;
 
-  @Column({ type: "varchar", length: 50, default: "toss_payments" })
+  @Column({ type: "varchar", length: 50, default: "portone" })
   provider: string;
 
   @Column({ type: "varchar", length: 255, nullable: true })

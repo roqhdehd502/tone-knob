@@ -84,8 +84,10 @@ export class PaymentService {
   }
 
   /**
-   * 빌링키 발급 + 최초 결제 확정 (정기결제/구독용)
-   * 프론트에서 requestIssueBillingKeyAndPay 완료 후 호출
+   * 빌링키 발급 확정 (정기결제/구독용)
+   * 프론트에서 PortOne SDK requestIssueBillingKey 완료 후 호출.
+   * requestIssueBillingKey는 결제를 생성하지 않으므로(빌링키만 발급)
+   * PortOne 결제 조회(verifyPayment) 대신 빌링키 존재 여부를 검증한다.
    */
   async confirmBillingKeyPayment(
     paymentId: string,
@@ -93,7 +95,26 @@ export class PaymentService {
     externalPaymentId: string,
     billingKey: string,
   ): Promise<Payment> {
-    const payment = await this.verifyAndLoadPendingPayment(paymentId, userId, externalPaymentId);
+    const payment = await this.paymentRepository.findOne({ where: { id: paymentId } });
+    if (!payment) throw new RpcException(new NotFoundException("결제 내역을 찾을 수 없습니다"));
+    if (payment.userId !== userId) {
+      throw new RpcException(new ForbiddenException("본인의 결제만 처리할 수 있습니다"));
+    }
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw new RpcException(new BadRequestException("이미 처리된 결제입니다"));
+    }
+
+    // PortOne에 빌링키가 실제로 존재하고 삭제되지 않았는지 검증
+    try {
+      const bk = await this.portoneService.getBillingKey(billingKey);
+      if (bk.deletedAt) {
+        throw new Error("삭제된 빌링키입니다");
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "빌링키 검증 실패";
+      throw new RpcException(new BadRequestException(`빌링키 검증 실패: ${msg}`));
+    }
+
     payment.status = PaymentStatus.COMPLETED;
     payment.externalPaymentId = externalPaymentId;
     payment.billingKey = billingKey;

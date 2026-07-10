@@ -135,10 +135,10 @@ export class PaymentProxyController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "빌링키 결제 확정 (정기결제/구독)",
+    summary: "빌링키 발급 확정 (정기결제/구독)",
     description:
-      "PortOne SDK requestIssueBillingKeyAndPay 완료 후 호출. " +
-      "서버가 PortOne V2 API로 재검증 후 billingKey를 저장하고 completed 처리합니다. " +
+      "PortOne SDK requestIssueBillingKey 완료 후 호출. " +
+      "서버가 PortOne V2 API로 빌링키 존재 여부를 검증한 뒤 billingKey를 저장하고 completed 처리합니다. " +
       "이후 구독 갱신 시 저장된 billingKey로 서버 주도 청구가 가능합니다.",
   })
   @ApiParam({ name: "id", description: "결제 ID (내부 UUID)" })
