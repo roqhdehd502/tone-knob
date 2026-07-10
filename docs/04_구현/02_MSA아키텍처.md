@@ -391,19 +391,31 @@ Supabase (단일 PostgreSQL)
 
 ### 9.1 서비스별 배포 플랫폼 (확정안)
 
-| 서비스               | 플랫폼            | 이유                                                              |
-| -------------------- | ----------------- | ------------------------------------------------------------------ |
-| frontend             | **Vercel** (정적) | SPA 정적 파일, `frontend/vercel.json` 기존 구비                    |
-| gateway              | **Fly.io**        | 유일한 공개 HTTP 진입점                                            |
-| 나머지 8개 마이크로서비스 | **Fly.io**        | TCP 마이크로서비스(`@nestjs/microservices`) 그대로 배포, 프라이빗 네트워킹으로 상호 통신 |
+| 서비스                    | 플랫폼                        | 이유                                                              |
+| ------------------------- | ----------------------------- | ------------------------------------------------------------------ |
+| frontend                  | **Vercel** (정적)             | SPA 정적 파일, `frontend/vercel.json` 기존 구비                    |
+| gateway + 8개 마이크로서비스 | **OCI Free Tier ARM** (VM 1대) | 4vCPU / 24GB RAM / 영구 무료, Docker Compose로 9개 서비스 통합 운영 |
+
+OCI 단일 VM 위에서 `docker-compose.prod.yml` 으로 모든 백엔드 컨테이너를 기동한다.
+서비스 간 통신은 Docker 내부 네트워크(`internal` bridge)의 컨테이너명 DNS를 이용하며,
+외부로는 Nginx(포트 80/443)만 노출한다.
+
+```
+클라이언트
+  ├─ https://YOUR_DOMAIN/*       → nginx → gateway:3000  (REST API)
+  └─ https://jam.YOUR_DOMAIN/*  → nginx → jam-svc:3004  (Socket.IO WebSocket)
+```
 
 또는 동일한 Dockerfile/`k8s/` 매니페스트로 **Kubernetes**(자체 호스팅/관리형) 배포도 가능 (8장 참고).
 
-> **변경 이력**: 최초 설계는 HTTP-only 서비스(gateway/auth-svc/tab-svc/community-svc/marketplace-svc/subscription-svc)를 Vercel 서버리스로, 상시 실행이 필요한 서비스(jam-svc/media-svc/ai-svc)만 Railway/Fly.io로 분리하는 것이었다(9.1~9.3절 원안, 아래 보존). 그러나 실제로는 gateway를 제외한 8개 서비스 모두 **TCP 마이크로서비스**(`Transport.TCP`)이고 HTTP 서버가 없다 — Vercel 서버리스 함수는 HTTP 요청/응답 모델이므로, 이를 배포하려면 서비스마다 HTTP 어댑터를 추가하고 모든 `@MessagePattern`/`ClientProxy.send` 호출부를 REST로 재작성해야 한다. 검증되지 않은 상태로 9개 서비스를 한꺼번에 재작성하는 리스크보다, **기존 Dockerfile/TCP 구조를 그대로 쓸 수 있는 Fly.io 단일 플랫폼**으로 통일하는 것이 더 안전하다고 판단해 확정안을 변경했다. 각 서비스의 `backend/*/fly.toml`이 이미 작성되어 있다 (`fly deploy --config backend/<svc>/fly.toml --dockerfile backend/<svc>/Dockerfile`, 레포 루트에서 실행). Fly의 프라이빗 네트워킹(6PN, `<app>.internal:<port>`)이 TCP 인터-서비스 통신을 그대로 지원하므로 코드 변경이 전혀 필요 없다.
+> **변경 이력**:
+> - 1차 원안: HTTP-only 서비스는 Vercel 서버리스, 상시 실행 서비스는 Railway/Fly.io 분리 (9.2절 참고용으로 보존)
+> - 2차 변경: gateway 제외 8개 서비스가 전부 TCP 마이크로서비스(HTTP 어댑터 없음)라 Vercel 불가 → Fly.io 단일 플랫폼으로 통일 (`fly.toml` 9개 작성)
+> - 3차 변경(현재): Fly.io는 9개 컨테이너를 개별 과금하면 월 $30~$50 발생 → **OCI Free Tier ARM 단일 VM + Docker Compose** 로 전환. 기존 Dockerfile은 그대로 사용, `fly.toml` 삭제.
 
 ### 9.2 (원안, 참고용) Vercel 서버리스 서비스 구조
 
-각 서비스에 HTTP 어댑터를 추가한다면 다음 구조였을 것이다 (현재는 미구현, 9.1의 변경 이력 참고):
+각 서비스에 HTTP 어댑터를 추가한다면 다음 구조였을 것이다 (현재는 미구현):
 
 ```
 backend/auth-svc/
@@ -412,21 +424,21 @@ backend/auth-svc/
 └── vercel.json
 ```
 
-### 9.3 서비스 간 통신 (Fly.io 배포 환경)
+### 9.3 서비스 간 통신 (OCI Docker Compose 배포 환경)
 
-개발 환경과 동일하게 TCP를 그대로 사용한다 — Fly 프라이빗 네트워킹이 `<app-name>.internal` DNS로 인터-서비스 TCP 연결을 지원하기 때문에 코드/프로토콜 변경이 없다:
-
-```
-개발환경 (로컬/Docker Compose):  @nestjs/microservices TCP, host=localhost 또는 컨테이너명
-배포환경 (Fly.io):              @nestjs/microservices TCP, host=<app-name>.internal (동일 프로토콜)
-```
-
-환경 변수로 호스트만 교체 (`backend/gateway/fly.toml` 예시):
+개발 환경과 동일하게 TCP를 그대로 사용한다 — Docker 내부 네트워크가 컨테이너명 DNS로 인터-서비스 TCP 연결을 지원하기 때문에 코드/프로토콜 변경이 없다:
 
 ```
-AUTH_SVC_HOST=tone-knob-auth-svc.internal
-TAB_SVC_HOST=tone-knob-tab-svc.internal
-JAM_SVC_HOST=tone-knob-jam-svc.internal
+개발환경 (로컬/Docker Compose):  @nestjs/microservices TCP, host=컨테이너명 (auth-svc, tab-svc ...)
+배포환경 (OCI Docker Compose):  @nestjs/microservices TCP, host=컨테이너명 (동일 — 환경 변수 무변경)
+```
+
+개발/프로덕션 모두 컨테이너명이 동일하므로 `.env.prod.example`의 `*_SVC_HOST` 기본값을 그대로 사용한다:
+
+```
+AUTH_SVC_HOST=auth-svc
+TAB_SVC_HOST=tab-svc
+JAM_SVC_HOST=jam-svc
 ```
 
 ### 9.4 서비스 디스커버리 및 설정 관리
@@ -437,9 +449,9 @@ JAM_SVC_HOST=tone-knob-jam-svc.internal
 | 환경                          | 디스커버리 방식                                                                     | 설정(Config) 저장소                              |
 | ----------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------- |
 | 로컬 개발                     | `.env`의 `*_SVC_HOST`/`*_SVC_PORT` (기본값 `localhost`)                              | 서비스별 `.env`                                    |
-| Docker Compose                | Compose 네트워크의 컨테이너명 DNS (`auth-svc`, `tab-svc` ...)                         | `docker-compose.services.yml`의 `environment:`     |
+| Docker Compose (로컬 개발)    | Compose 네트워크의 컨테이너명 DNS (`auth-svc`, `tab-svc` ...)                         | `docker-compose.services.yml`의 `environment:`     |
+| Docker Compose (OCI 프로덕션) | 동일 — `internal` bridge 네트워크 컨테이너명 DNS                                      | OCI VM의 `.env` 파일 (`docker-compose.prod.yml`이 `env_file: .env`로 읽음) |
 | Kubernetes (`k8s/`)           | k8s Service의 ClusterIP DNS (`auth-svc.tone-knob.svc.cluster.local` 등, 네임스페이스 내에서는 짧은 이름으로 해석) | `ConfigMap`(`tone-knob-config`) + `Secret`(`tone-knob-secrets`) — 사실상 경량 "컨피그 서버" 역할 |
-| 서버리스 (Vercel/Railway/Fly) | 배포 시점에 고정되는 `*_SERVICE_URL` 환경변수 (9.3절)                                | 각 플랫폼의 환경변수 대시보드                      |
 
 **왜 전용 서비스 레지스트리를 도입하지 않았는가**
 
@@ -621,5 +633,5 @@ docker compose -f docker-compose.services.yml up -d  # 전체 서비스 컨테�
 | [@nestjs/microservices](https://docs.nestjs.com/microservices/basics) | NestJS 마이크로서비스 코어    |
 | [NATS](https://nats.io/)                                              | 메시지 브로커 (비동기 이벤트) |
 | [Redis](https://redis.io/)                                            | 세션 캐시, Pub/Sub (선택)     |
-| [Fly.io](https://fly.io/)                                             | WebSocket 서비스 배포         |
+| [Oracle Cloud (OCI)](https://www.oracle.com/cloud/free/)              | 백엔드 VM 배포 (Free Tier ARM) |
 | [Supabase](https://supabase.com/)                                     | 공유 PostgreSQL (초기)        |

@@ -200,22 +200,50 @@ kubectl apply -f k8s/
 - jam-svc의 Socket.IO(`/socket.io`)는 REST API(gateway)와 별도 HTTP 포트(3004)로 서빙되므로 Ingress에서
   경로 기반으로 분기한다 (`k8s/19-ingress.yaml`).
 
-## Fly.io 배포 (프론트엔드는 Vercel)
+## OCI 배포 (백엔드) / Vercel (프론트엔드)
 
-각 백엔드 서비스(`backend/*/fly.toml`)는 기존 Dockerfile/TCP 구조를 그대로 사용하며, Fly 프라이빗 네트워킹
-(`<app-name>.internal:<port>`)으로 서로 통신한다 — 코드 변경이 필요 없다. 자세한 배경은
-[MSA 아키텍처 §9.1](./docs/04_구현/02_MSA아키텍처.md#91-서비스별-배포-플랫폼-확정안) 참고.
+백엔드는 **Oracle Cloud Free Tier ARM** 인스턴스(4vCPU / 24GB) + Docker Compose로 배포한다.
+PostgreSQL은 Supabase를 그대로 사용하며 VM 내 컨테이너는 Redis + 9개 마이크로서비스 + Nginx.
+
+### 사전 작업 (OCI VM에서)
 
 ```bash
-# 레포 루트에서 서비스별로 실행 (예: auth-svc)
-fly deploy --config backend/auth-svc/fly.toml --dockerfile backend/auth-svc/Dockerfile
+# 1. 레포 클론
+git clone https://github.com/<you>/tone-knob.git /opt/tone-knob
+cd /opt/tone-knob
 
-# gateway는 각 서비스의 *_SVC_HOST를 <app-name>.internal 형태로 설정해야 한다 (backend/gateway/fly.toml 참고)
+# 2. 환경변수 파일 작성 (YOUR_DOMAIN, 시크릿 등 채워 넣기)
+cp .env.prod.example .env
+
+# 3. nginx.conf 도메인 교체
+sed -i 's/YOUR_DOMAIN/실제도메인/g' nginx/nginx.conf
+
+# 4. SSL 인증서 발급 (도메인이 이 VM을 가리키고 있어야 함)
+sudo certbot certonly --standalone -d 실제도메인 -d jam.실제도메인
+
+# 5. 빌드 및 기동
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-프론트엔드는 기존 `frontend/vercel.json`으로 Vercel에 정적 배포한다 (`VITE_API_URL`을 gateway의 Fly 퍼블릭 URL로 설정).
+### 트래픽 흐름
 
-**블로커**: 실제 Fly.io/Vercel 계정·자격증명이 없어 위 명령의 실제 실행 결과는 검증하지 못했다 — `fly.toml` 9개 파일은 TOML 문법 검증만 완료된 상태.
+```
+클라이언트
+  ├─ https://YOUR_DOMAIN/*        → nginx → gateway:3000  (REST API)
+  └─ https://jam.YOUR_DOMAIN/*   → nginx → jam-svc:3004  (Socket.IO WebSocket)
+```
+
+### 업데이트 배포
+
+```bash
+cd /opt/tone-knob
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+프론트엔드는 `frontend/vercel.json`으로 Vercel에 정적 배포한다 (`VITE_API_URL`을 `https://YOUR_DOMAIN` 으로 설정).
+
+> **블로커**: OCI 계정 및 도메인 미확보 상태 — 인스턴스 신청 후 위 절차 적용 가능.
 
 ## 테스트
 

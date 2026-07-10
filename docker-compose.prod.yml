@@ -1,0 +1,196 @@
+version: "3.8"
+
+# OCI (Oracle Cloud) 프로덕션 배포용 Docker Compose
+# PostgreSQL: Supabase 사용 (컨테이너 없음) — DATABASE_URL을 .env에 설정
+# HTTPS: nginx + Let's Encrypt (certbot으로 인증서 발급 후 시작)
+#
+# 시작 전 필수 작업:
+#   1. .env 파일 작성 (cp .env.prod.example .env)
+#   2. certbot으로 SSL 인증서 발급:
+#        sudo certbot certonly --standalone -d YOUR_DOMAIN -d jam.YOUR_DOMAIN
+#   3. nginx/nginx.conf 에서 YOUR_DOMAIN 교체
+#
+# 배포 명령 (레포 루트에서):
+#   docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
+  redis:
+    image: redis:7-alpine
+    container_name: tone-knob-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # ── Microservices ────────────────────────────────────────────────────────────
+
+  auth-svc:
+    build:
+      context: .
+      dockerfile: backend/auth-svc/Dockerfile
+    container_name: tone-knob-auth-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+
+  tab-svc:
+    build:
+      context: .
+      dockerfile: backend/tab-svc/Dockerfile
+    container_name: tone-knob-tab-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+
+  jam-svc:
+    build:
+      context: .
+      dockerfile: backend/jam-svc/Dockerfile
+    container_name: tone-knob-jam-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+
+  community-svc:
+    build:
+      context: .
+      dockerfile: backend/community-svc/Dockerfile
+    container_name: tone-knob-community-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    networks:
+      - internal
+
+  marketplace-svc:
+    build:
+      context: .
+      dockerfile: backend/marketplace-svc/Dockerfile
+    container_name: tone-knob-marketplace-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    # @Cron 중복 실행 방지: 단일 인스턴스 유지
+    deploy:
+      replicas: 1
+    depends_on:
+      - community-svc
+    networks:
+      - internal
+
+  subscription-svc:
+    build:
+      context: .
+      dockerfile: backend/subscription-svc/Dockerfile
+    container_name: tone-knob-subscription-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    # @Cron 중복 실행 방지: 단일 인스턴스 유지
+    deploy:
+      replicas: 1
+    networks:
+      - internal
+
+  media-svc:
+    build:
+      context: .
+      dockerfile: backend/media-svc/Dockerfile
+    container_name: tone-knob-media-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    networks:
+      - internal
+
+  ai-svc:
+    build:
+      context: .
+      dockerfile: backend/ai-svc/Dockerfile
+    container_name: tone-knob-ai-svc
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - community-svc
+    networks:
+      - internal
+
+  gateway:
+    build:
+      context: .
+      dockerfile: backend/gateway/Dockerfile
+    container_name: tone-knob-gateway
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - auth-svc
+      - tab-svc
+      - jam-svc
+      - community-svc
+      - marketplace-svc
+      - subscription-svc
+      - media-svc
+      - ai-svc
+    networks:
+      - internal
+
+  # ── Nginx (리버스 프록시 + HTTPS) ────────────────────────────────────────────
+
+  nginx:
+    image: nginx:alpine
+    container_name: tone-knob-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # certbot 발급 인증서
+    depends_on:
+      - gateway
+      - jam-svc
+    networks:
+      - internal
+
+# ── Networks / Volumes ────────────────────────────────────────────────────────
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  redis-data:
