@@ -1,5 +1,3 @@
-version: "3.8"
-
 # OCI (Oracle Cloud) 프로덕션 배포용 Docker Compose
 # PostgreSQL: Supabase 사용 (컨테이너 없음) — DATABASE_URL을 .env에 설정
 # HTTPS: nginx + Let's Encrypt (certbot으로 인증서 발급 후 시작)
@@ -144,6 +142,21 @@ services:
       NODE_ENV: production
     depends_on:
       - community-svc
+      - ml-server
+    networks:
+      - internal
+
+  # ── ML Server (Python FastAPI) ───────────────────────────────────────────────
+  # TAB_GENERATION: Claude API / AUDIO_EXTRACTION: Basic Pitch (CPU, ARM64 호환)
+  # 빌드 주의: tensorflow 포함으로 최초 빌드에 10–20분 소요될 수 있음
+  # 필수 환경변수 (.env): ANTHROPIC_API_KEY, ML_WEBHOOK_SECRET
+  ml-server:
+    build:
+      context: ml-server
+      dockerfile: Dockerfile
+    container_name: tone-knob-ml-server
+    restart: unless-stopped
+    env_file: .env
     networks:
       - internal
 

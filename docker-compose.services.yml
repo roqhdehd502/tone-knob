@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # ── Infrastructure ──
   postgres:
@@ -174,7 +172,7 @@ services:
     environment:
       AI_SVC_PORT: 3009
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
-      ML_SERVER_URL: http://localhost:8001
+      ML_SERVER_URL: http://ml-server:8001
       GATEWAY_PUBLIC_URL: http://gateway:3000
       ML_WEBHOOK_SECRET: ${ML_WEBHOOK_SECRET:-}
       COMMUNITY_SVC_HOST: community-svc
@@ -185,6 +183,23 @@ services:
         condition: service_healthy
       community-svc:
         condition: service_started
+      ml-server:
+        condition: service_started
+
+  # ── ML Server (Python FastAPI) ──────────────────────────────────────────────
+  # TAB_GENERATION: Claude API  / AUDIO_EXTRACTION: Basic Pitch (CPU, ARM64 호환)
+  # 최초 빌드 시 tensorflow 설치로 10–20분 소요 가능
+  ml-server:
+    build:
+      context: ml-server
+      dockerfile: Dockerfile
+    container_name: tone-knob-ml-server
+    ports:
+      - "8001:8001"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ML_WEBHOOK_SECRET: ${ML_WEBHOOK_SECRET:-}
+      PORT: 8001
 
   gateway:
     build:

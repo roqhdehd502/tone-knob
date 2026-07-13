@@ -20,6 +20,7 @@ tone-knob/
 │   ├── subscription-svc/  # 구독, 타브 제작 제한 (TCP :3007)
 │   ├── media-svc/         # CDN, 지역 선택 (TCP :3008)
 │   └── ai-svc/            # AI 타브 생성, 오디오 추출 (TCP :3009)
+├── ml-server/             # Python FastAPI ML 서버 (:8001) — 타브 생성(Claude API) + 오디오 추출(Basic Pitch)
 ├── packages/
 │   └── shared/            # 공유 DTO, 타입, 이벤트 상수 (@tone-knob/shared)
 ├── supabase/              # DB 마이그레이션 + 시드 데이터
@@ -29,16 +30,17 @@ tone-knob/
 
 ## 기술 스택
 
-| 영역     | 기술                                                                  |
-| -------- | --------------------------------------------------------------------- |
-| Frontend | React 19, React Router V7 (SSR), TypeScript, TailwindCSS v4, Radix UI |
-| Backend  | NestJS 11 마이크로서비스 (TCP), TypeORM 0.3                           |
-| Shared   | `@tone-knob/shared` — DTO, 이벤트 패턴/페이로드, 타입                 |
-| Auth     | JWT (Access 15m / Refresh 7d), bcrypt, OAuth2 (Google, GitHub)        |
-| Realtime | Socket.IO (협업 편집 `/collab`, 합주룸 `/jam`)                        |
-| DB       | Supabase (PostgreSQL 17)                                              |
-| Infra    | Turborepo, Docker Compose                                             |
-| CI/CD    | GitHub Actions — main push → OCI SSH 자동 배포                        |
+| 영역     | 기술                                                                    |
+| -------- | ----------------------------------------------------------------------- |
+| Frontend | React 19, React Router V7 (SSR), TypeScript, TailwindCSS v4, Radix UI   |
+| Backend  | NestJS 11 마이크로서비스 (TCP), TypeORM 0.3                             |
+| ML       | Python FastAPI + Basic Pitch (오디오→타브) + Claude API (프롬프트→타브) |
+| Shared   | `@tone-knob/shared` — DTO, 이벤트 패턴/페이로드, 타입                   |
+| Auth     | JWT (Access 15m / Refresh 7d), bcrypt, OAuth2 (Google, GitHub)          |
+| Realtime | Socket.IO (협업 편집 `/collab`, 합주룸 `/jam`)                          |
+| DB       | Supabase (PostgreSQL 17)                                                |
+| Infra    | Turborepo, Docker Compose                                               |
+| CI/CD    | GitHub Actions — main push → OCI SSH 자동 배포                          |
 
 ## 빠른 시작
 
@@ -70,26 +72,27 @@ cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 
 각 서비스 디렉토리의 `.env.sample`을 `.env`로 복사하여 설정합니다.
 
-| 변수                                         | 위치                             | 설명                                                             |
-| -------------------------------------------- | -------------------------------- | ---------------------------------------------------------------- |
-| `DATABASE_URL`                               | 7개 서비스 (DB 사용)             | Supabase PostgreSQL URL (공유 DB, 독립 커넥션)                   |
-| `JWT_SECRET`                                 | auth-svc, gateway, jam-svc       | JWT 서명/검증 시크릿 (동일 값 필수, 64자+)                       |
-| `COMMUNITY_SVC_HOST/PORT`                    | tab-svc, marketplace-svc, ai-svc | 이벤트 발행 대상                                                 |
-| `MARKETPLACE_SVC_HOST/PORT`                  | auth-svc, tab-svc, jam-svc       | 이벤트 발행 대상 (Knob 활동 기반 자동 적립)                      |
-| `GOOGLE_CLIENT_ID/SECRET`                    | gateway                          | Google OAuth2 (선택, 미설정 시 비활성)                           |
-| `GITHUB_CLIENT_ID/SECRET`                    | gateway                          | GitHub OAuth2 (선택, 미설정 시 비활성)                           |
-| `ML_SERVER_URL`                              | ai-svc                           | ML 서버 엔드포인트 (미연결 시 더미 결과로 대체)                  |
-| `GATEWAY_PUBLIC_URL`                         | ai-svc                           | ML 서버가 콜백할 Gateway 공개 주소                               |
-| `ML_WEBHOOK_SECRET`                          | ai-svc, gateway                  | ML 웹훅 인증 공유 시크릿 (동일 값 필수, 선택)                    |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | media-svc                        | Supabase Storage 연동 (미설정 시 업로드 비활성)                  |
-| `REDIS_URL`                                  | tab-svc                          | 타브 목록 캐싱 (30초 TTL, 연결 실패 시 캐시 없이 동작)           |
-| `SENTRY_DSN`                                 | gateway                          | 에러 모니터링 (선택, 미설정 시 SDK 비활성)                       |
-| `VITE_API_URL`                               | frontend                         | Gateway URL                                                      |
-| `VITE_SENTRY_DSN`                            | frontend                         | 클라이언트 에러 모니터링 (선택, 미설정 시 SDK 비활성)            |
-| `PORTONE_STORE_ID`                           | marketplace-svc, gateway         | PortOne V2 Store ID (`store-XXXXXXXX` 형식, 콘솔 발급 필수)      |
-| `PORTONE_CHANNEL_KEY`                        | marketplace-svc, gateway         | PortOne V2 채널키 (테스트: `test_ck_...`, 실결제: `live_ck_...`) |
-| `PORTONE_API_SECRET`                         | marketplace-svc                  | PortOne V2 API Secret (서버 전용, 외부 노출 금지)                |
-| `PORTONE_WEBHOOK_SECRET`                     | marketplace-svc                  | PortOne 웹훅 서명 검증 시크릿 (선택, 미설정 시 검증 생략)        |
+| 변수                                         | 위치                             | 설명                                                                                  |
+| -------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                               | 7개 서비스 (DB 사용)             | Supabase PostgreSQL URL (공유 DB, 독립 커넥션)                                        |
+| `JWT_SECRET`                                 | auth-svc, gateway, jam-svc       | JWT 서명/검증 시크릿 (동일 값 필수, 64자+)                                            |
+| `COMMUNITY_SVC_HOST/PORT`                    | tab-svc, marketplace-svc, ai-svc | 이벤트 발행 대상                                                                      |
+| `MARKETPLACE_SVC_HOST/PORT`                  | auth-svc, tab-svc, jam-svc       | 이벤트 발행 대상 (Knob 활동 기반 자동 적립)                                           |
+| `GOOGLE_CLIENT_ID/SECRET`                    | gateway                          | Google OAuth2 (선택, 미설정 시 비활성)                                                |
+| `GITHUB_CLIENT_ID/SECRET`                    | gateway                          | GitHub OAuth2 (선택, 미설정 시 비활성)                                                |
+| `ML_SERVER_URL`                              | ai-svc                           | ML 서버 엔드포인트 — 로컬: `http://localhost:8001`, 프로덕션: `http://ml-server:8001` |
+| `GATEWAY_PUBLIC_URL`                         | ai-svc                           | ML 서버 콜백 주소 — 로컬: `http://localhost:3000`, 프로덕션: `http://gateway:3000`    |
+| `ML_WEBHOOK_SECRET`                          | ai-svc, gateway, ml-server       | ML 웹훅 인증 공유 시크릿 (세 곳 동일 값, 선택)                                        |
+| `ANTHROPIC_API_KEY`                          | ml-server                        | Claude API 키 — 타브 생성(`TAB_GENERATION`) 작업에 사용                               |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | media-svc                        | Supabase Storage 연동 (미설정 시 업로드 비활성)                                       |
+| `REDIS_URL`                                  | tab-svc                          | 타브 목록 캐싱 (30초 TTL, 연결 실패 시 캐시 없이 동작)                                |
+| `SENTRY_DSN`                                 | gateway                          | 에러 모니터링 (선택, 미설정 시 SDK 비활성)                                            |
+| `VITE_API_URL`                               | frontend                         | Gateway URL                                                                           |
+| `VITE_SENTRY_DSN`                            | frontend                         | 클라이언트 에러 모니터링 (선택, 미설정 시 SDK 비활성)                                 |
+| `PORTONE_STORE_ID`                           | marketplace-svc, gateway         | PortOne V2 Store ID (`store-XXXXXXXX` 형식, 콘솔 발급 필수)                           |
+| `PORTONE_CHANNEL_KEY`                        | marketplace-svc, gateway         | PortOne V2 채널키 (테스트: `test_ck_...`, 실결제: `live_ck_...`)                      |
+| `PORTONE_API_SECRET`                         | marketplace-svc                  | PortOne V2 API Secret (서버 전용, 외부 노출 금지)                                     |
+| `PORTONE_WEBHOOK_SECRET`                     | marketplace-svc                  | PortOne 웹훅 서명 검증 시크릿 (선택, 미설정 시 검증 생략)                             |
 
 ### PortOne V2 결제 설정
 
@@ -125,11 +128,16 @@ cd frontend && npm run dev      # 유저 화면만 (http://localhost:5173)
 ```
 Client → Frontend (:5173)
            ↓ HTTP
-         Gateway (:3000)
-           ↓ TCP
-  ┌────────┼────────┬──────────┬───────────┬──────────┬────────┬──────────┐
-auth    tab-svc  jam-svc  community  marketplace  subscription  media  ai-svc
-:3001   :3002    :3003    :3005      :3006        :3007         :3008  :3009
+         Gateway (:3000) ←──────────── webhook 콜백 (POST /api/ai-gen/webhook/:id)
+           ↓ TCP                                           ↑
+  ┌────────┼────────┬──────────┬───────────┬──────────┬───┼────┬──────────┐
+auth    tab-svc  jam-svc  community  marketplace  subscription  media  ai-svc (:3009)
+:3001   :3002    :3003    :3005      :3006        :3007         :3008     │
+                                                                    HTTP POST /jobs
+                                                                          ↓
+                                                                   ml-server (:8001)
+                                                              TAB_GENERATION: Claude API
+                                                              AUDIO_EXTRACTION: Basic Pitch
 ```
 
 ### 이벤트 드리븐 통신
@@ -156,6 +164,63 @@ auth    tab-svc  jam-svc  community  marketplace  subscription  media  ai-svc
 - **소셜 로그인**: Google, GitHub OAuth2 (선택적 활성화)
 - **관리자 패널** (`/admin`, :3100): 회원·타브·합주방·구독·녹음 관리, 대시보드 통계 (Supabase service_role 직접 연결, 쿠키 세션 인증)
 
+## ML 서버 셋업
+
+`ml-server/`는 Python FastAPI 서버로, NestJS 백엔드와 별도로 기동해야 합니다.
+`ai-svc`가 연결에 실패하면 자동으로 더미 결과로 대체하므로, **로컬 개발 시 ML 서버 없이도 전체 서비스는 정상 동작합니다.**
+
+### 로컬 개발 (단독 실행)
+
+```bash
+cd ml-server
+
+# 가상환경 생성 및 활성화
+python -m venv .venv
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
+
+# 의존성 설치 (tensorflow 포함으로 최초 설치 5–10분 소요)
+pip install -r requirements.txt
+
+# 환경변수 설정
+cp .env.sample .env
+# .env를 열어 ANTHROPIC_API_KEY, ML_WEBHOOK_SECRET 입력
+
+# 개발 서버 기동
+uvicorn main:app --reload --port 8001
+```
+
+### Docker Compose로 실행
+
+```bash
+# ml-server만 단독 빌드·기동
+ANTHROPIC_API_KEY=sk-ant-... docker compose -f docker-compose.services.yml up ml-server -d
+
+# 또는 전체 서비스와 함께 기동 (최초 빌드 10–20분 소요)
+ANTHROPIC_API_KEY=sk-ant-... docker compose -f docker-compose.services.yml up -d
+```
+
+### 환경변수 (ml-server/.env)
+
+| 변수                | 설명                                                                             |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | Claude API 키 — `TAB_GENERATION` 기능 필수. 미설정 시 해당 작업 타입 실패        |
+| `ML_WEBHOOK_SECRET` | ai-svc · gateway의 `ML_WEBHOOK_SECRET`과 **동일한 값** 필수. 미설정 시 검증 생략 |
+| `PORT`              | 포트 (기본값 `8001`)                                                             |
+
+### AI 작업 흐름
+
+| 단계 | 내용                                                                                 |
+| ---- | ------------------------------------------------------------------------------------ |
+| 1    | 사용자가 `POST /api/ai-gen/tab` 또는 `POST /api/ai-gen/audio-extraction` 요청        |
+| 2    | ai-svc가 DB에 작업 기록 후 `POST http://ml-server:8001/jobs` 디스패치 (5초 타임아웃) |
+| 3    | ml-server가 202 즉시 반환, 백그라운드에서 처리 시작                                  |
+| 4    | 처리 완료 후 `POST http://gateway:3000/api/ai-gen/webhook/{jobId}` 콜백              |
+| 5    | 프론트엔드는 `GET /api/ai-gen/jobs/:id`로 폴링하여 완료 여부 확인                    |
+
+> **ml-server 미연결 시**: ai-svc가 3초 후 더미 결과를 자동으로 완료 처리합니다 (로컬 개발 기본 동작).
+
+---
+
 ## DB 마이그레이션
 
 `supabase/migrations/*.sql`은 `scripts/migrate.js`로 실행한다. `backend/marketplace-svc/.env`의 `DATABASE_URL`로 직접 접속하며,
@@ -177,7 +242,8 @@ psql "<DATABASE_URL>" -f supabase/seed.sql
 ## Docker 배포
 
 ```bash
-docker compose -f docker-compose.services.yml up -d
+docker compose -f docker-compose.services.yml up -d # 개발 환경시
+docker compose -f docker-compose.prod.yml up -d # 배포 환경시
 ```
 
 ## Kubernetes 배포
@@ -239,12 +305,12 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 GitHub 레포 → **Settings → Secrets and variables → Actions** 에서 아래 4개 Secret을 등록해야 한다:
 
-| Secret | 값 예시 | 설명 |
-| --- | --- | --- |
-| `OCI_SSH_HOST` | `144.xxx.xxx.xxx` | OCI VM 공개 IP |
-| `OCI_SSH_USER` | `ubuntu` | SSH 접속 사용자명 |
+| Secret                | 값 예시                 | 설명                 |
+| --------------------- | ----------------------- | -------------------- |
+| `OCI_SSH_HOST`        | `144.xxx.xxx.xxx`       | OCI VM 공개 IP       |
+| `OCI_SSH_USER`        | `ubuntu`                | SSH 접속 사용자명    |
 | `OCI_SSH_PRIVATE_KEY` | `-----BEGIN OPENSSH...` | SSH 개인키 전체 내용 |
-| `OCI_DEPLOY_PATH` | `/opt/tone-knob` | VM 레포 클론 경로 |
+| `OCI_DEPLOY_PATH`     | `/opt/tone-knob`        | VM 레포 클론 경로    |
 
 ### 수동 배포 (긴급 시)
 
